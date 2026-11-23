@@ -63,7 +63,7 @@
       "notProvided": "Non fourni"
     },
     "labels": {
-        "viewAll": "Tout voir",
+      "viewAll": "Tout voir",
       "status": "Statut",
       "actions": "Actions",
       "total": "Total",
@@ -404,17 +404,17 @@
     "majors": "Spécialisations"
   },
   "students": {
-      "peek": {
-            "title": "Aperçu de l’étudiant",
-            "description": "Un résumé de ce dossier sans l’ouvrir.",
-            "studentNumber": "Numéro d’étudiant",
-            "nationality": "Nationalité",
-            "email": "E-mail",
-            "notProvided": "Non renseigné",
-            "since": "Inscrit depuis le {date}",
-            "openRecord": "Ouvrir le dossier complet",
-            "quickView": "Aperçu rapide"
-      },
+    "peek": {
+      "title": "Aperçu de l’étudiant",
+      "description": "Un résumé de ce dossier sans l’ouvrir.",
+      "studentNumber": "Numéro d’étudiant",
+      "nationality": "Nationalité",
+      "email": "E-mail",
+      "notProvided": "Non renseigné",
+      "since": "Inscrit depuis le {date}",
+      "openRecord": "Ouvrir le dossier complet",
+      "quickView": "Aperçu rapide"
+    },
     "title": "Étudiants",
     "subtitle": "L'annuaire des étudiants internationaux.",
     "directory": "Annuaire des étudiants",
@@ -560,8 +560,8 @@
     "clearFilters": "Effacer les filtres"
   },
   "studentProfile": {
-      "viewPhoto": "Ouvrir la photo",
-      "photoPreviewHint": "Molette ou + / − pour zoomer · glisser pour déplacer · R pivote",
+    "viewPhoto": "Ouvrir la photo",
+    "photoPreviewHint": "Molette ou + / − pour zoomer · glisser pour déplacer · R pivote",
     "title": "Dossier étudiant",
     "identityHeading": "Identité",
     "noPhoto": "Aucune photo enregistrée",
@@ -901,7 +901,35 @@
     "buildingsHint": "Bâtiments résidentiels",
     "roomsHint": "Sur l’ensemble du campus",
     "bedsHint": "Capacité totale",
-    "availableHint": "Prêts à attribuer"
+    "availableHint": "Prêts à attribuer",
+    "importAction": "Importer les attributions",
+    "import": {
+      "title": "Importer les attributions de logement",
+      "description": "Téléversez le CSV du service logement. Chaque ligne est vérifiée par rapport aux bâtiments, chambres et lits avant toute écriture.",
+      "chooseFile": "Choisir un fichier CSV",
+      "template": "Télécharger le modèle",
+      "formatHint": "Colonnes : numéro d'étudiant, bâtiment, étage, chambre, lit, date d'entrée.",
+      "sourceReference": "Référence source",
+      "sourceReferencePlaceholder": "ex. Feuille logement septembre 2026",
+      "sourceReferenceHint": "Conservée sur chaque attribution et dans le journal d'audit, pour retrouver la feuille d'origine.",
+      "preview": "Aperçu",
+      "apply": "Confirmer l'import",
+      "running": "Traitement…",
+      "confirmHint": "Rien n'a encore été écrit. Seules les lignes prêtes sont importées ; les lits occupés et les étudiants déjà logés sont ignorés, jamais écrasés.",
+      "applied": "{count} attributions de logement importées.",
+      "aborted": "Rien n'a été écrit. Corrigez les lignes en erreur puis réimportez.",
+      "summary": "{total} lignes · {valid} prêtes · {created} importées · {skipped} ignorées · {failed} en erreur",
+      "rowHeader": "Ligne",
+      "studentHeader": "Étudiant",
+      "bedHeader": "Lit",
+      "resultHeader": "Résultat",
+      "status": {
+        "VALID": "Prête à importer",
+        "CREATED": "Importée",
+        "SKIPPED": "Ignorée",
+        "ERROR": "Erreur"
+      }
+    }
   },
   "immigration": {
     "title": "Immigration",
@@ -1502,7 +1530,7 @@
     "fileSize": "Taille",
     "fileType": "Type de fichier",
     "documentType": "Type de document",
-      "rotate": "Pivoter",
+    "rotate": "Pivoter",
     "uploadedBy": "Téléversé par",
     "uploadedAt": "Téléversé le",
     "empty": "Aucun document.",
@@ -1726,6 +1754,9 @@
         "bed": {
           "created": "Lit ajouté",
           "updated": "Lit modifié"
+        },
+        "import": {
+          "applied": "Attributions de logement importées"
         }
       },
       "announcement": {
@@ -1991,7 +2022,7 @@
       "ASSIGNMENT_NOT_FOUND": "Cette affectation de logement est introuvable.",
       "ASSIGNMENT_NOT_REACTIVATABLE": "Une affectation clôturée ne peut pas être réactivée. Créez plutôt une nouvelle affectation.",
       "BED_NOT_FOUND": "Ce lit n’existe pas ou n’est pas en service.",
-      "BED_OCCUPIED": "Ce lit est déjà occupé.",
+      "BED_OCCUPIED": "Ce lit est déjà occupé ; la ligne a été ignorée.",
       "BED_OUT_OF_SERVICE": "Ce lit est hors service.",
       "CHANGE_REQUEST_NOT_PENDING": "Cette demande a déjà été examinée.",
       "CLASSROOM_NOT_AVAILABLE": "Cette salle n'est pas disponible pour la planification.",
@@ -2031,7 +2062,7 @@
       "ROOM_OUT_OF_SERVICE": "Cette chambre est hors service.",
       "SESSION_EXPIRED": "Votre session a expiré.",
       "STORAGE_UNAVAILABLE": "Le stockage de documents est indisponible pour le moment.",
-      "STUDENT_ALREADY_ASSIGNED": "Cet étudiant a déjà une attribution de logement active.",
+      "STUDENT_ALREADY_ASSIGNED": "Cet étudiant est déjà logé ; la ligne a été ignorée. Utilisez le transfert.",
       "STUDENT_NOT_FOUND": "Cet étudiant est introuvable.",
       "STUDENT_RECORD_INACTIVE": "Votre dossier étudiant n’est pas actif. Veuillez contacter le bureau international.",
       "TICKET_NOT_FOUND": "Cette demande d'assistance est introuvable.",
@@ -2053,11 +2084,11 @@
       "INVALID_EMAIL": "Cette adresse e-mail n'est pas valide.",
       "INVALID_DATE_OF_BIRTH": "Utilisez le format AAAA-MM-JJ pour la date de naissance.",
       "INVALID_GENDER": "Le genre doit être FEMALE, MALE ou OTHER.",
-      "DUPLICATE_IN_FILE": "Cette ligne apparaît plusieurs fois dans le fichier.",
+      "DUPLICATE_IN_FILE": "L'étudiant ou le lit apparaît plusieurs fois dans le fichier.",
       "DUPLICATE_EMAIL": "Un compte avec cet e-mail existe déjà.",
       "IMPORT_ENCODING": "Le fichier doit être un CSV encodé en UTF-8.",
-      "IMPORT_EMPTY": "Le fichier ne contient aucune ligne d'étudiant.",
-      "IMPORT_MISSING_COLUMNS": "Il manque des colonnes obligatoires dans le fichier.",
+      "IMPORT_EMPTY": "Le fichier ne contient aucune ligne de données.",
+      "IMPORT_MISSING_COLUMNS": "Il manque une colonne obligatoire dans le fichier.",
       "IMPORT_TOO_MANY_ROWS": "Le fichier contient trop de lignes. Divisez-le puis réimportez.",
       "IMPORT_FILE_TOO_LARGE": "Le fichier dépasse la taille autorisée.",
       "IMPORT_PLACEMENT_COLUMNS_RETIRED": "Les colonnes d’affectation ne peuvent pas être importées. Importez l’étudiant sans valeurs d’affectation, puis enregistrez l’admission et l’affectation via le flux d’admission/affectation.",
@@ -2074,7 +2105,7 @@
       "SCANNER_UNAVAILABLE": "Le fichier n’a pas pu être analysé et n’a pas été stocké.",
       "DOCUMENT_NOT_SCANNED": "Ce document doit être analysé et déclaré propre avant examen.",
       "PREVIEW_UNSUPPORTED": "Ce type de fichier ne peut pas être prévisualisé ici.",
-      "IMPORT_CONFIRMATION_REQUIRED": "Prévisualisez et confirmez explicitement l’import avant de l’appliquer.",
+      "IMPORT_CONFIRMATION_REQUIRED": "Prévisualisez le fichier et confirmez l'import avant de l'appliquer.",
       "PROGRAM_OFFERING_UNAVAILABLE": "Cette offre d'admission n'est pas ouverte au placement des étudiants.",
       "PROGRAM_OFFERING_NOT_MAPPED": "Cette offre source n'a pas été associée à un programme officiel.",
       "MAJOR_REQUIRED": "Sélectionnez une offre de programme ou une majeure et un programme.",
@@ -2213,7 +2244,11 @@
       "EXAM_SCORE_ABOVE_MAXIMUM": "La note dépasse le maximum indiqué pour cet examen.",
       "EXAM_STUDENT_NOT_ELIGIBLE": "Cet étudiant n'est pas inscrit à une section qui présente cet examen.",
       "EXAM_CORRECTION_REASON_REQUIRED": "Une correction nécessite un motif d'au moins 10 caractères.",
-      "EXAM_NO_STUDENT_RECORD": "Aucun dossier étudiant n'est lié à ce compte."
+      "EXAM_NO_STUDENT_RECORD": "Aucun dossier étudiant n'est lié à ce compte.",
+      "IMPORT_UNRESOLVED_REFERENCE": "Le bâtiment, la chambre ou le lit n'existe pas. Créez la structure ou corrigez la ligne.",
+      "IMPORT_INVALID_DATE": "Les dates doivent être au format AAAA-MM-JJ et la date de fin ne peut précéder la date de début.",
+      "IMPORT_MISSING_FIELDS": "Une ou plusieurs valeurs obligatoires sont manquantes.",
+      "IMPORT_TOO_LARGE": "Le fichier est trop volumineux pour un seul lot."
     }
   },
   "theme": {

@@ -1,4 +1,5 @@
-import { apiFetch } from "./api";
+import { API_BASE, apiFetch } from "./api";
+import { apiErrorFromResponse } from "./api-error";
 import type {
   BuildingBrief,
   BuildingDetail,
@@ -7,6 +8,7 @@ import type {
   RoomBrief,
   StudentHousingResponse,
   HousingAssignmentResponse,
+  HousingImportReport,
 } from "@/types/housing";
 
 /** Rooms are owned by the API, so status values are the backend's. */
@@ -157,4 +159,48 @@ export async function updateBed(
     method: "PATCH",
     body: JSON.stringify(data),
   });
+}
+
+// --- Controlled import -------------------------------------------------------
+
+export async function previewHousingImport(
+  file: File,
+): Promise<HousingImportReport> {
+  const response = await fetch(`${API_BASE}/api/v1/housing/import/preview`, {
+    method: "POST",
+    credentials: "include",
+    // No `Content-Type`: the browser must set the multipart boundary itself.
+    body: (() => {
+      const form = new FormData();
+      form.append("file", file);
+      return form;
+    })(),
+  });
+  if (!response.ok) throw await apiErrorFromResponse(response);
+  return response.json();
+}
+
+export async function applyHousingImport(
+  file: File,
+  sourceReference: string,
+): Promise<HousingImportReport> {
+  const form = new FormData();
+  form.append("file", file);
+  const params = new URLSearchParams({ confirm: "true" });
+  if (sourceReference.trim()) params.set("source_reference", sourceReference.trim());
+
+  const response = await fetch(
+    `${API_BASE}/api/v1/housing/import/apply?${params.toString()}`,
+    { method: "POST", credentials: "include", body: form },
+  );
+  if (!response.ok) throw await apiErrorFromResponse(response);
+  return response.json();
+}
+
+export async function downloadHousingImportTemplate(): Promise<Blob> {
+  const response = await fetch(`${API_BASE}/api/v1/housing/import/template`, {
+    credentials: "include",
+  });
+  if (!response.ok) throw await apiErrorFromResponse(response);
+  return response.blob();
 }

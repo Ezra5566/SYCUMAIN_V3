@@ -3,17 +3,20 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, UploadFile
 from fastapi import status as http_status
+from fastapi.responses import Response
 from sqlalchemy.orm import Session as DBSession
 
 from app.audit import record_audit
 from app.auth.dependencies import CurrentUser, get_db
+from app.config.settings import get_settings
 from app.models.housing import RoomStatus
 from app.models.platform import NotificationType
 from app.permissions.scope import can_view_housing
 from app.schemas.housing import (
     BedCreate,
+    HousingImportReport,
     BedUpdate,
     BuildingBrief,
     BuildingCreate,
@@ -55,6 +58,13 @@ from app.services.housing import (
     update_floor,
     update_housing_assignment,
     update_room,
+)
+from app.services.housing_import import (
+    ImportFileError,
+    apply_housing_import,
+    build_template_csv,
+    parse_rows,
+    preview_housing_import,
 )
 from app.services.notification import create_notification
 
@@ -793,3 +803,133 @@ def get_student_housing_endpoint(
         )
 
     return get_student_housing(db, student.user_id)
+
+
+# --- Controlled import -------------------------------------------------------
+#
+# The housing office's allocation sheet is imported through preview + confirm:
+# the first call validates every row without writing, and the second one applies
+# the same file after the operator has seen the report. Importing is a data
+# change with physical consequences (a student arrives to a taken bed), so it is
+# gated on `housing.assign` and audited with the counts that were applied.
+
+
+def _require_import_permission(current_user: CurrentUser) -> None:
+    from app.permissions.checks import has_permission
+
+    if not has_permission(current_user, "housing.assign"):
+        raise HTTPException(
+            status_code=http_status.HTTP_403_FORBIDDEN,
+            detail={
+                "error": {
+                    "code": "FORBIDDEN",
+                    "message": "You do not have permission to import housing assignments.",
+                }
+            },
+        )
+
+
+def _read_upload(file: UploadFile) -> bytes:
+    settings = get_settings()
+    limit = settings.MAX_IMPORT_SIZE_MB * 1024 * 1024
+    raw = file.file.read(limit + 1)
+    if len(raw) > limit:
+        raise HTTPException(
+            status_code=http_status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail={
+                "error": {
+                    "code": "IMPORT_TOO_LARGE",
+                    "message": f"The file is larger than {settings.MAX_IMPORT_SIZE_MB} MB.",
+                }
+            },
+        )
+    return raw
+
+
+def _parse_or_400(raw: bytes):
+    try:
+        return parse_rows(raw, max_rows=get_settings().MAX_IMPORT_ROWS)
+    except ImportFileError as exc:
+        raise HTTPException(
+            status_code=http_status.HTTP_400_BAD_REQUEST,
+            detail={"error": {"code": exc.code, "message": exc.message}},
+        ) from exc
+
+
+@router.get("/import/template")
+def housing_import_template_endpoint(
+    current_user: CurrentUser,
+) -> Response:
+    """Download the CSV template the housing office fills in."""
+    _require_import_permission(current_user)
+    return Response(
+        content=build_template_csv(),
+        media_type="text/csv",
+        headers={
+            "Content-Disposition": 'attachment; filename="housing-import-template.csv"',
+            # The template contains no personal data, but it is generated per
+            # request; a shared cache would be pointless and confusing.
+            "Cache-Control": "private, no-store",
+        },
+    )
+
+
+@router.post("/import/preview", response_model=HousingImportReport)
+def housing_import_preview_endpoint(
+    current_user: CurrentUser,
+    db: Annotated[DBSession, Depends(get_db)],
+    file: Annotated[UploadFile, File()],
+) -> HousingImportReport:
+    """Validate an allocation file without changing any record."""
+    _require_import_permission(current_user)
+    return preview_housing_import(db, _parse_or_400(_read_upload(file)))
+
+
+@router.post("/import/apply", response_model=HousingImportReport)
+def housing_import_apply_endpoint(
+    current_user: CurrentUser,
+    db: Annotated[DBSession, Depends(get_db)],
+    request: Request,
+    file: Annotated[UploadFile, File()],
+    confirm: Annotated[bool, Query()] = False,
+    source_reference: Annotated[str | None, Query(max_length=200)] = None,
+) -> HousingImportReport:
+    """Apply a file that has been previewed and explicitly confirmed."""
+    _require_import_permission(current_user)
+    if not confirm:
+        raise HTTPException(
+            status_code=http_status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={
+                "error": {
+                    "code": "IMPORT_CONFIRMATION_REQUIRED",
+                    "message": "Preview the file and explicitly confirm it before applying.",
+                }
+            },
+        )
+
+    rows = _parse_or_400(_read_upload(file))
+    report = apply_housing_import(
+        db, rows, actor_id=current_user.id, source_reference=source_reference
+    )
+
+    record_audit(
+        db,
+        action="housing.import.applied",
+        actor=current_user,
+        entity_type="housing_import",
+        entity_id=None,
+        context={
+            "source_reference": source_reference,
+            "total": report.total,
+            "created": report.created,
+            "skipped": report.skipped,
+            "failed": report.failed,
+            "aborted": report.aborted,
+        },
+        request=request,
+    )
+    # The audit entry commits with the batch that produced it. A failed batch
+    # is still worth recording: an attempted import is an operational event.
+    db.commit()
+
+    return report

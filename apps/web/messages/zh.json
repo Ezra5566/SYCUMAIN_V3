@@ -63,7 +63,7 @@
       "notProvided": "未提供"
     },
     "labels": {
-        "viewAll": "查看全部",
+      "viewAll": "查看全部",
       "status": "状态",
       "actions": "操作",
       "total": "合计",
@@ -404,17 +404,17 @@
     "majors": "主修专业"
   },
   "students": {
-      "peek": {
-            "title": "学生速览",
-            "description": "无需打开完整档案即可查看概要。",
-            "studentNumber": "学号",
-            "nationality": "国籍",
-            "email": "电子邮箱",
-            "notProvided": "未提供",
-            "since": "注册日期 {date}",
-            "openRecord": "打开完整档案",
-            "quickView": "快速查看"
-      },
+    "peek": {
+      "title": "学生速览",
+      "description": "无需打开完整档案即可查看概要。",
+      "studentNumber": "学号",
+      "nationality": "国籍",
+      "email": "电子邮箱",
+      "notProvided": "未提供",
+      "since": "注册日期 {date}",
+      "openRecord": "打开完整档案",
+      "quickView": "快速查看"
+    },
     "title": "学生",
     "subtitle": "国际学生名册。",
     "directory": "学生名册",
@@ -560,8 +560,8 @@
     "clearFilters": "清除筛选"
   },
   "studentProfile": {
-      "viewPhoto": "查看照片",
-      "photoPreviewHint": "滚轮或 + / − 缩放 · 拖动移动 · R 旋转",
+    "viewPhoto": "查看照片",
+    "photoPreviewHint": "滚轮或 + / − 缩放 · 拖动移动 · R 旋转",
     "title": "学生档案",
     "identityHeading": "身份信息",
     "noPhoto": "暂无照片",
@@ -901,7 +901,35 @@
     "buildingsHint": "住宅楼宇",
     "roomsHint": "覆盖全部宿舍",
     "bedsHint": "床位总容量",
-    "availableHint": "可立即分配"
+    "availableHint": "可立即分配",
+    "importAction": "导入住宿分配",
+    "import": {
+      "title": "导入住宿分配",
+      "description": "上传宿舍管理处的 CSV 文件。写入前会逐行核对楼栋、房间和床位记录。",
+      "chooseFile": "选择 CSV 文件",
+      "template": "下载模板",
+      "formatHint": "列：学号、楼栋、楼层、房间、床位、入住日期。",
+      "sourceReference": "来源备注",
+      "sourceReferencePlaceholder": "例如：2026 年 9 月住宿表",
+      "sourceReferenceHint": "保存在每条分配记录和审计日志中，便于追溯原始表格。",
+      "preview": "预览",
+      "apply": "确认导入",
+      "running": "处理中…",
+      "confirmHint": "尚未写入任何数据。仅导入标记为就绪的行；已占用的床位和已入住的学生会被跳过，绝不覆盖。",
+      "applied": "已导入 {count} 条住宿分配。",
+      "aborted": "未写入任何数据。请修正标记为错误的行后重新导入。",
+      "summary": "{total} 行 · {valid} 就绪 · {created} 已导入 · {skipped} 已跳过 · {failed} 有错误",
+      "rowHeader": "行",
+      "studentHeader": "学生",
+      "bedHeader": "床位",
+      "resultHeader": "结果",
+      "status": {
+        "VALID": "可导入",
+        "CREATED": "已导入",
+        "SKIPPED": "已跳过",
+        "ERROR": "错误"
+      }
+    }
   },
   "immigration": {
     "title": "出入境事务",
@@ -1502,7 +1530,7 @@
     "fileSize": "大小",
     "fileType": "文件类型",
     "documentType": "文件类别",
-      "rotate": "旋转",
+    "rotate": "旋转",
     "uploadedBy": "上传人",
     "uploadedAt": "上传时间",
     "empty": "暂无文件。",
@@ -1726,6 +1754,9 @@
         "bed": {
           "created": "已新增床位",
           "updated": "已更新床位"
+        },
+        "import": {
+          "applied": "已导入住宿分配"
         }
       },
       "announcement": {
@@ -1991,7 +2022,7 @@
       "ASSIGNMENT_NOT_FOUND": "未找到该住宿分配记录。",
       "ASSIGNMENT_NOT_REACTIVATABLE": "已结束的住宿分配无法重新启用，请新建一条分配记录。",
       "BED_NOT_FOUND": "该床位不存在或已停用。",
-      "BED_OCCUPIED": "该床位已有学生入住。",
+      "BED_OCCUPIED": "该床位已有入住者，此行已跳过。",
       "BED_OUT_OF_SERVICE": "该床位已停用。",
       "CHANGE_REQUEST_NOT_PENDING": "该申请已完成审核。",
       "CLASSROOM_NOT_AVAILABLE": "该教室当前不可用于排课。",
@@ -2031,7 +2062,7 @@
       "ROOM_OUT_OF_SERVICE": "该房间已停用。",
       "SESSION_EXPIRED": "登录状态已过期。",
       "STORAGE_UNAVAILABLE": "文件存储服务当前不可用。",
-      "STUDENT_ALREADY_ASSIGNED": "该学生已有有效的住宿分配。",
+      "STUDENT_ALREADY_ASSIGNED": "该学生已有住宿分配，此行已跳过。请使用调换功能。",
       "STUDENT_NOT_FOUND": "未找到该学生。",
       "STUDENT_RECORD_INACTIVE": "您的学籍状态不是有效状态，请联系国际学生办公室。",
       "TICKET_NOT_FOUND": "未找到该服务请求。",
@@ -2053,11 +2084,11 @@
       "INVALID_EMAIL": "该电子邮箱地址无效。",
       "INVALID_DATE_OF_BIRTH": "出生日期请使用 YYYY-MM-DD 格式。",
       "INVALID_GENDER": "性别必须为 FEMALE、MALE 或 OTHER。",
-      "DUPLICATE_IN_FILE": "该行在文件中重复出现。",
+      "DUPLICATE_IN_FILE": "该学生或床位在文件中出现多次。",
       "DUPLICATE_EMAIL": "该邮箱已存在账户。",
       "IMPORT_ENCODING": "文件必须是 UTF-8 编码的 CSV。",
-      "IMPORT_EMPTY": "文件中没有学生数据行。",
-      "IMPORT_MISSING_COLUMNS": "文件缺少必需的列。",
+      "IMPORT_EMPTY": "文件没有数据行。",
+      "IMPORT_MISSING_COLUMNS": "文件缺少必填列。",
       "IMPORT_TOO_MANY_ROWS": "文件行数过多，请拆分后重新导入。",
       "IMPORT_FILE_TOO_LARGE": "文件超过允许的大小。",
       "IMPORT_PLACEMENT_COLUMNS_RETIRED": "无法导入安置列。请先在不填写安置信息的情况下导入学生，然后通过入学/安置流程记录入学和安置。",
@@ -2074,7 +2105,7 @@
       "SCANNER_UNAVAILABLE": "无法扫描文件，因此未保存。",
       "DOCUMENT_NOT_SCANNED": "文件必须先通过安全扫描才能审核。",
       "PREVIEW_UNSUPPORTED": "此文件类型无法在页面内预览。",
-      "IMPORT_CONFIRMATION_REQUIRED": "请先预览并明确确认，再应用导入。",
+      "IMPORT_CONFIRMATION_REQUIRED": "请先预览文件并确认后再执行导入。",
       "PROGRAM_OFFERING_UNAVAILABLE": "该入学批次的项目招生方向未开放学生选择。",
       "PROGRAM_OFFERING_NOT_MAPPED": "该来源招生方向尚未映射到正式项目。",
       "MAJOR_REQUIRED": "请选择项目招生方向，或选择专业和项目。",
@@ -2213,7 +2244,11 @@
       "EXAM_SCORE_ABOVE_MAXIMUM": "分数超过该考试设定的满分。",
       "EXAM_STUDENT_NOT_ELIGIBLE": "该学生未注册参加本场考试的班级。",
       "EXAM_CORRECTION_REASON_REQUIRED": "更正需要至少 10 个字符的原因。",
-      "EXAM_NO_STUDENT_RECORD": "该账户未关联学生记录。"
+      "EXAM_NO_STUDENT_RECORD": "该账户未关联学生记录。",
+      "IMPORT_UNRESOLVED_REFERENCE": "楼栋、房间或床位不存在。请先创建结构或修正该行。",
+      "IMPORT_INVALID_DATE": "日期格式必须为 YYYY-MM-DD，且结束日期不能早于开始日期。",
+      "IMPORT_MISSING_FIELDS": "缺少一个或多个必填值。",
+      "IMPORT_TOO_LARGE": "文件过大，无法一次导入。"
     }
   },
   "theme": {

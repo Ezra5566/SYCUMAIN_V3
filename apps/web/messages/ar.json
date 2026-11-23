@@ -63,7 +63,7 @@
       "notProvided": "غير مقدَّم"
     },
     "labels": {
-        "viewAll": "عرض الكل",
+      "viewAll": "عرض الكل",
       "status": "الحالة",
       "actions": "الإجراءات",
       "total": "الإجمالي",
@@ -404,17 +404,17 @@
     "majors": "التخصصات"
   },
   "students": {
-      "peek": {
-            "title": "نظرة سريعة على الطالب",
-            "description": "ملخص لهذا السجل دون فتحه.",
-            "studentNumber": "الرقم الجامعي",
-            "nationality": "الجنسية",
-            "email": "البريد الإلكتروني",
-            "notProvided": "غير متوفر",
-            "since": "مسجل منذ {date}",
-            "openRecord": "فتح السجل الكامل",
-            "quickView": "عرض سريع"
-      },
+    "peek": {
+      "title": "نظرة سريعة على الطالب",
+      "description": "ملخص لهذا السجل دون فتحه.",
+      "studentNumber": "الرقم الجامعي",
+      "nationality": "الجنسية",
+      "email": "البريد الإلكتروني",
+      "notProvided": "غير متوفر",
+      "since": "مسجل منذ {date}",
+      "openRecord": "فتح السجل الكامل",
+      "quickView": "عرض سريع"
+    },
     "title": "الطلاب",
     "subtitle": "دليل الطلاب الدوليين.",
     "directory": "دليل الطلاب",
@@ -560,8 +560,8 @@
     "clearFilters": "مسح عوامل التصفية"
   },
   "studentProfile": {
-      "viewPhoto": "فتح الصورة",
-      "photoPreviewHint": "استخدم العجلة أو + / − للتكبير · اسحب للتحريك · R للتدوير",
+    "viewPhoto": "فتح الصورة",
+    "photoPreviewHint": "استخدم العجلة أو + / − للتكبير · اسحب للتحريك · R للتدوير",
     "title": "ملف الطالب",
     "identityHeading": "الهوية",
     "noPhoto": "لا توجد صورة مسجلة",
@@ -901,7 +901,35 @@
     "buildingsHint": "مبانٍ سكنية",
     "roomsHint": "في جميع المباني",
     "bedsHint": "السعة الإجمالية للأسرّة",
-    "availableHint": "جاهزة للتخصيص"
+    "availableHint": "جاهزة للتخصيص",
+    "importAction": "استيراد التوزيع",
+    "import": {
+      "title": "استيراد توزيع السكن",
+      "description": "ارفع ملف CSV الخاص بمكتب السكن. يتم التحقق من كل صف مقابل سجلات المباني والغرف والأسرّة قبل كتابة أي بيانات.",
+      "chooseFile": "اختر ملف CSV",
+      "template": "تنزيل القالب",
+      "formatHint": "الأعمدة: رقم الطالب، المبنى، الطابق، الغرفة، السرير، تاريخ السكن.",
+      "sourceReference": "مرجع المصدر",
+      "sourceReferencePlaceholder": "مثال: كشف السكن سبتمبر 2026",
+      "sourceReferenceHint": "يُحفظ في كل تخصيص وفي سجل التدقيق، لتتبع الكشف الأصلي.",
+      "preview": "معاينة",
+      "apply": "تأكيد الاستيراد",
+      "running": "جارٍ التنفيذ…",
+      "confirmHint": "لم تتم كتابة أي بيانات بعد. تُستورد الصفوف الجاهزة فقط؛ الأسرّة المشغولة والطلاب المقيمون تُتخطى ولا تُستبدل أبدًا.",
+      "applied": "تم استيراد {count} من تخصيصات السكن.",
+      "aborted": "لم تتم كتابة أي بيانات. صحّح الصفوف التي بها أخطاء ثم أعد الاستيراد.",
+      "summary": "{total} صفًا · {valid} جاهز · {created} مستورد · {skipped} متخطى · {failed} به أخطاء",
+      "rowHeader": "الصف",
+      "studentHeader": "الطالب",
+      "bedHeader": "السرير",
+      "resultHeader": "النتيجة",
+      "status": {
+        "VALID": "جاهز للاستيراد",
+        "CREATED": "مستورد",
+        "SKIPPED": "متخطى",
+        "ERROR": "خطأ"
+      }
+    }
   },
   "immigration": {
     "title": "شؤون الإقامة",
@@ -1502,7 +1530,7 @@
     "fileSize": "الحجم",
     "fileType": "نوع الملف",
     "documentType": "نوع المستند",
-      "rotate": "تدوير",
+    "rotate": "تدوير",
     "uploadedBy": "رفعه",
     "uploadedAt": "تاريخ الرفع",
     "empty": "لا توجد مستندات.",
@@ -1726,6 +1754,9 @@
         "bed": {
           "created": "تمت إضافة سرير",
           "updated": "تم تحديث السرير"
+        },
+        "import": {
+          "applied": "تم استيراد توزيع السكن"
         }
       },
       "announcement": {
@@ -1991,7 +2022,7 @@
       "ASSIGNMENT_NOT_FOUND": "لم يتم العثور على تخصيص السكن هذا.",
       "ASSIGNMENT_NOT_REACTIVATABLE": "لا يمكن إعادة تنشيط تخصيص مُغلق. أنشئ تخصيصاً جديداً بدلاً من ذلك.",
       "BED_NOT_FOUND": "هذا السرير غير موجود أو خارج الخدمة.",
-      "BED_OCCUPIED": "هذا السرير مشغول بالفعل.",
+      "BED_OCCUPIED": "هذا السرير مشغول بالفعل، لذلك تم تخطي الصف.",
       "BED_OUT_OF_SERVICE": "هذا السرير خارج الخدمة.",
       "CHANGE_REQUEST_NOT_PENDING": "تمت مراجعة هذا الطلب بالفعل.",
       "CLASSROOM_NOT_AVAILABLE": "هذه القاعة غير متاحة للجدولة.",
@@ -2031,7 +2062,7 @@
       "ROOM_OUT_OF_SERVICE": "هذه الغرفة خارج الخدمة.",
       "SESSION_EXPIRED": "انتهت صلاحية الجلسة.",
       "STORAGE_UNAVAILABLE": "تخزين المستندات غير متاح حاليًا.",
-      "STUDENT_ALREADY_ASSIGNED": "لدى هذا الطالب إسناد سكن نشط بالفعل.",
+      "STUDENT_ALREADY_ASSIGNED": "هذا الطالب مقيم بالفعل، لذلك تم تخطي الصف. استخدم النقل بدلًا من ذلك.",
       "STUDENT_NOT_FOUND": "لم يتم العثور على هذا الطالب.",
       "STUDENT_RECORD_INACTIVE": "سجل الطالب الخاص بك غير نشط. يُرجى التواصل مع المكتب الدولي.",
       "TICKET_NOT_FOUND": "لم يتم العثور على طلب الدعم هذا.",
@@ -2053,11 +2084,11 @@
       "INVALID_EMAIL": "عنوان البريد الإلكتروني غير صالح.",
       "INVALID_DATE_OF_BIRTH": "استخدم التنسيق YYYY-MM-DD لتاريخ الميلاد.",
       "INVALID_GENDER": "يجب أن يكون الجنس FEMALE أو MALE أو OTHER.",
-      "DUPLICATE_IN_FILE": "يتكرر هذا الصف أكثر من مرة في الملف.",
+      "DUPLICATE_IN_FILE": "يتكرر الطالب أو السرير أكثر من مرة في الملف.",
       "DUPLICATE_EMAIL": "يوجد حساب بهذا البريد الإلكتروني بالفعل.",
-      "IMPORT_ENCODING": "يجب أن يكون الملف بصيغة CSV وترميز UTF-8.",
-      "IMPORT_EMPTY": "لا يحتوي الملف على صفوف طلاب.",
-      "IMPORT_MISSING_COLUMNS": "الملف يفتقد أعمدة مطلوبة.",
+      "IMPORT_ENCODING": "يجب أن يكون الملف CSV بترميز UTF-8.",
+      "IMPORT_EMPTY": "لا يحتوي الملف على صفوف بيانات.",
+      "IMPORT_MISSING_COLUMNS": "الملف يفتقد عمودًا مطلوبًا.",
       "IMPORT_TOO_MANY_ROWS": "عدد صفوف الملف كبير جدًا. قسّمه ثم أعد الاستيراد.",
       "IMPORT_FILE_TOO_LARGE": "حجم الملف يتجاوز الحد المسموح.",
       "IMPORT_PLACEMENT_COLUMNS_RETIRED": "لا يمكن استيراد أعمدة التوزيع. استورد الطالب دون قيم التوزيع، ثم سجّل القبول والتوزيع عبر مسار القبول/التوزيع.",
@@ -2074,7 +2105,7 @@
       "SCANNER_UNAVAILABLE": "تعذر فحص الملف ولم يتم تخزينه.",
       "DOCUMENT_NOT_SCANNED": "يجب أن يكون الملف سليماً بعد الفحص قبل المراجعة.",
       "PREVIEW_UNSUPPORTED": "لا يمكن معاينة هذا النوع من الملفات داخل الصفحة.",
-      "IMPORT_CONFIRMATION_REQUIRED": "عاين الاستيراد وأكده صراحةً قبل تطبيقه.",
+      "IMPORT_CONFIRMATION_REQUIRED": "عاين الملف وأكّد الاستيراد قبل تنفيذه.",
       "PROGRAM_OFFERING_UNAVAILABLE": "طرح البرنامج لهذه الفترة غير مفتوح لتسجيل الطلاب.",
       "PROGRAM_OFFERING_NOT_MAPPED": "لم يتم ربط طرح المصدر ببرنامج رسمي.",
       "MAJOR_REQUIRED": "اختر طرح برنامج أو تخصصاً وبرنامجاً.",
@@ -2213,7 +2244,11 @@
       "EXAM_SCORE_ABOVE_MAXIMUM": "الدرجة تتجاوز الحد الأقصى المحدد للامتحان.",
       "EXAM_STUDENT_NOT_ELIGIBLE": "هذا الطالب غير مسجل في شعبة تؤدي هذا الامتحان.",
       "EXAM_CORRECTION_REASON_REQUIRED": "يتطلب التصحيح سببًا لا يقل عن ١٠ أحرف.",
-      "EXAM_NO_STUDENT_RECORD": "لا يوجد سجل طالب مرتبط بهذا الحساب."
+      "EXAM_NO_STUDENT_RECORD": "لا يوجد سجل طالب مرتبط بهذا الحساب.",
+      "IMPORT_UNRESOLVED_REFERENCE": "المبنى أو الغرفة أو السرير غير موجود. أنشئ الهيكل أولًا أو صحّح الصف.",
+      "IMPORT_INVALID_DATE": "يجب كتابة التواريخ بصيغة YYYY-MM-DD، ولا يجوز أن يسبق تاريخ الانتهاء تاريخ البدء.",
+      "IMPORT_MISSING_FIELDS": "هناك قيمة أو أكثر من القيم المطلوبة مفقودة.",
+      "IMPORT_TOO_LARGE": "الملف كبير جدًا للاستيراد دفعة واحدة."
     }
   },
   "theme": {

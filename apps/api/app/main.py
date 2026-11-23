@@ -140,13 +140,19 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # Shutdown: nothing to clean up yet
 
 
+# The interactive documentation and the OpenAPI document expose every route,
+# parameter and schema — a map of the attack surface. They stay available while
+# the API is being developed, and are switched off in production rather than
+# left for a deployment checklist to remember.
+_docs_enabled = not settings.is_production
+
 app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
     description="International Student School Portal API",
-    docs_url="/docs",
-    redoc_url="/redoc",
-    openapi_url="/openapi.json",
+    docs_url="/docs" if _docs_enabled else None,
+    redoc_url="/redoc" if _docs_enabled else None,
+    openapi_url="/openapi.json" if _docs_enabled else None,
     lifespan=lifespan,
 )
 
@@ -264,8 +270,7 @@ app.include_router(health.router)
 @app.get("/")
 async def root():
     """Root endpoint."""
-    return {
-        "name": settings.APP_NAME,
-        "version": settings.APP_VERSION,
-        "docs": "/docs",
-    }
+    payload = {"name": settings.APP_NAME, "version": settings.APP_VERSION}
+    if _docs_enabled:
+        payload["docs"] = "/docs"
+    return payload

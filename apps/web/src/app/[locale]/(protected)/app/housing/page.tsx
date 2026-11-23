@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   BedDouble,
@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   DoorOpen,
   Layers3,
+  Upload,
   Users,
 } from "lucide-react";
 import { Link } from "@/i18n/navigation";
@@ -27,6 +28,8 @@ import { LoadingState } from "@/components/ui/loading-state";
 import { OccupancyLegend } from "@/components/housing/occupancy-legend";
 import { BuildingRoomMap } from "@/components/housing/building-room-map";
 import { AddBuildingDialog } from "@/components/housing/structure-dialogs";
+import { ImportHousingDialog } from "@/components/housing/import-housing-dialog";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
 import type { HousingOverviewResponse } from "@/types/housing";
 
@@ -36,6 +39,7 @@ export default function HousingPage() {
   const localizeError = useErrorMessage();
   const statusLabel = useStatusLabel();
   const { hasPermission } = useAuth();
+  const [importOpen, setImportOpen] = useState(false);
 
   const fetchOverview = useCallback(() => getHousingOverview(), []);
   const { data, loading, error, refetch } = useApi<HousingOverviewResponse>(
@@ -94,10 +98,26 @@ export default function HousingPage() {
           { label: t("title") },
         ]}
         actions={
-          hasPermission("housing.create") ? (
-            <AddBuildingDialog onCreated={refetch} />
+          hasPermission("housing.assign") || hasPermission("housing.create") ? (
+            <div className="flex flex-wrap items-center gap-2">
+              {hasPermission("housing.assign") && (
+                <Button variant="outline" onClick={() => setImportOpen(true)}>
+                  <Upload className="me-1.5 h-4 w-4" aria-hidden="true" />
+                  {t("importAction")}
+                </Button>
+              )}
+              {hasPermission("housing.create") && (
+                <AddBuildingDialog onCreated={refetch} />
+              )}
+            </div>
           ) : undefined
         }
+      />
+
+      <ImportHousingDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        onImported={refetch}
       />
 
       <Card className="mb-4 overflow-hidden">

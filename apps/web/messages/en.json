@@ -63,7 +63,7 @@
       "notProvided": "Not provided"
     },
     "labels": {
-        "viewAll": "View all",
+      "viewAll": "View all",
       "status": "Status",
       "actions": "Actions",
       "total": "Total",
@@ -404,17 +404,17 @@
     "majors": "Majors"
   },
   "students": {
-      "peek": {
-            "title": "Student quick view",
-            "description": "A summary of this record without opening it.",
-            "studentNumber": "Student number",
-            "nationality": "Nationality",
-            "email": "Email",
-            "notProvided": "Not provided",
-            "since": "On the register since {date}",
-            "openRecord": "Open full record",
-            "quickView": "Quick view"
-      },
+    "peek": {
+      "title": "Student quick view",
+      "description": "A summary of this record without opening it.",
+      "studentNumber": "Student number",
+      "nationality": "Nationality",
+      "email": "Email",
+      "notProvided": "Not provided",
+      "since": "On the register since {date}",
+      "openRecord": "Open full record",
+      "quickView": "Quick view"
+    },
     "title": "Students",
     "subtitle": "The international student directory.",
     "directory": "Student directory",
@@ -560,8 +560,8 @@
     "clearFilters": "Clear filters"
   },
   "studentProfile": {
-      "viewPhoto": "Open photo",
-      "photoPreviewHint": "Scroll or use + / − to zoom · drag to move · R rotates",
+    "viewPhoto": "Open photo",
+    "photoPreviewHint": "Scroll or use + / − to zoom · drag to move · R rotates",
     "title": "Student profile",
     "identityHeading": "Identity",
     "noPhoto": "No photo on file",
@@ -901,7 +901,35 @@
     "buildingsHint": "Residential buildings",
     "roomsHint": "Across the estate",
     "bedsHint": "Total bed capacity",
-    "availableHint": "Ready to assign"
+    "availableHint": "Ready to assign",
+    "importAction": "Import allocations",
+    "import": {
+      "title": "Import housing allocations",
+      "description": "Upload the housing office's CSV. Every row is checked against the building, room and bed records before anything is written.",
+      "chooseFile": "Choose a CSV file",
+      "template": "Download template",
+      "formatHint": "Columns: student number, building, floor, room, bed, start date.",
+      "sourceReference": "Source reference",
+      "sourceReferencePlaceholder": "e.g. Housing sheet September 2026",
+      "sourceReferenceHint": "Stored on each created assignment and in the audit log, so the original sheet can be traced.",
+      "preview": "Preview",
+      "apply": "Confirm import",
+      "running": "Working…",
+      "confirmHint": "Nothing has been written yet. Import only the rows marked ready; occupied beds and housed students are skipped, never overwritten.",
+      "applied": "Imported {count} housing assignments.",
+      "aborted": "Nothing was written. Correct the rows marked with errors and import again.",
+      "summary": "{total} rows · {valid} ready · {created} imported · {skipped} skipped · {failed} with errors",
+      "rowHeader": "Row",
+      "studentHeader": "Student",
+      "bedHeader": "Bed",
+      "resultHeader": "Result",
+      "status": {
+        "VALID": "Ready to import",
+        "CREATED": "Imported",
+        "SKIPPED": "Skipped",
+        "ERROR": "Error"
+      }
+    }
   },
   "immigration": {
     "title": "Immigration",
@@ -1502,7 +1530,7 @@
     "fileSize": "Size",
     "fileType": "File type",
     "documentType": "Document type",
-      "rotate": "Rotate",
+    "rotate": "Rotate",
     "uploadedBy": "Uploaded by",
     "uploadedAt": "Uploaded",
     "empty": "No documents.",
@@ -1726,6 +1754,9 @@
         "bed": {
           "created": "Bed added",
           "updated": "Bed updated"
+        },
+        "import": {
+          "applied": "Housing allocations imported"
         }
       },
       "announcement": {
@@ -1991,7 +2022,7 @@
       "ASSIGNMENT_NOT_FOUND": "That housing assignment could not be found.",
       "ASSIGNMENT_NOT_REACTIVATABLE": "A closed assignment cannot be reactivated. Create a new assignment instead.",
       "BED_NOT_FOUND": "That bed does not exist or is not in service.",
-      "BED_OCCUPIED": "This bed is already occupied.",
+      "BED_OCCUPIED": "That bed already has an occupant, so the row was skipped.",
       "BED_OUT_OF_SERVICE": "This bed is out of service.",
       "CHANGE_REQUEST_NOT_PENDING": "This request has already been reviewed.",
       "CLASSROOM_NOT_AVAILABLE": "That classroom is not available for scheduling.",
@@ -2031,7 +2062,7 @@
       "ROOM_OUT_OF_SERVICE": "This room is out of service.",
       "SESSION_EXPIRED": "Your session has expired.",
       "STORAGE_UNAVAILABLE": "Document storage is not available right now.",
-      "STUDENT_ALREADY_ASSIGNED": "This student already has an active housing assignment.",
+      "STUDENT_ALREADY_ASSIGNED": "That student is already housed, so the row was skipped. Use transfer instead.",
       "STUDENT_NOT_FOUND": "This student could not be found.",
       "STUDENT_RECORD_INACTIVE": "Your student record is not active. Please contact the international office.",
       "TICKET_NOT_FOUND": "This support request could not be found.",
@@ -2053,11 +2084,11 @@
       "INVALID_EMAIL": "This email address is not valid.",
       "INVALID_DATE_OF_BIRTH": "Use the format YYYY-MM-DD for the date of birth.",
       "INVALID_GENDER": "Gender must be FEMALE, MALE or OTHER.",
-      "DUPLICATE_IN_FILE": "This row appears more than once in the file.",
+      "DUPLICATE_IN_FILE": "The student or bed appears more than once in the file.",
       "DUPLICATE_EMAIL": "An account with this email already exists.",
       "IMPORT_ENCODING": "The file must be UTF-8 encoded CSV.",
-      "IMPORT_EMPTY": "The file contains no student rows.",
-      "IMPORT_MISSING_COLUMNS": "The file is missing required columns.",
+      "IMPORT_EMPTY": "The file has no data rows.",
+      "IMPORT_MISSING_COLUMNS": "The file is missing a required column.",
       "IMPORT_TOO_MANY_ROWS": "The file has too many rows. Split it and import again.",
       "IMPORT_FILE_TOO_LARGE": "The file is larger than the allowed size.",
       "IMPORT_PLACEMENT_COLUMNS_RETIRED": "Placement columns cannot be imported. Import the student without placement values, then record admission and placement through the admission/placement workflow.",
@@ -2074,7 +2105,7 @@
       "SCANNER_UNAVAILABLE": "The file could not be scanned and was not stored.",
       "DOCUMENT_NOT_SCANNED": "This document must be scanned clean before review.",
       "PREVIEW_UNSUPPORTED": "This file type cannot be previewed inline.",
-      "IMPORT_CONFIRMATION_REQUIRED": "Preview and explicitly confirm the import before applying it.",
+      "IMPORT_CONFIRMATION_REQUIRED": "Preview the file and confirm the import before applying it.",
       "PROGRAM_OFFERING_UNAVAILABLE": "That intake offering is not open for student placement.",
       "PROGRAM_OFFERING_NOT_MAPPED": "That source offering has not been mapped to a canonical program.",
       "MAJOR_REQUIRED": "Select a program offering or a major and program.",
@@ -2213,7 +2244,11 @@
       "EXAM_SCORE_ABOVE_MAXIMUM": "The score exceeds the examination's stated maximum.",
       "EXAM_STUDENT_NOT_ELIGIBLE": "That student is not enrolled in a section sitting this examination.",
       "EXAM_CORRECTION_REASON_REQUIRED": "A correction needs a reason of at least 10 characters.",
-      "EXAM_NO_STUDENT_RECORD": "No student record is linked to this account."
+      "EXAM_NO_STUDENT_RECORD": "No student record is linked to this account.",
+      "IMPORT_UNRESOLVED_REFERENCE": "The building, room or bed does not exist. Create the structure first or correct the row.",
+      "IMPORT_INVALID_DATE": "Dates must be written as YYYY-MM-DD and the end date cannot precede the start date.",
+      "IMPORT_MISSING_FIELDS": "One or more required values are missing.",
+      "IMPORT_TOO_LARGE": "The file is too large to import in one batch."
     }
   },
   "theme": {

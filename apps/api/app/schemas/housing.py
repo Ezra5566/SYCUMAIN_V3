@@ -356,3 +356,39 @@ class StudentHousingResponse(BaseModel):
 
     has_assignment: bool = False
     assignment: HousingAssignmentResponse | None = None
+
+
+# --- Housing Import Schemas ---
+
+
+class HousingImportRow(BaseModel):
+    """One spreadsheet row's outcome.
+
+    ``status`` is a machine-readable token (VALID / CREATED / SKIPPED / ERROR)
+    so the UI localizes it like every other status. ``code`` is the reason a row
+    was skipped or rejected, translated client-side from ``errors.codes.*``.
+    """
+
+    row_number: int
+    student_number: str | None = None
+    student_name: str | None = None
+    building: str | None = None
+    room: str | None = None
+    bed: str | None = None
+    status: str
+    code: str | None = None
+    message: str | None = None
+
+
+class HousingImportReport(BaseModel):
+    """Result of validating or applying a housing allocation file."""
+
+    dry_run: bool
+    #: True when invalid rows (or a commit conflict) meant nothing was written.
+    aborted: bool = False
+    total: int
+    valid: int
+    created: int
+    skipped: int
+    failed: int
+    rows: list[HousingImportRow]
