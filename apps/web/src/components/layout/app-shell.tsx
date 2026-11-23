@@ -15,6 +15,7 @@ import {
   ChevronDown,
   Home,
   LogOut,
+  Menu as MenuIcon,
   Moon,
   Search,
   Settings as SettingsIcon,
@@ -32,6 +33,13 @@ import { LanguageSwitcher } from "@/components/layout/language-switcher";
 import { ThemeSwitcher } from "@/components/layout/theme-switcher";
 import { useTheme } from "@/components/theme/theme-provider";
 import { ScuMark } from "@/components/brand/scu-mark";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { NAV_SECTIONS } from "@/lib/navigation";
 
 interface AppShellProps {
@@ -78,6 +86,7 @@ export function AppShell({ children, className }: AppShellProps) {
   const trackRef = useRef<HTMLDivElement>(null);
   const tabRefs = useRef(new Map<string, HTMLAnchorElement>());
   const [pill, setPill] = useState({ offset: 0, width: 0, ready: false });
+  const [navOpen, setNavOpen] = useState(false);
 
   const roles = useMemo(() => user?.roles.map((role) => role.name) ?? [], [user]);
 
@@ -341,6 +350,89 @@ export function AppShell({ children, className }: AppShellProps) {
             <span className="scu-dock__tip">{t("settings")}</span>
           </Link>
         </nav>
+
+        {/* Phones replace the vertical dock with a thumb-reachable bar: four
+            destinations, with every remaining module in the Menu sheet. */}
+        <nav className="scu-mobiledock" aria-label={t("mainNav")}>
+          <Link
+            href="/app"
+            className={cn("scu-mobiledock__btn", isCurrent("/app") && "is-active")}
+            aria-current={isCurrent("/app") ? "page" : undefined}
+          >
+            <Home className="h-[19px] w-[19px]" aria-hidden="true" />
+            <span>{t("dashboard")}</span>
+          </Link>
+          {dockLinks.slice(0, 2).map(({ href, label, Icon }) => (
+            <Link
+              key={href}
+              href={href}
+              className={cn("scu-mobiledock__btn", isCurrent(href) && "is-active")}
+              aria-current={isCurrent(href) ? "page" : undefined}
+            >
+              <Icon className="h-[19px] w-[19px]" aria-hidden="true" />
+              <span className="truncate">{label}</span>
+            </Link>
+          ))}
+          <button
+            type="button"
+            className="scu-mobiledock__btn"
+            aria-label={t("search")}
+            onClick={() => window.dispatchEvent(new Event(COMMAND_OPEN_EVENT))}
+          >
+            <Search className="h-[19px] w-[19px]" aria-hidden="true" />
+            <span>{tCommon("actions.search")}</span>
+          </button>
+          <button
+            type="button"
+            className={cn("scu-mobiledock__btn", navOpen && "is-active")}
+            aria-label={t("menu")}
+            aria-expanded={navOpen}
+            onClick={() => setNavOpen(true)}
+          >
+            <MenuIcon className="h-[19px] w-[19px]" aria-hidden="true" />
+            <span>{t("menu")}</span>
+          </button>
+        </nav>
+
+        <Sheet open={navOpen} onOpenChange={setNavOpen}>
+          <SheetContent
+            side="bottom"
+            className="max-h-[82vh] overflow-y-auto rounded-t-[26px] border-border/80 p-0"
+          >
+            <SheetHeader className="border-b border-border/70 px-5 py-4 text-start">
+              <SheetTitle className="text-base">{t("menu")}</SheetTitle>
+              <SheetDescription className="sr-only">{t("mainNav")}</SheetDescription>
+            </SheetHeader>
+            <nav className="grid grid-cols-2 gap-1 p-3" aria-label={t("mainNav")}>
+              {items.map((item) => {
+                const Icon = item.icon;
+                const active = isCurrent(item.href as string);
+                return (
+                  <Link
+                    key={item.labelKey}
+                    href={item.href as string}
+                    onClick={() => setNavOpen(false)}
+                    aria-current={active ? "page" : undefined}
+                    className={cn("scu-sheetlink", active && "is-active")}
+                  >
+                    <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
+                    <span className="truncate">{t(item.labelKey)}</span>
+                  </Link>
+                );
+              })}
+            </nav>
+            <div className="border-t border-border/70 p-3">
+              <Link
+                href="/app/settings"
+                onClick={() => setNavOpen(false)}
+                className="scu-sheetlink is-wide"
+              >
+                <SettingsIcon className="h-4 w-4 shrink-0" aria-hidden="true" />
+                <span>{t("settings")}</span>
+              </Link>
+            </div>
+          </SheetContent>
+        </Sheet>
 
         <main id="main" className="scu-main">
           <div key={pathname} className={cn("motion-page", className)}>

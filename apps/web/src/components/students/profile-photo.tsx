@@ -2,11 +2,12 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Upload, User, X } from "lucide-react";
+import { Maximize2, Upload, User, X } from "lucide-react";
 import { studentApi } from "@/lib/student-api";
 import { useErrorMessage } from "@/lib/use-error-message";
 import { normalizeApiError, type NormalizedError } from "@/lib/api-error";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { toast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
 
@@ -41,6 +42,7 @@ export function ProfilePhoto({
   const localizeError = useErrorMessage();
 
   const [objectUrl, setObjectUrl] = useState<string | null>(null);
+  const [viewerOpen, setViewerOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [failure, setFailure] = useState<NormalizedError | null>(null);
 
@@ -100,12 +102,25 @@ export function ProfilePhoto({
     <div className="flex flex-col items-center gap-3">
       <div className="relative h-28 w-28 shrink-0 overflow-hidden rounded-full border border-border bg-muted shadow-sm">
         {objectUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element -- the blob URL is created at runtime.
-          <img
-            src={objectUrl}
-            alt={fullName}
-            className="h-full w-full object-cover"
-          />
+          <button
+            type="button"
+            onClick={() => setViewerOpen(true)}
+            className="group relative block h-full w-full cursor-zoom-in focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            aria-label={t("viewPhoto")}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element -- the blob URL is created at runtime. */}
+            <img
+              src={objectUrl}
+              alt={fullName}
+              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
+            />
+            <span
+              className="absolute inset-0 grid place-items-center bg-black/0 text-white opacity-0 transition-all duration-200 group-hover:bg-black/35 group-hover:opacity-100 group-focus-visible:bg-black/35 group-focus-visible:opacity-100"
+              aria-hidden="true"
+            >
+              <Maximize2 className="h-5 w-5" />
+            </span>
+          </button>
         ) : (
           <div
             className="flex h-full w-full items-center justify-center"
@@ -122,6 +137,17 @@ export function ProfilePhoto({
           </div>
         )}
       </div>
+
+      {objectUrl && (
+        <ImageLightbox
+          src={objectUrl}
+          alt={fullName}
+          open={viewerOpen}
+          onOpenChange={setViewerOpen}
+          caption={t("photoPreviewHint")}
+          downloadName={`${fullName}.jpg`}
+        />
+      )}
 
       {canEdit && (
         <div className="flex flex-wrap items-center justify-center gap-2">

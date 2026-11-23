@@ -32,6 +32,7 @@ import { toast } from "@/components/ui/toast";
 import { OnboardStudentDialog } from "@/components/students/onboard-student-dialog";
 import { BulkStatusDialog } from "@/components/students/bulk-status-dialog";
 import { ImportStudentsDialog } from "@/components/students/import-students-dialog";
+import { StudentPeekDialog } from "@/components/students/student-peek";
 import type {
   ImmigrationStatusFilter,
   StudentBrief,
@@ -101,6 +102,7 @@ export default function StudentsPage() {
   const [exporting, setExporting] = useState(false);
   const [bulkOpen, setBulkOpen] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
+  const [peek, setPeek] = useState<StudentBrief | null>(null);
 
   const fetchStudents = useCallback(
     () =>
@@ -342,11 +344,9 @@ export default function StudentsPage() {
       header: tCommon("labels.actions"),
       className: "text-end",
       cell: (student) => (
-        <Button asChild variant="ghost" size="sm">
-          <Link href={`/app/students/${student.id}`}>
-            <Eye className="h-3.5 w-3.5" aria-hidden="true" />
-            {tCommon("actions.view")}
-          </Link>
+        <Button variant="ghost" size="sm" onClick={() => setPeek(student)}>
+          <Eye className="h-3.5 w-3.5" aria-hidden="true" />
+          {t("peek.quickView")}
         </Button>
       ),
     },
@@ -551,9 +551,20 @@ export default function StudentsPage() {
                       {student.last_name}, {student.first_name}
                     </Link>
                   </div>
-                  <StatusBadge tone={toneForStatus(student.status)}>
-                    {t(`status.${student.status}`)}
-                  </StatusBadge>
+                  <div className="flex shrink-0 items-center gap-1">
+                    <StatusBadge tone={toneForStatus(student.status)}>
+                      {t(`status.${student.status}`)}
+                    </StatusBadge>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 px-2"
+                      onClick={() => setPeek(student)}
+                    >
+                      <Eye className="h-3.5 w-3.5" aria-hidden="true" />
+                      <span className="sr-only">{t("peek.quickView")}</span>
+                    </Button>
+                  </div>
                 </div>
                 <p className="font-mono text-xs text-muted-foreground">
                   {student.student_id}
@@ -576,6 +587,14 @@ export default function StudentsPage() {
           )}
         </>
       )}
+
+      <StudentPeekDialog
+        student={peek}
+        open={Boolean(peek)}
+        onOpenChange={(open) => {
+          if (!open) setPeek(null);
+        }}
+      />
     </AppShell>
   );
 }

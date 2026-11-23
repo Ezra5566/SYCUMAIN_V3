@@ -63,6 +63,7 @@
       "notProvided": "Non fourni"
     },
     "labels": {
+        "viewAll": "Tout voir",
       "status": "Statut",
       "actions": "Actions",
       "total": "Total",
@@ -403,6 +404,17 @@
     "majors": "Spécialisations"
   },
   "students": {
+      "peek": {
+            "title": "Aperçu de l’étudiant",
+            "description": "Un résumé de ce dossier sans l’ouvrir.",
+            "studentNumber": "Numéro d’étudiant",
+            "nationality": "Nationalité",
+            "email": "E-mail",
+            "notProvided": "Non renseigné",
+            "since": "Inscrit depuis le {date}",
+            "openRecord": "Ouvrir le dossier complet",
+            "quickView": "Aperçu rapide"
+      },
     "title": "Étudiants",
     "subtitle": "L'annuaire des étudiants internationaux.",
     "directory": "Annuaire des étudiants",
@@ -548,6 +560,8 @@
     "clearFilters": "Effacer les filtres"
   },
   "studentProfile": {
+      "viewPhoto": "Ouvrir la photo",
+      "photoPreviewHint": "Molette ou + / − pour zoomer · glisser pour déplacer · R pivote",
     "title": "Dossier étudiant",
     "identityHeading": "Identité",
     "noPhoto": "Aucune photo enregistrée",
@@ -1488,6 +1502,7 @@
     "fileSize": "Taille",
     "fileType": "Type de fichier",
     "documentType": "Type de document",
+      "rotate": "Pivoter",
     "uploadedBy": "Téléversé par",
     "uploadedAt": "Téléversé le",
     "empty": "Aucun document.",

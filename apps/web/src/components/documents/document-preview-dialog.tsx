@@ -1,12 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
-import { Download, Eye, Loader2, ZoomIn, ZoomOut } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useFormatter, useTranslations } from "next-intl";
+import { Download, Eye, Loader2, RotateCw, ZoomIn, ZoomOut } from "lucide-react";
 import type { PDFDocumentProxy } from "pdfjs-dist";
 import { documentApi } from "@/lib/platform-api";
 import { formatFileSize } from "@/lib/format";
 import { useErrorMessage } from "@/lib/use-error-message";
+import { useStatusLabel } from "@/lib/use-status-label";
+import { StatusBadge, toneForStatus } from "@/components/ui/status-badge";
 import { normalizeApiError, type NormalizedError } from "@/lib/api-error";
 import { Button } from "@/components/ui/button";
 import { PdfPreviewPages } from "@/components/documents/pdf-preview";
@@ -42,6 +44,8 @@ export function DocumentPreviewDialog({
 }) {
   const t = useTranslations("documents");
   const tCommon = useTranslations("common");
+  const format = useFormatter();
+  const statusLabel = useStatusLabel();
   const localizeError = useErrorMessage();
   const [url, setUrl] = useState<string | null>(null);
   const [pdf, setPdf] = useState<PDFDocumentProxy | null>(null);
@@ -49,6 +53,15 @@ export function DocumentPreviewDialog({
   const [failure, setFailure] = useState<NormalizedError | null>(null);
   const [renderFailed, setRenderFailed] = useState(false);
   const [zoom, setZoom] = useState(1);
+  const [rotation, setRotation] = useState(0);
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const dragRef = useRef<{ x: number; y: number; ox: number; oy: number } | null>(null);
+
+  const resetView = useCallback(() => {
+    setZoom(1);
+    setRotation(0);
+    setOffset({ x: 0, y: 0 });
+  }, []);
 
   const handlePdfError = useCallback(() => setRenderFailed(true), []);
 
@@ -62,7 +75,7 @@ export function DocumentPreviewDialog({
     setRenderFailed(false);
     setUrl(null);
     setPdf(null);
-    setZoom(1);
+    resetView();
 
     const load = async () => {
       let blob: Blob;
@@ -121,7 +134,7 @@ export function DocumentPreviewDialog({
       if (objectUrl) URL.revokeObjectURL(objectUrl);
       if (loadedPdf) void loadedPdf.destroy();
     };
-  }, [document.content_type, document.id, open]);
+  }, [document.content_type, document.id, open, resetView]);
 
   const localized = failure ? localizeError(failure) : null;
   const isImage = document.content_type.startsWith("image/");
@@ -140,6 +153,16 @@ export function DocumentPreviewDialog({
             {document.original_filename} · {formatFileSize(document.file_size)}
             {pdf ? ` · ${t("previewPages", { count: pdf.numPages })}` : ""}
           </DialogDescription>
+          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+            <StatusBadge tone={toneForStatus(document.review_status)}>
+              {statusLabel(document.review_status, "documents.reviewStatus")}
+            </StatusBadge>
+            <span>{t(`types.${document.document_type}`)}</span>
+            <span aria-hidden="true">·</span>
+            <span>
+              {format.dateTime(new Date(document.created_at), { dateStyle: "medium" })}
+            </span>
+          </div>
         </DialogHeader>
 
         {hasPreview && !renderFailed && (
@@ -160,7 +183,7 @@ export function DocumentPreviewDialog({
               <button
                 type="button"
                 className="min-w-12 rounded px-1 text-xs tabular-nums text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                onClick={() => setZoom(1)}
+                onClick={resetView}
                 aria-label={t("zoomReset")}
               >
                 {zoomPercent}
@@ -176,6 +199,21 @@ export function DocumentPreviewDialog({
               >
                 <ZoomIn className="h-4 w-4" aria-hidden="true" />
               </Button>
+              {isImage && (
+                <>
+                  <span className="mx-0.5 h-5 w-px bg-border" aria-hidden="true" />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    aria-label={t("rotate")}
+                    onClick={() => setRotation((value) => (value + 90) % 360)}
+                  >
+                    <RotateCw className="h-4 w-4" aria-hidden="true" />
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         )}
@@ -211,13 +249,47 @@ export function DocumentPreviewDialog({
               />
             </div>
           ) : url && isImage ? (
-            <div className="flex min-h-[55vh] justify-center p-3">
+            <div
+              className="flex min-h-[55vh] cursor-grab touch-none justify-center overflow-hidden p-3 active:cursor-grabbing"
+              onPointerDown={(event) => {
+                dragRef.current = {
+                  x: event.clientX,
+                  y: event.clientY,
+                  ox: offset.x,
+                  oy: offset.y,
+                };
+                event.currentTarget.setPointerCapture(event.pointerId);
+              }}
+              onPointerMove={(event) => {
+                const start = dragRef.current;
+                if (!start) return;
+                setOffset({
+                  x: start.ox + (event.clientX - start.x),
+                  y: start.oy + (event.clientY - start.y),
+                });
+              }}
+              onPointerUp={(event) => {
+                dragRef.current = null;
+                if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+                  event.currentTarget.releasePointerCapture(event.pointerId);
+                }
+              }}
+              onPointerCancel={() => {
+                dragRef.current = null;
+              }}
+              onDoubleClick={resetView}
+            >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={url}
                 alt={document.title}
-                className="h-auto max-w-none object-contain"
-                style={{ width: `${zoom * 100}%` }}
+                draggable={false}
+                className="h-auto max-w-none select-none object-contain"
+                style={{
+                  width: `${zoom * 100}%`,
+                  transform: `translate(${offset.x}px, ${offset.y}px) rotate(${rotation}deg)`,
+                  transition: dragRef.current ? "none" : "transform 0.18s ease",
+                }}
               />
             </div>
           ) : (

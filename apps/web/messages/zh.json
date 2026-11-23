@@ -63,6 +63,7 @@
       "notProvided": "未提供"
     },
     "labels": {
+        "viewAll": "查看全部",
       "status": "状态",
       "actions": "操作",
       "total": "合计",
@@ -403,6 +404,17 @@
     "majors": "主修专业"
   },
   "students": {
+      "peek": {
+            "title": "学生速览",
+            "description": "无需打开完整档案即可查看概要。",
+            "studentNumber": "学号",
+            "nationality": "国籍",
+            "email": "电子邮箱",
+            "notProvided": "未提供",
+            "since": "注册日期 {date}",
+            "openRecord": "打开完整档案",
+            "quickView": "快速查看"
+      },
     "title": "学生",
     "subtitle": "国际学生名册。",
     "directory": "学生名册",
@@ -548,6 +560,8 @@
     "clearFilters": "清除筛选"
   },
   "studentProfile": {
+      "viewPhoto": "查看照片",
+      "photoPreviewHint": "滚轮或 + / − 缩放 · 拖动移动 · R 旋转",
     "title": "学生档案",
     "identityHeading": "身份信息",
     "noPhoto": "暂无照片",
@@ -1488,6 +1502,7 @@
     "fileSize": "大小",
     "fileType": "文件类型",
     "documentType": "文件类别",
+      "rotate": "旋转",
     "uploadedBy": "上传人",
     "uploadedAt": "上传时间",
     "empty": "暂无文件。",

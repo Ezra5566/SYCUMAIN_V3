@@ -161,6 +161,109 @@ if (await trigger.count()) {
   }
 }
 
+// Mobile navigation: bottom bar, menu sheet, quick view and notification peek.
+await page.setViewportSize({ width: 390, height: 844 });
+await page.goto(`${BASE}/en/app`, { waitUntil: "domcontentloaded" });
+await page.waitForSelector(".scu-mobiledock", { timeout: 45000 });
+await page.waitForTimeout(400);
+const mobileNav = await page.evaluate(() => {
+  const bar = document.querySelector(".scu-mobiledock");
+  const rect = bar.getBoundingClientRect();
+  return {
+    display: getComputedStyle(bar).display,
+    items: bar.querySelectorAll("a, button").length,
+    insideViewport: rect.bottom <= window.innerHeight + 1 && rect.width <= window.innerWidth + 1,
+  };
+});
+
+await page.locator(".scu-mobiledock button[aria-expanded]").first().click();
+// Let the bottom-sheet slide-in finish before judging its settled rect.
+await page.waitForTimeout(1100);
+const menuSheet = await page.evaluate(() => {
+  const panel = document.querySelector('[role="dialog"]');
+  if (!panel) return null;
+  const rect = panel.getBoundingClientRect();
+  return {
+    links: panel.querySelectorAll("a").length,
+    width: Math.round(rect.width),
+    height: Math.round(rect.height),
+    top: Math.round(rect.top),
+    bottom: Math.round(rect.bottom),
+    viewportHeight: window.innerHeight,
+    insideViewport:
+      rect.width <= window.innerWidth + 1 &&
+      rect.top >= -1 &&
+      rect.bottom <= window.innerHeight + 1,
+  };
+});
+await page.screenshot({
+  path: new URL("../../../../solvik-menu-sheet.png", import.meta.url).pathname,
+});
+await page.keyboard.press("Escape");
+await page.waitForTimeout(250);
+if (!mobileNav.insideViewport) failures.push("mobile dock outside viewport");
+if (!menuSheet || menuSheet.links < 5) failures.push(`menu sheet links ${menuSheet ? menuSheet.links : "missing"}`);
+if (menuSheet && !menuSheet.insideViewport) failures.push("menu sheet outside viewport");
+
+// Quick view from the directory.
+await page.goto(`${BASE}/en/app/students`, { waitUntil: "domcontentloaded" });
+await page.waitForSelector(".scu-tools", { timeout: 45000 });
+await page.waitForTimeout(700);
+let peek = null;
+const quickView = page.getByRole("button", { name: /quick view/i }).first();
+if (await quickView.count()) {
+  await quickView.click();
+  await page.waitForTimeout(450);
+  peek = await page.evaluate(() => {
+    const panel = document.querySelector('[role="dialog"]');
+    if (!panel) return null;
+    const rect = panel.getBoundingClientRect();
+    return {
+      width: Math.round(rect.width),
+      left: Math.round(rect.left),
+      right: Math.round(rect.right),
+      fits: rect.left >= -1 && rect.right <= window.innerWidth + 1,
+    };
+  });
+  await page.screenshot({
+    path: new URL("../../../../solvik-peek.png", import.meta.url).pathname,
+  });
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(250);
+  if (peek && !peek.fits) failures.push(`quick view overflows: ${JSON.stringify(peek)}`);
+}
+
+// Notification popover from the header.
+await page.goto(`${BASE}/en/app`, { waitUntil: "domcontentloaded" });
+await page.waitForSelector(".scu-tools", { timeout: 45000 });
+await page.waitForTimeout(500);
+let notificationPeek = null;
+const bell = page.locator('.scu-tools button[aria-label*="otification" i]').first();
+if (await bell.count()) {
+  await bell.click();
+  await page.waitForTimeout(600);
+  notificationPeek = await page.evaluate(() => {
+    const panel = document.querySelector(".scu-pop");
+    if (!panel) return null;
+    const rect = panel.getBoundingClientRect();
+    return {
+      width: Math.round(rect.width),
+      left: Math.round(rect.left),
+      right: Math.round(rect.right),
+      fits: rect.left >= -1 && rect.right <= window.innerWidth + 1,
+      entries: panel.querySelectorAll("li").length,
+    };
+  });
+  await page.screenshot({
+    path: new URL("../../../../solvik-notifications.png", import.meta.url).pathname,
+  });
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(200);
+  if (notificationPeek && !notificationPeek.fits) {
+    failures.push(`notification popover overflows: ${JSON.stringify(notificationPeek)}`);
+  }
+}
+
 // Reference captures for the handover: narrow dashboard and the accent picker.
 await page.setViewportSize({ width: 390, height: 844 });
 await page.goto(`${BASE}/en/app`, { waitUntil: "domcontentloaded" });
@@ -174,6 +277,22 @@ await page.waitForSelector('input[name="accent"]', { timeout: 45000 });
 await page.waitForTimeout(500);
 await page.screenshot({ path: new URL("../../../../solvik-settings.png", import.meta.url).pathname });
 
-console.log(JSON.stringify({ rows, accent, dialog, failures, consoleErrors: consoleErrors.slice(0, 8) }, null, 1));
+console.log(
+  JSON.stringify(
+    {
+      rows,
+      accent,
+      dialog,
+      mobileNav,
+      menuSheet,
+      peek,
+      notificationPeek,
+      failures,
+      consoleErrors: consoleErrors.slice(0, 8),
+    },
+    null,
+    1,
+  ),
+);
 await browser.close();
 process.exit(failures.length > 0 ? 1 : 0);

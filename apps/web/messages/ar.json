@@ -63,6 +63,7 @@
       "notProvided": "غير مقدَّم"
     },
     "labels": {
+        "viewAll": "عرض الكل",
       "status": "الحالة",
       "actions": "الإجراءات",
       "total": "الإجمالي",
@@ -403,6 +404,17 @@
     "majors": "التخصصات"
   },
   "students": {
+      "peek": {
+            "title": "نظرة سريعة على الطالب",
+            "description": "ملخص لهذا السجل دون فتحه.",
+            "studentNumber": "الرقم الجامعي",
+            "nationality": "الجنسية",
+            "email": "البريد الإلكتروني",
+            "notProvided": "غير متوفر",
+            "since": "مسجل منذ {date}",
+            "openRecord": "فتح السجل الكامل",
+            "quickView": "عرض سريع"
+      },
     "title": "الطلاب",
     "subtitle": "دليل الطلاب الدوليين.",
     "directory": "دليل الطلاب",
@@ -548,6 +560,8 @@
     "clearFilters": "مسح عوامل التصفية"
   },
   "studentProfile": {
+      "viewPhoto": "فتح الصورة",
+      "photoPreviewHint": "استخدم العجلة أو + / − للتكبير · اسحب للتحريك · R للتدوير",
     "title": "ملف الطالب",
     "identityHeading": "الهوية",
     "noPhoto": "لا توجد صورة مسجلة",
@@ -1488,6 +1502,7 @@
     "fileSize": "الحجم",
     "fileType": "نوع الملف",
     "documentType": "نوع المستند",
+      "rotate": "تدوير",
     "uploadedBy": "رفعه",
     "uploadedAt": "تاريخ الرفع",
     "empty": "لا توجد مستندات.",

@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Check, CheckCheck } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { notificationApi } from "@/lib/platform-api";
+import { NOTIFICATION_TYPE_MESSAGE_KEY as TYPE_MESSAGE_KEY } from "@/lib/notification-types";
 import { NOTIFICATIONS_CHANGED } from "@/components/layout/notification-bell";
 import { useApi } from "@/lib/use-api";
 import { useErrorMessage } from "@/lib/use-error-message";
@@ -199,26 +200,4 @@ export default function NotificationsPage() {
   );
 }
 
-/**
- * Maps a notification type to the message key that carries its human-readable
- * text. Adding a backend notification type requires only a new entry here plus
- * the message — no changes to the rendering logic.
- *
- * Types absent from this map render only their label, which is the correct
- * degradation: a bare status chip is better than an invented sentence.
- */
-const TYPE_MESSAGE_KEY: Record<string, string> = {
-  IMMIGRATION_CHANGE_SUBMITTED: "immigrationSubmitted",
-  IMMIGRATION_CHANGE_APPROVED: "immigrationApproved",
-  IMMIGRATION_CHANGE_REJECTED: "immigrationRejected",
-  IMMIGRATION_DOCUMENT_UPLOADED: "immigrationDocumentUploaded",
-  HOUSING_ASSIGNMENT_CREATED: "housingAssigned",
-  HOUSING_ASSIGNMENT_TRANSFERRED: "housingTransferred",
-  HOUSING_ASSIGNMENT_ENDED: "housingEnded",
-  SUPPORT_TICKET_CREATED: "supportCreated",
-  SUPPORT_TICKET_REPLIED: "supportReplied",
-  SUPPORT_TICKET_STATUS_CHANGED: "supportStatusChanged",
-  SUPPORT_TICKET_ASSIGNED: "supportAssigned",
-  ANNOUNCEMENT_PUBLISHED: "announcementPublished",
-  DOCUMENT_UPLOADED: "documentUploaded",
-};
+/** The type→sentence map is shared with the header popover. */

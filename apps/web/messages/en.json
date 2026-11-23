@@ -63,6 +63,7 @@
       "notProvided": "Not provided"
     },
     "labels": {
+        "viewAll": "View all",
       "status": "Status",
       "actions": "Actions",
       "total": "Total",
@@ -403,6 +404,17 @@
     "majors": "Majors"
   },
   "students": {
+      "peek": {
+            "title": "Student quick view",
+            "description": "A summary of this record without opening it.",
+            "studentNumber": "Student number",
+            "nationality": "Nationality",
+            "email": "Email",
+            "notProvided": "Not provided",
+            "since": "On the register since {date}",
+            "openRecord": "Open full record",
+            "quickView": "Quick view"
+      },
     "title": "Students",
     "subtitle": "The international student directory.",
     "directory": "Student directory",
@@ -548,6 +560,8 @@
     "clearFilters": "Clear filters"
   },
   "studentProfile": {
+      "viewPhoto": "Open photo",
+      "photoPreviewHint": "Scroll or use + / − to zoom · drag to move · R rotates",
     "title": "Student profile",
     "identityHeading": "Identity",
     "noPhoto": "No photo on file",
@@ -1488,6 +1502,7 @@
     "fileSize": "Size",
     "fileType": "File type",
     "documentType": "Document type",
+      "rotate": "Rotate",
     "uploadedBy": "Uploaded by",
     "uploadedAt": "Uploaded",
     "empty": "No documents.",
