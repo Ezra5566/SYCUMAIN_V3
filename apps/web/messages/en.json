@@ -1045,8 +1045,8 @@
     "importSourcePlaceholder": "Batch or file reference",
     "importSourceRequired": "Enter a source reference for this batch.",
     "importPayload": "Normalized batch",
-    "importPayloadHint": "Use existing immigration field names only. This is not an SCU file format; unknown fields are rejected.",
-    "importPayloadPlaceholder": "Array of normalized records using the existing immigration field names.",
+    "importPayloadHint": "Use existing immigration field names only. Identify each student by student number (or record id). Unknown fields are rejected; existing values are never replaced.",
+    "importPayloadPlaceholder": "Example: STU-123 with passport_number P1234567 and passport_expiry_date 2030-01-01",
     "importNoRecords": "The batch contains no records.",
     "importParseError": "The batch is not valid JSON.",
     "importPreview": "Preview batch",
@@ -1109,6 +1109,12 @@
       "hoverHint": "Hover or focus a country",
       "mapLabel": "World map of international students by country. Use the country distribution list for a keyboard-accessible equivalent.",
       "selectedDetail": "{count, plural, one {# student} other {# students}} of {total} students in the filtered cohort"
+    },
+    "importStatusLabels": {
+      "APPLY": "Ready",
+      "CONFLICT": "Conflict",
+      "INVALID": "Invalid",
+      "UNCHANGED": "Already up to date"
     }
   },
   "academics": {

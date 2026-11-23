@@ -27,7 +27,6 @@ from __future__ import annotations
 
 import csv
 import io
-import uuid
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime, time
 from typing import TYPE_CHECKING, Any
@@ -48,6 +47,7 @@ from app.models.identity import Student
 from app.schemas.housing import HousingImportReport, HousingImportRow
 
 if TYPE_CHECKING:
+    import uuid
     from collections.abc import Sequence
 
     from sqlalchemy.orm import Session as DBSession

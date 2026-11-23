@@ -86,9 +86,15 @@ class ChangeRequestReview(BaseModel):
 
 
 class ImmigrationImportRecord(BaseModel):
-    """One normalized import row; values use existing profile fields only."""
+    """One normalized import row; values use existing profile fields only.
 
-    student_id: uuid.UUID
+    ``student_id`` is a *reference*, not necessarily a UUID: the student number
+    (``STU-123``) is what the registrar's sheet carries and what the student and
+    housing importers already use, so a batch can be built from one source file.
+    A UUID is still accepted for callers that hold the record id.
+    """
+
+    student_id: str = Field(min_length=1, max_length=64)
     values: dict[str, str | None] = Field(min_length=1)
 
 
@@ -106,7 +112,10 @@ class ImmigrationImportApplyRequest(ImmigrationImportRequest):
 
 
 class ImmigrationImportPreviewRecord(BaseModel):
-    student_id: uuid.UUID
+    #: Resolved student record id, or None when the reference did not resolve.
+    student_id: uuid.UUID | None = None
+    #: The reference exactly as it appeared in the batch.
+    student_reference: str | None = None
     student_name: str | None = None
     student_number: str | None = None
     status: str

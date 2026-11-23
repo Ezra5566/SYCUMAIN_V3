@@ -218,7 +218,9 @@ export function ImmigrationImportDialog({
                                   : "success"
                             }
                           >
-                            {record.status}
+                            {t.has(`importStatusLabels.${record.status}`)
+                              ? t(`importStatusLabels.${record.status}`)
+                              : record.status}
                           </StatusBadge>
                         </td>
                         <td className="py-2 pe-3">

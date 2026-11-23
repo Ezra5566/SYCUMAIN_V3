@@ -1201,12 +1201,13 @@ def import_immigration_profile(
     data: dict,
     source_reference: str | None,
     actor_id: uuid.UUID | None,
-) -> tuple[ImmigrationProfile, list[str]]:
+) -> tuple[ImmigrationProfile, list[str], bool]:
     """Import values without promoting them to verified official data.
 
-    Returns the profile and the fields that were *not* applied because the
-    existing profile is verified and holds a different value. Conflicts are
-    deliberately reported instead of silently overwriting an official record.
+    Returns the profile, the fields that were *not* applied because the profile
+    already holds a different value, and whether anything changed. The third
+    value matters for reporting: re-importing an identical row is a no-op, and
+    saying "applied: 1" for a row that changed nothing is a false success.
     """
     profile = get_or_create_immigration_profile(db, student_id, actor_id=actor_id)
     previous = _profile_snapshot(profile)
@@ -1217,14 +1218,13 @@ def import_immigration_profile(
         if field not in IMMIGRATION_PROFILE_FIELDS or value is None:
             continue
         existing = getattr(profile, field)
-        if (
-            profile.verification_status == "VERIFIED"
-            and existing is not None
-            and existing != value
-        ):
+        # Any differing existing value is a conflict, verified or not. An
+        # import fills blanks; it never replaces what the institution already
+        # recorded, and it never does so silently.
+        if existing is not None and existing != value:
             conflicts.append(field)
             continue
-        if existing is None or existing == value:
+        if existing is None:
             setattr(profile, field, value)
             applied = True
 
@@ -1244,7 +1244,27 @@ def import_immigration_profile(
         )
     db.commit()
     db.refresh(profile)
-    return profile, sorted(set(conflicts))
+    return profile, sorted(set(conflicts)), applied
+
+
+def resolve_student_reference(db: DBSession, reference: str) -> Student | None:
+    """Resolve an import reference to a student.
+
+    The student number is tried first because it is the stable identifier the
+    campus actually knows; the record UUID is accepted as a fallback so an
+    existing caller that already holds one keeps working.
+    """
+    value = (reference or "").strip()
+    if not value:
+        return None
+    student = db.query(Student).filter(Student.student_id == value).first()
+    if student is not None:
+        return student
+    try:
+        record_id = uuid.UUID(value)
+    except ValueError:
+        return None
+    return db.query(Student).filter(Student.id == record_id).first()
 
 
 def _import_values(values: dict) -> tuple[dict, list[str]]:
@@ -1271,13 +1291,14 @@ def preview_immigration_import(
     """Validate and preview an import without changing any stored record."""
     previews: list[ImmigrationImportPreviewRecord] = []
     for record in records:
-        student = db.query(Student).filter(Student.id == record.student_id).first()
+        student = resolve_student_reference(db, record.student_id)
         if student is None:
             previews.append(
                 ImmigrationImportPreviewRecord(
-                    student_id=record.student_id,
+                    student_id=None,
+                    student_reference=record.student_id,
                     status="INVALID",
-                    errors=["Student not found"],
+                    errors=[f"Student not found: {record.student_id}"],
                 )
             )
             continue
@@ -1297,22 +1318,27 @@ def preview_immigration_import(
         if not errors:
             for field, value in values.items():
                 existing = getattr(profile, field) if profile else None
-                if (
-                    profile
-                    and profile.verification_status == "VERIFIED"
-                    and existing is not None
-                    and existing != value
-                ):
+                if existing is not None and existing != value:
                     conflicts.append(field)
                 else:
                     applied.append(field)
 
+        if errors:
+            row_status = "INVALID"
+        elif conflicts:
+            row_status = "CONFLICT"
+        elif not applied:
+            row_status = "UNCHANGED"
+        else:
+            row_status = "APPLY"
+
         previews.append(
             ImmigrationImportPreviewRecord(
                 student_id=student.id,
+                student_reference=record.student_id,
                 student_name=f"{student.first_name} {student.last_name}",
                 student_number=student.student_id,
-                status="INVALID" if errors else "CONFLICT" if conflicts else "APPLY",
+                status=row_status,
                 current_values=current,
                 proposed_values={key: _json_value(value) for key, value in values.items()},
                 applied_fields=applied,
@@ -1339,17 +1365,20 @@ def apply_immigration_import(
 
     applied = 0
     for record in records:
+        student = resolve_student_reference(db, record.student_id)
+        if student is None:
+            raise ValueError("The import contains invalid records; correct them before applying.")
         values, errors = _import_values(record.values)
         if errors:
             raise ValueError("The import contains invalid records; correct them before applying.")
-        _, conflicts = import_immigration_profile(
+        _, _, changed = import_immigration_profile(
             db,
-            student_id=record.student_id,
+            student_id=student.id,
             data=values,
             source_reference=source_reference,
             actor_id=actor_id,
         )
-        if len(conflicts) < len(values):
+        if changed:
             applied += 1
 
     return ImmigrationImportApplyResponse(

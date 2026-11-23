@@ -16,7 +16,6 @@ from app.models.platform import NotificationType
 from app.permissions.scope import can_view_housing
 from app.schemas.housing import (
     BedCreate,
-    HousingImportReport,
     BedUpdate,
     BuildingBrief,
     BuildingCreate,
@@ -28,6 +27,7 @@ from app.schemas.housing import (
     HousingAssignmentResponse,
     HousingAssignmentTransfer,
     HousingAssignmentUpdate,
+    HousingImportReport,
     HousingOverviewResponse,
     RoomBrief,
     RoomCreate,

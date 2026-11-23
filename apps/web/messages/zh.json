@@ -1045,8 +1045,8 @@
     "importSourcePlaceholder": "批次或文件编号",
     "importSourceRequired": "请输入此批次的来源编号。",
     "importPayload": "规范化批次",
-    "importPayloadHint": "只能使用现有移民字段名。这不是 SCU 文件格式，未知字段会被拒绝。",
-    "importPayloadPlaceholder": "使用现有移民字段名的规范化记录数组。",
+    "importPayloadHint": "仅使用现有的移民信息字段名。用学号（或记录 ID）标识每位学生。未知字段会被拒绝；现有值绝不会被替换。",
+    "importPayloadPlaceholder": "示例：STU-123，passport_number 为 P1234567，passport_expiry_date 为 2030-01-01",
     "importNoRecords": "批次中没有记录。",
     "importParseError": "批次不是有效的 JSON。",
     "importPreview": "预览批次",
@@ -1109,6 +1109,12 @@
       "hoverHint": "悬停或聚焦国家",
       "mapLabel": "国际学生国家分布世界地图。可使用国家分布列表作为键盘可访问的替代内容。",
       "selectedDetail": "筛选批次共 {total} 名学生，其中 {count} 名来自该国"
+    },
+    "importStatusLabels": {
+      "APPLY": "可导入",
+      "CONFLICT": "冲突",
+      "INVALID": "无效",
+      "UNCHANGED": "已是最新"
     }
   },
   "academics": {

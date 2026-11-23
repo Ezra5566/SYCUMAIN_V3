@@ -11,6 +11,8 @@ from datetime import UTC, datetime
 
 import pytest
 
+from app.auth.service import hash_password
+from app.models.audit import AuditLog
 from app.models.housing import (
     Bed,
     Building,
@@ -19,8 +21,6 @@ from app.models.housing import (
     HousingAssignmentStatus,
     Room,
 )
-from app.auth.service import hash_password
-from app.models.audit import AuditLog
 from app.models.identity import Student, User
 
 HEADER = "student_id,building,floor,room,bed,start_date\n"
@@ -88,7 +88,8 @@ def _upload(client, path: str, body: str, **params):
 
 def test_preview_validates_without_writing(client, db_session, structure):
     _login(client, "admin@school.portal")
-    response = _upload(client, "/api/v1/housing/import/preview", HEADER + "STU-001,Test Hall,1,101,1,2026-09-01\n")
+    body = HEADER + "STU-001,Test Hall,1,101,1,2026-09-01\n"
+    response = _upload(client, "/api/v1/housing/import/preview", body)
 
     assert response.status_code == 200, response.text
     report = response.json()
@@ -301,7 +302,10 @@ def test_missing_required_column_is_a_file_error(client, structure):
 
 def test_semicolon_and_bom_are_accepted(client, structure):
     _login(client, "admin@school.portal")
-    body = "\ufeffstudent number;building;floor;room;bed;check in\nSTU-001;Test Hall;1;101;1;2026-09-01\n"
+    body = (
+        "\ufeffstudent number;building;floor;room;bed;check in\n"
+        "STU-001;Test Hall;1;101;1;2026-09-01\n"
+    )
     response = _upload(client, "/api/v1/housing/import/preview", body)
     assert response.status_code == 200, response.text
     assert response.json()["valid"] == 1

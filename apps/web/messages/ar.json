@@ -1045,8 +1045,8 @@
     "importSourcePlaceholder": "مرجع الدفعة أو الملف",
     "importSourceRequired": "أدخل مرجع المصدر لهذه الدفعة.",
     "importPayload": "دفعة موحّدة",
-    "importPayloadHint": "استخدم أسماء حقول الهجرة الحالية فقط. هذا ليس تنسيق ملف SCU؛ الحقول غير المعروفة تُرفض.",
-    "importPayloadPlaceholder": "مصفوفة سجلات موحّدة تستخدم أسماء حقول الهجرة الحالية.",
+    "importPayloadHint": "استخدم أسماء حقول الهجرة الموجودة فقط. ميّز كل طالب برقمه (أو معرّف السجل). الحقول غير المعروفة تُرفض، والقيم الحالية لا تُستبدل أبدًا.",
+    "importPayloadPlaceholder": "مثال: STU-123 مع passport_number P1234567 و passport_expiry_date 2030-01-01",
     "importNoRecords": "لا تحتوي الدفعة على سجلات.",
     "importParseError": "الدفعة ليست JSON صالحاً.",
     "importPreview": "معاينة الدفعة",
@@ -1109,6 +1109,12 @@
       "hoverHint": "مرّر المؤشر فوق بلد أو ركّز عليه",
       "mapLabel": "خريطة عالمية للطلاب الدوليين حسب البلد. استخدم قائمة توزيع البلدان كبديل متاح عبر لوحة المفاتيح.",
       "selectedDetail": "{count, plural, one {طالب واحد} other {# طلاب}} من أصل {total} طالبًا في الدفعة المصفّاة"
+    },
+    "importStatusLabels": {
+      "APPLY": "جاهز",
+      "CONFLICT": "تعارض",
+      "INVALID": "غير صالح",
+      "UNCHANGED": "محدّث بالفعل"
     }
   },
   "academics": {

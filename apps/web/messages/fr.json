@@ -1045,8 +1045,8 @@
     "importSourcePlaceholder": "Référence du lot ou du fichier",
     "importSourceRequired": "Saisissez une référence source pour ce lot.",
     "importPayload": "Lot normalisé",
-    "importPayloadHint": "Utilisez uniquement les noms de champs existants. Ce n’est pas un format SCU ; les champs inconnus sont refusés.",
-    "importPayloadPlaceholder": "Tableau de dossiers normalisés utilisant les noms de champs existants.",
+    "importPayloadHint": "Utilisez uniquement les noms de champs d'immigration existants. Identifiez chaque étudiant par son numéro (ou l'id d'enregistrement). Les champs inconnus sont rejetés ; les valeurs existantes ne sont jamais remplacées.",
+    "importPayloadPlaceholder": "Exemple : STU-123 avec passport_number P1234567 et passport_expiry_date 2030-01-01",
     "importNoRecords": "Le lot ne contient aucun dossier.",
     "importParseError": "Le lot n’est pas un JSON valide.",
     "importPreview": "Prévisualiser le lot",
@@ -1109,6 +1109,12 @@
       "hoverHint": "Survolez ou sélectionnez un pays",
       "mapLabel": "Carte mondiale des étudiants internationaux par pays. Utilisez la liste de répartition par pays comme équivalent accessible au clavier.",
       "selectedDetail": "{count, plural, one {# étudiant} other {# étudiants}} sur {total} étudiants de la promotion filtrée"
+    },
+    "importStatusLabels": {
+      "APPLY": "Prêt",
+      "CONFLICT": "Conflit",
+      "INVALID": "Invalide",
+      "UNCHANGED": "Déjà à jour"
     }
   },
   "academics": {

@@ -10,7 +10,11 @@ operational contract for the office that runs a migration — not a plan.
 |---|---|---|---|
 | Students | `POST /api/v1/students/import` | CSV (multipart) | Student record + login account |
 | Housing allocations | `POST /api/v1/housing/import/preview` then `/import/apply` | CSV (multipart) | `housing_assignments` only |
-| Immigration values | `POST /api/v1/immigration/import/preview` then `/import/apply` | JSON batch | Profile fields, always unverified |
+| Immigration values | `POST /api/v1/immigration/import/preview` then `/import/apply` | JSON batch keyed by student number | Profile fields, always unverified |
+
+All three channels identify a person by **student number**. Immigration also
+accepts the internal record id for callers that already hold one, but a
+migration sheet never needs a UUID.
 
 Templates: `GET /api/v1/students/import/template` and
 `GET /api/v1/housing/import/template`.
@@ -34,8 +38,12 @@ These are enforced server-side; the UI only reflects them.
 3. **Nothing is overwritten silently.**
    - Housing never transfers a student or evicts an occupant; both are reported
      as skipped.
-   - Immigration never changes a field on a `VERIFIED` profile to a different
-     value; the conflict is reported instead.
+   - Immigration fills blank fields only. A differing existing value is a
+     reported conflict whether or not the profile is verified — an import never
+     replaces what the institution already recorded, and never ignores a
+     difference without saying so.
+   - A row whose values already match is reported as `UNCHANGED` and counted as
+     skipped, not as "applied".
 4. **Imported immigration is never verified.** Values imported from a file are
    stored as `UNVERIFIED`, `verified_at`/`verified_by` cleared, and a version
    entry records the import. Verification remains an explicit act by an
@@ -98,8 +106,10 @@ already delivered, and any document files already uploaded.
 
 Honest list of what is **not** built:
 
-- **CSV only.** XLSX is not parsed; the office must save the sheet as CSV.
-  `.xlsx` uploads are rejected as an encoding error rather than half-parsed.
+- **CSV only for students and housing; JSON for immigration.** XLSX is not
+  parsed; the office must save the sheet as CSV, and immigration values are
+  submitted as a normalized JSON batch keyed by student number. That is a real
+  usability gap for a registrar with a spreadsheet of passport data.
 - **No import-history screen.** The audit log is the record of who imported
   what and when; there is no dedicated page with per-batch status.
 - **No resumable batches.** A 5 MB / 500-row cap per file is enforced; larger

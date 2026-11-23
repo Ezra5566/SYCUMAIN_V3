@@ -515,7 +515,7 @@ class TestImmigrationProvenance:
                 data_source="MANAGEMENT",
             )
 
-            imported, conflicts = import_immigration_profile(
+            imported, conflicts, changed = import_immigration_profile(
                 db,
                 student_id=student_id,
                 data={
@@ -534,6 +534,8 @@ class TestImmigrationProvenance:
             assert imported.verification_status == "UNVERIFIED"
             assert imported.data_source == "IMPORT"
             assert imported.source_reference == "SCU-import-batch-1"
+            # One permitted blank was filled, so the call changed the record.
+            assert changed is True
         finally:
             db.close()
 

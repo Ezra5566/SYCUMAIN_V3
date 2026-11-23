@@ -10,7 +10,7 @@ import re
 import uuid
 from datetime import datetime
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 # Deliberately permissive: the local part allows the characters the campus
 # actually uses, and the domain must have a dot. Full RFC 5322 validation
@@ -51,7 +51,14 @@ def validate_password_strength(value: str) -> str:
 
 
 class AccountCreate(BaseModel):
-    """Provision a new user account."""
+    """Provision a new user account.
+
+    Unknown fields are rejected. A caller that sends ``role_names`` instead of
+    ``roles`` used to have the field silently ignored, which turns a privilege
+    request into a confusing success; the request must fail instead.
+    """
+
+    model_config = ConfigDict(extra="forbid")
 
     email: str = Field(..., max_length=255)
     full_name: str = Field(..., min_length=1, max_length=255)
@@ -117,6 +124,8 @@ class AccountRolesUpdate(BaseModel):
     changes, so a caller without permission still receives 403 rather than a
     request-validation error that leaks the endpoint contract.
     """
+
+    model_config = ConfigDict(extra="forbid")
 
     roles: list[str] = Field(..., min_length=1)
     reason: str | None = Field(None, max_length=500)
