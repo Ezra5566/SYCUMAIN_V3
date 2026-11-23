@@ -1,0 +1,8 @@
+# Native postinstall scripts required by the Next.js / Tailwind / ESLint toolchain.
+#
+# pnpm blocks dependency build scripts by default. These three are legitimate
+# and needed for correct native resolution; everything else stays blocked.
+allowBuilds:
+  '@parcel/watcher': true
+  '@swc/core': true
+  unrs-resolver: true

@@ -1,0 +1,2407 @@
+{
+  "generatedAt": "2026-11-10T23:18:33.516Z",
+  "sourceSha256": "91a36ccea191b0e205f828e138eb5d4d3afe3b9a0ae2aa46b442decc0eeb95d4",
+  "sourceSummary": {
+    "metadata": {
+      "source": "2026-2027-1 专业课表",
+      "generated": "2026-10-09",
+      "timezone": "Asia/Shanghai",
+      "totalSemesters": 3,
+      "totalPrograms": 15,
+      "updated": "2026-10-23 09:26"
+    },
+    "semesters": [
+      {
+        "id": "2026-autumn",
+        "name": "2026 Autumn",
+        "nameCN": "2026秋季",
+        "declaredFormat": "standard8",
+        "resolvedFormat": "block4",
+        "programs": 6,
+        "scheduleRows": 23
+      },
+      {
+        "id": "2026-spring",
+        "name": "2026 Spring",
+        "nameCN": "2026春季",
+        "declaredFormat": "standard8",
+        "resolvedFormat": "standard8",
+        "programs": 5,
+        "scheduleRows": 30
+      },
+      {
+        "id": "2025-autumn",
+        "name": "2025 Autumn",
+        "nameCN": "2025秋季",
+        "declaredFormat": "standard8",
+        "resolvedFormat": "standard8",
+        "programs": 4,
+        "scheduleRows": 23
+      }
+    ],
+    "offerings": 15,
+    "distinctPrograms": 8,
+    "courses": 26,
+    "rooms": 11,
+    "rawRows": 76,
+    "uniqueSessions": 52,
+    "mergedRows": 24,
+    "derivedSections": 33
+  },
+  "formatResolution": {
+    "declared": {
+      "2026-autumn": "standard8",
+      "2026-spring": "standard8",
+      "2025-autumn": "standard8"
+    },
+    "resolved": {
+      "2026-autumn": "block4",
+      "2026-spring": "standard8",
+      "2025-autumn": "standard8"
+    },
+    "reason": "Top-level timeSlotFormats declares block4 for 2026 Autumn. All 23 Autumn rows use block4 slot labels (1-2,3-4,5-6,7-8) or unions (1-4,5-8); no single-period label exists. 2025 Autumn and 2026 Spring contain single-period 7, which only standard8 defines. The per-semester timeSlotFormat field for 2026 Autumn is therefore treated as erroneous."
+  },
+  "offerings": [
+    {
+      "sourceId": "chinese-elementary-2026a",
+      "semester": "2026-autumn",
+      "name": "Chinese Language (Elementary Level) 1",
+      "nameCN": "初级汉语言文学（国际）1",
+      "scheduleRows": 3
+    },
+    {
+      "sourceId": "chinese-intermediate-2026a",
+      "semester": "2026-autumn",
+      "name": "Chinese Language (Intermediate Level) 1",
+      "nameCN": "中级汉语言文学（国际）1",
+      "scheduleRows": 3
+    },
+    {
+      "sourceId": "ai-2026a",
+      "semester": "2026-autumn",
+      "name": "Artificial Intelligence (International) 1",
+      "nameCN": "人工智能（国际）1",
+      "scheduleRows": 4
+    },
+    {
+      "sourceId": "civil-2026a",
+      "semester": "2026-autumn",
+      "name": "Civil Engineering (International) 1",
+      "nameCN": "土木工程（国际）1",
+      "scheduleRows": 4
+    },
+    {
+      "sourceId": "business-2026a",
+      "semester": "2026-autumn",
+      "name": "Business Administration (International) 1",
+      "nameCN": "工商管理（国际）1",
+      "scheduleRows": 4
+    },
+    {
+      "sourceId": "cs-2026a",
+      "semester": "2026-autumn",
+      "name": "Computer Science and Technology (International) 1",
+      "nameCN": "计算机科学与技术（国际）1",
+      "scheduleRows": 5
+    },
+    {
+      "sourceId": "civil-engineering-2026s",
+      "semester": "2026-spring",
+      "name": "Civil Engineering (International) 1",
+      "nameCN": "土木工程（国际）1",
+      "scheduleRows": 7
+    },
+    {
+      "sourceId": "ai-2026s",
+      "semester": "2026-spring",
+      "name": "Artificial Intelligence (International) 1",
+      "nameCN": "人工智能（国际）1",
+      "scheduleRows": 7
+    },
+    {
+      "sourceId": "cs-2026s",
+      "semester": "2026-spring",
+      "name": "Computer Science and Technology (International) 1",
+      "nameCN": "计算机科学与技术（国际）1",
+      "scheduleRows": 8
+    },
+    {
+      "sourceId": "chinese-lit-2026s",
+      "semester": "2026-spring",
+      "name": "Chinese Language and Literature (International) 1",
+      "nameCN": "汉语言文学（国际）1",
+      "scheduleRows": 3
+    },
+    {
+      "sourceId": "business-2026s",
+      "semester": "2026-spring",
+      "name": "Business Administration (International) 1",
+      "nameCN": "工商管理（国际）1",
+      "scheduleRows": 5
+    },
+    {
+      "sourceId": "ai-2025a",
+      "semester": "2025-autumn",
+      "name": "Artificial Intelligence (International) 1",
+      "nameCN": "人工智能（国际）1",
+      "scheduleRows": 5
+    },
+    {
+      "sourceId": "cs-2025a",
+      "semester": "2025-autumn",
+      "name": "Computer Science and Technology (International) 1",
+      "nameCN": "计算机科学与技术（国际）1",
+      "scheduleRows": 5
+    },
+    {
+      "sourceId": "business-2025a",
+      "semester": "2025-autumn",
+      "name": "Business Administration (International) 1",
+      "nameCN": "工商管理（国际）1",
+      "scheduleRows": 7
+    },
+    {
+      "sourceId": "robotics-2025a",
+      "semester": "2025-autumn",
+      "name": "Robotics Engineering (International) 1",
+      "nameCN": "机器人工程（国际）1",
+      "scheduleRows": 6
+    }
+  ],
+  "courses": [
+    {
+      "course": "AI Ethics (International)",
+      "semesters": [
+        "2025-autumn"
+      ]
+    },
+    {
+      "course": "AI Thinking and Ethics (International)",
+      "semesters": [
+        "2025-autumn"
+      ]
+    },
+    {
+      "course": "Advanced Mathematics (A) 1",
+      "semesters": [
+        "2026-autumn"
+      ]
+    },
+    {
+      "course": "Architectural Mechanics (International)",
+      "semesters": [
+        "2026-spring"
+      ]
+    },
+    {
+      "course": "Business and Technology (International)",
+      "semesters": [
+        "2025-autumn"
+      ]
+    },
+    {
+      "course": "Chinese Language",
+      "semesters": [
+        "2026-autumn"
+      ]
+    },
+    {
+      "course": "Chinese, Major 1-2 (International)",
+      "semesters": [
+        "2026-spring"
+      ]
+    },
+    {
+      "course": "Chinese, Major 2-1 (International)",
+      "semesters": [
+        "2025-autumn"
+      ]
+    },
+    {
+      "course": "Civil Engineering Drawing (International)",
+      "semesters": [
+        "2026-spring"
+      ]
+    },
+    {
+      "course": "Computer Organization Principles (International)",
+      "semesters": [
+        "2025-autumn"
+      ]
+    },
+    {
+      "course": "Data Structures and Algorithms (International)",
+      "semesters": [
+        "2025-autumn"
+      ]
+    },
+    {
+      "course": "Digital Electronic Technology",
+      "semesters": [
+        "2026-spring"
+      ]
+    },
+    {
+      "course": "Discrete Mathematics (International)",
+      "semesters": [
+        "2026-spring"
+      ]
+    },
+    {
+      "course": "Fundamentals of Electronic Technology (International)",
+      "semesters": [
+        "2025-autumn"
+      ]
+    },
+    {
+      "course": "Fundamentals of Programming (International)",
+      "semesters": [
+        "2026-spring"
+      ]
+    },
+    {
+      "course": "Human Resource Management (International)",
+      "semesters": [
+        "2025-autumn",
+        "2026-spring"
+      ]
+    },
+    {
+      "course": "Introduction to the Major",
+      "semesters": [
+        "2026-autumn"
+      ]
+    },
+    {
+      "course": "Introduction to the Major (Group 1)",
+      "semesters": [
+        "2026-autumn"
+      ]
+    },
+    {
+      "course": "Introduction to the Major (Group 2)",
+      "semesters": [
+        "2026-autumn"
+      ]
+    },
+    {
+      "course": "MATHS (A2) (International)",
+      "semesters": [
+        "2026-spring"
+      ]
+    },
+    {
+      "course": "Management (International)",
+      "semesters": [
+        "2026-spring"
+      ]
+    },
+    {
+      "course": "Microeconomics (International)",
+      "semesters": [
+        "2025-autumn"
+      ]
+    },
+    {
+      "course": "Organizational Behavior (International)",
+      "semesters": [
+        "2025-autumn"
+      ]
+    },
+    {
+      "course": "Prompt Engineering (International)",
+      "semesters": [
+        "2025-autumn",
+        "2026-spring"
+      ]
+    },
+    {
+      "course": "Python Programming (International)",
+      "semesters": [
+        "2026-spring"
+      ]
+    },
+    {
+      "course": "University Physics A 1 (International)",
+      "semesters": [
+        "2026-spring"
+      ]
+    }
+  ],
+  "sessions": [
+    {
+      "semester": "2025-autumn",
+      "course": "Computer Organization Principles (International)",
+      "day": "Friday",
+      "sessionLabel": "3-4",
+      "start": "10:20",
+      "end": "12:00",
+      "location": "N302",
+      "programIds": [
+        "cs-2025a"
+      ],
+      "programNames": [
+        "Computer Science and Technology (International) 1"
+      ]
+    },
+    {
+      "semester": "2025-autumn",
+      "course": "AI Ethics (International)",
+      "day": "Monday",
+      "sessionLabel": "3-4",
+      "start": "10:20",
+      "end": "12:00",
+      "location": "N103",
+      "programIds": [
+        "ai-2025a"
+      ],
+      "programNames": [
+        "Artificial Intelligence (International) 1"
+      ]
+    },
+    {
+      "semester": "2025-autumn",
+      "course": "AI Thinking and Ethics (International)",
+      "day": "Monday",
+      "sessionLabel": "3-4",
+      "start": "10:20",
+      "end": "12:00",
+      "location": "N103",
+      "programIds": [
+        "robotics-2025a"
+      ],
+      "programNames": [
+        "Robotics Engineering (International) 1"
+      ]
+    },
+    {
+      "semester": "2025-autumn",
+      "course": "Organizational Behavior (International)",
+      "day": "Monday",
+      "sessionLabel": "5-6",
+      "start": "13:30",
+      "end": "15:10",
+      "location": "N105",
+      "programIds": [
+        "business-2025a"
+      ],
+      "programNames": [
+        "Business Administration (International) 1"
+      ]
+    },
+    {
+      "semester": "2025-autumn",
+      "course": "Data Structures and Algorithms (International)",
+      "day": "Monday",
+      "sessionLabel": "1-4",
+      "start": "8:20",
+      "end": "12:00",
+      "location": "N104",
+      "programIds": [
+        "cs-2025a"
+      ],
+      "programNames": [
+        "Computer Science and Technology (International) 1"
+      ]
+    },
+    {
+      "semester": "2025-autumn",
+      "course": "Chinese, Major 2-1 (International)",
+      "day": "Thursday",
+      "sessionLabel": "3-4",
+      "start": "10:20",
+      "end": "12:00",
+      "location": "N107",
+      "programIds": [
+        "ai-2025a",
+        "cs-2025a",
+        "business-2025a",
+        "robotics-2025a"
+      ],
+      "programNames": [
+        "Artificial Intelligence (International) 1",
+        "Computer Science and Technology (International) 1",
+        "Business Administration (International) 1",
+        "Robotics Engineering (International) 1"
+      ]
+    },
+    {
+      "semester": "2025-autumn",
+      "course": "Prompt Engineering (International)",
+      "day": "Thursday",
+      "sessionLabel": "5-8",
+      "start": "13:30",
+      "end": "17:00",
+      "location": "N103",
+      "programIds": [
+        "ai-2025a",
+        "robotics-2025a"
+      ],
+      "programNames": [
+        "Artificial Intelligence (International) 1",
+        "Robotics Engineering (International) 1"
+      ]
+    },
+    {
+      "semester": "2025-autumn",
+      "course": "Computer Organization Principles (International)",
+      "day": "Tuesday",
+      "sessionLabel": "3-4",
+      "start": "10:20",
+      "end": "12:00",
+      "location": "N302",
+      "programIds": [
+        "cs-2025a"
+      ],
+      "programNames": [
+        "Computer Science and Technology (International) 1"
+      ]
+    },
+    {
+      "semester": "2025-autumn",
+      "course": "Business and Technology (International)",
+      "day": "Tuesday",
+      "sessionLabel": "3-4",
+      "start": "10:20",
+      "end": "12:00",
+      "location": "N104",
+      "programIds": [
+        "business-2025a"
+      ],
+      "programNames": [
+        "Business Administration (International) 1"
+      ]
+    },
+    {
+      "semester": "2025-autumn",
+      "course": "Human Resource Management (International)",
+      "day": "Tuesday",
+      "sessionLabel": "5-6",
+      "start": "13:30",
+      "end": "15:10",
+      "location": "N104",
+      "programIds": [
+        "business-2025a"
+      ],
+      "programNames": [
+        "Business Administration (International) 1"
+      ]
+    },
+    {
+      "semester": "2025-autumn",
+      "course": "Fundamentals of Electronic Technology (International)",
+      "day": "Tuesday",
+      "sessionLabel": "5-8",
+      "start": "13:30",
+      "end": "17:00",
+      "location": "N105",
+      "programIds": [
+        "robotics-2025a"
+      ],
+      "programNames": [
+        "Robotics Engineering (International) 1"
+      ]
+    },
+    {
+      "semester": "2025-autumn",
+      "course": "Human Resource Management (International)",
+      "day": "Tuesday",
+      "sessionLabel": "7",
+      "start": "15:20",
+      "end": "16:05",
+      "location": "N104",
+      "programIds": [
+        "business-2025a"
+      ],
+      "programNames": [
+        "Business Administration (International) 1"
+      ]
+    },
+    {
+      "semester": "2025-autumn",
+      "course": "AI Ethics (International)",
+      "day": "Wednesday",
+      "sessionLabel": "3-4",
+      "start": "10:20",
+      "end": "12:00",
+      "location": "N103",
+      "programIds": [
+        "ai-2025a"
+      ],
+      "programNames": [
+        "Artificial Intelligence (International) 1"
+      ]
+    },
+    {
+      "semester": "2025-autumn",
+      "course": "Microeconomics (International)",
+      "day": "Wednesday",
+      "sessionLabel": "3-4",
+      "start": "10:20",
+      "end": "12:00",
+      "location": "N104",
+      "programIds": [
+        "business-2025a"
+      ],
+      "programNames": [
+        "Business Administration (International) 1"
+      ]
+    },
+    {
+      "semester": "2025-autumn",
+      "course": "AI Thinking and Ethics (International)",
+      "day": "Wednesday",
+      "sessionLabel": "3-4",
+      "start": "10:20",
+      "end": "12:00",
+      "location": "N103",
+      "programIds": [
+        "robotics-2025a"
+      ],
+      "programNames": [
+        "Robotics Engineering (International) 1"
+      ]
+    },
+    {
+      "semester": "2025-autumn",
+      "course": "Chinese, Major 2-1 (International)",
+      "day": "Wednesday",
+      "sessionLabel": "1-2",
+      "start": "8:20",
+      "end": "10:00",
+      "location": "N107",
+      "programIds": [
+        "ai-2025a",
+        "cs-2025a",
+        "business-2025a",
+        "robotics-2025a"
+      ],
+      "programNames": [
+        "Artificial Intelligence (International) 1",
+        "Computer Science and Technology (International) 1",
+        "Business Administration (International) 1",
+        "Robotics Engineering (International) 1"
+      ]
+    },
+    {
+      "semester": "2026-autumn",
+      "course": "Chinese Language",
+      "day": "Friday",
+      "sessionLabel": "1-4",
+      "start": "8:20",
+      "end": "12:00",
+      "location": "N107",
+      "programIds": [
+        "chinese-intermediate-2026a"
+      ],
+      "programNames": [
+        "Chinese Language (Intermediate Level) 1"
+      ]
+    },
+    {
+      "semester": "2026-autumn",
+      "course": "Chinese Language",
+      "day": "Monday",
+      "sessionLabel": "5-8",
+      "start": "13:30",
+      "end": "17:00",
+      "location": "N107",
+      "programIds": [
+        "chinese-elementary-2026a"
+      ],
+      "programNames": [
+        "Chinese Language (Elementary Level) 1"
+      ]
+    },
+    {
+      "semester": "2026-autumn",
+      "course": "Introduction to the Major",
+      "day": "Monday",
+      "sessionLabel": "5-6",
+      "start": "13:30",
+      "end": "15:10",
+      "location": "G410",
+      "programIds": [
+        "business-2026a"
+      ],
+      "programNames": [
+        "Business Administration (International) 1"
+      ]
+    },
+    {
+      "semester": "2026-autumn",
+      "course": "Introduction to the Major (Group 1)",
+      "day": "Monday",
+      "sessionLabel": "5-6",
+      "start": "13:30",
+      "end": "15:10",
+      "location": "G315",
+      "programIds": [
+        "cs-2026a"
+      ],
+      "programNames": [
+        "Computer Science and Technology (International) 1"
+      ]
+    },
+    {
+      "semester": "2026-autumn",
+      "course": "Chinese Language",
+      "day": "Monday",
+      "sessionLabel": "1-4",
+      "start": "8:20",
+      "end": "12:00",
+      "location": "N107",
+      "programIds": [
+        "chinese-intermediate-2026a"
+      ],
+      "programNames": [
+        "Chinese Language (Intermediate Level) 1"
+      ]
+    },
+    {
+      "semester": "2026-autumn",
+      "course": "Chinese Language",
+      "day": "Monday",
+      "sessionLabel": "1-2",
+      "start": "8:20",
+      "end": "10:00",
+      "location": "G410",
+      "programIds": [
+        "ai-2026a",
+        "civil-2026a",
+        "business-2026a",
+        "cs-2026a"
+      ],
+      "programNames": [
+        "Artificial Intelligence (International) 1",
+        "Civil Engineering (International) 1",
+        "Business Administration (International) 1",
+        "Computer Science and Technology (International) 1"
+      ]
+    },
+    {
+      "semester": "2026-autumn",
+      "course": "Advanced Mathematics (A) 1",
+      "day": "Thursday",
+      "sessionLabel": "5-8",
+      "start": "13:30",
+      "end": "17:00",
+      "location": "G310",
+      "programIds": [
+        "ai-2026a",
+        "civil-2026a",
+        "business-2026a",
+        "cs-2026a"
+      ],
+      "programNames": [
+        "Artificial Intelligence (International) 1",
+        "Civil Engineering (International) 1",
+        "Business Administration (International) 1",
+        "Computer Science and Technology (International) 1"
+      ]
+    },
+    {
+      "semester": "2026-autumn",
+      "course": "Chinese Language",
+      "day": "Thursday",
+      "sessionLabel": "1-4",
+      "start": "8:20",
+      "end": "12:00",
+      "location": "N106",
+      "programIds": [
+        "chinese-elementary-2026a"
+      ],
+      "programNames": [
+        "Chinese Language (Elementary Level) 1"
+      ]
+    },
+    {
+      "semester": "2026-autumn",
+      "course": "Chinese Language",
+      "day": "Tuesday",
+      "sessionLabel": "5-8",
+      "start": "13:30",
+      "end": "17:00",
+      "location": "N107",
+      "programIds": [
+        "chinese-elementary-2026a"
+      ],
+      "programNames": [
+        "Chinese Language (Elementary Level) 1"
+      ]
+    },
+    {
+      "semester": "2026-autumn",
+      "course": "Introduction to the Major",
+      "day": "Tuesday",
+      "sessionLabel": "5-6",
+      "start": "13:30",
+      "end": "15:10",
+      "location": "G315",
+      "programIds": [
+        "civil-2026a"
+      ],
+      "programNames": [
+        "Civil Engineering (International) 1"
+      ]
+    },
+    {
+      "semester": "2026-autumn",
+      "course": "Chinese Language",
+      "day": "Wednesday",
+      "sessionLabel": "5-8",
+      "start": "13:30",
+      "end": "17:00",
+      "location": "N107",
+      "programIds": [
+        "chinese-intermediate-2026a"
+      ],
+      "programNames": [
+        "Chinese Language (Intermediate Level) 1"
+      ]
+    },
+    {
+      "semester": "2026-autumn",
+      "course": "Introduction to the Major",
+      "day": "Wednesday",
+      "sessionLabel": "5-6",
+      "start": "13:30",
+      "end": "15:10",
+      "location": "G309",
+      "programIds": [
+        "ai-2026a"
+      ],
+      "programNames": [
+        "Artificial Intelligence (International) 1"
+      ]
+    },
+    {
+      "semester": "2026-autumn",
+      "course": "Introduction to the Major (Group 2)",
+      "day": "Wednesday",
+      "sessionLabel": "5-6",
+      "start": "13:30",
+      "end": "15:10",
+      "location": "G315",
+      "programIds": [
+        "cs-2026a"
+      ],
+      "programNames": [
+        "Computer Science and Technology (International) 1"
+      ]
+    },
+    {
+      "semester": "2026-autumn",
+      "course": "Chinese Language",
+      "day": "Wednesday",
+      "sessionLabel": "7-8",
+      "start": "15:20",
+      "end": "17:00",
+      "location": "G310",
+      "programIds": [
+        "ai-2026a",
+        "civil-2026a",
+        "business-2026a",
+        "cs-2026a"
+      ],
+      "programNames": [
+        "Artificial Intelligence (International) 1",
+        "Civil Engineering (International) 1",
+        "Business Administration (International) 1",
+        "Computer Science and Technology (International) 1"
+      ]
+    },
+    {
+      "semester": "2026-spring",
+      "course": "Discrete Mathematics (International)",
+      "day": "Friday",
+      "sessionLabel": "5-6",
+      "start": "13:30",
+      "end": "15:10",
+      "location": "N105",
+      "programIds": [
+        "cs-2026s"
+      ],
+      "programNames": [
+        "Computer Science and Technology (International) 1"
+      ]
+    },
+    {
+      "semester": "2026-spring",
+      "course": "MATHS (A2) (International)",
+      "day": "Friday",
+      "sessionLabel": "1-4",
+      "start": "8:20",
+      "end": "12:00",
+      "location": "N106",
+      "programIds": [
+        "civil-engineering-2026s",
+        "ai-2026s",
+        "cs-2026s",
+        "business-2026s"
+      ],
+      "programNames": [
+        "Civil Engineering (International) 1",
+        "Artificial Intelligence (International) 1",
+        "Computer Science and Technology (International) 1",
+        "Business Administration (International) 1"
+      ]
+    },
+    {
+      "semester": "2026-spring",
+      "course": "Architectural Mechanics (International)",
+      "day": "Monday",
+      "sessionLabel": "5-8",
+      "start": "13:30",
+      "end": "17:00",
+      "location": "N301",
+      "programIds": [
+        "civil-engineering-2026s"
+      ],
+      "programNames": [
+        "Civil Engineering (International) 1"
+      ]
+    },
+    {
+      "semester": "2026-spring",
+      "course": "Python Programming (International)",
+      "day": "Monday",
+      "sessionLabel": "5-6",
+      "start": "13:30",
+      "end": "15:10",
+      "location": "N302",
+      "programIds": [
+        "ai-2026s"
+      ],
+      "programNames": [
+        "Artificial Intelligence (International) 1"
+      ]
+    },
+    {
+      "semester": "2026-spring",
+      "course": "Chinese, Major 1-2 (International)",
+      "day": "Monday",
+      "sessionLabel": "5-8",
+      "start": "13:30",
+      "end": "17:00",
+      "location": "N106",
+      "programIds": [
+        "chinese-lit-2026s"
+      ],
+      "programNames": [
+        "Chinese Language and Literature (International) 1"
+      ]
+    },
+    {
+      "semester": "2026-spring",
+      "course": "Management (International)",
+      "day": "Monday",
+      "sessionLabel": "5-6",
+      "start": "13:30",
+      "end": "15:10",
+      "location": "N104",
+      "programIds": [
+        "business-2026s"
+      ],
+      "programNames": [
+        "Business Administration (International) 1"
+      ]
+    },
+    {
+      "semester": "2026-spring",
+      "course": "Prompt Engineering (International)",
+      "day": "Thursday",
+      "sessionLabel": "3-4",
+      "start": "10:20",
+      "end": "12:00",
+      "location": "N103",
+      "programIds": [
+        "ai-2026s"
+      ],
+      "programNames": [
+        "Artificial Intelligence (International) 1"
+      ]
+    },
+    {
+      "semester": "2026-spring",
+      "course": "Digital Electronic Technology",
+      "day": "Thursday",
+      "sessionLabel": "3-4",
+      "start": "10:20",
+      "end": "12:00",
+      "location": "N302",
+      "programIds": [
+        "cs-2026s"
+      ],
+      "programNames": [
+        "Computer Science and Technology (International) 1"
+      ]
+    },
+    {
+      "semester": "2026-spring",
+      "course": "University Physics A 1 (International)",
+      "day": "Thursday",
+      "sessionLabel": "5-8",
+      "start": "13:30",
+      "end": "17:00",
+      "location": "N107",
+      "programIds": [
+        "civil-engineering-2026s",
+        "ai-2026s",
+        "cs-2026s"
+      ],
+      "programNames": [
+        "Civil Engineering (International) 1",
+        "Artificial Intelligence (International) 1",
+        "Computer Science and Technology (International) 1"
+      ]
+    },
+    {
+      "semester": "2026-spring",
+      "course": "Civil Engineering Drawing (International)",
+      "day": "Thursday",
+      "sessionLabel": "1-4",
+      "start": "8:20",
+      "end": "12:00",
+      "location": "N301",
+      "programIds": [
+        "civil-engineering-2026s"
+      ],
+      "programNames": [
+        "Civil Engineering (International) 1"
+      ]
+    },
+    {
+      "semester": "2026-spring",
+      "course": "Prompt Engineering (International)",
+      "day": "Tuesday",
+      "sessionLabel": "3-4",
+      "start": "10:20",
+      "end": "12:00",
+      "location": "N103",
+      "programIds": [
+        "ai-2026s"
+      ],
+      "programNames": [
+        "Artificial Intelligence (International) 1"
+      ]
+    },
+    {
+      "semester": "2026-spring",
+      "course": "Digital Electronic Technology",
+      "day": "Tuesday",
+      "sessionLabel": "3-4",
+      "start": "10:20",
+      "end": "12:00",
+      "location": "N302",
+      "programIds": [
+        "cs-2026s"
+      ],
+      "programNames": [
+        "Computer Science and Technology (International) 1"
+      ]
+    },
+    {
+      "semester": "2026-spring",
+      "course": "Architectural Mechanics (International)",
+      "day": "Tuesday",
+      "sessionLabel": "5-8",
+      "start": "13:30",
+      "end": "17:00",
+      "location": "N301",
+      "programIds": [
+        "civil-engineering-2026s"
+      ],
+      "programNames": [
+        "Civil Engineering (International) 1"
+      ]
+    },
+    {
+      "semester": "2026-spring",
+      "course": "Python Programming (International)",
+      "day": "Tuesday",
+      "sessionLabel": "5-6",
+      "start": "13:30",
+      "end": "15:10",
+      "location": "N302",
+      "programIds": [
+        "ai-2026s"
+      ],
+      "programNames": [
+        "Artificial Intelligence (International) 1"
+      ]
+    },
+    {
+      "semester": "2026-spring",
+      "course": "Fundamentals of Programming (International)",
+      "day": "Tuesday",
+      "sessionLabel": "5-8",
+      "start": "13:30",
+      "end": "17:00",
+      "location": "N103",
+      "programIds": [
+        "cs-2026s"
+      ],
+      "programNames": [
+        "Computer Science and Technology (International) 1"
+      ]
+    },
+    {
+      "semester": "2026-spring",
+      "course": "Chinese, Major 1-2 (International)",
+      "day": "Tuesday",
+      "sessionLabel": "5-8",
+      "start": "13:30",
+      "end": "17:00",
+      "location": "N106",
+      "programIds": [
+        "chinese-lit-2026s"
+      ],
+      "programNames": [
+        "Chinese Language and Literature (International) 1"
+      ]
+    },
+    {
+      "semester": "2026-spring",
+      "course": "Human Resource Management (International)",
+      "day": "Tuesday",
+      "sessionLabel": "5-6",
+      "start": "13:30",
+      "end": "15:10",
+      "location": "N104",
+      "programIds": [
+        "business-2026s"
+      ],
+      "programNames": [
+        "Business Administration (International) 1"
+      ]
+    },
+    {
+      "semester": "2026-spring",
+      "course": "Human Resource Management (International)",
+      "day": "Tuesday",
+      "sessionLabel": "7",
+      "start": "15:20",
+      "end": "16:05",
+      "location": "N104",
+      "programIds": [
+        "business-2026s"
+      ],
+      "programNames": [
+        "Business Administration (International) 1"
+      ]
+    },
+    {
+      "semester": "2026-spring",
+      "course": "Civil Engineering Drawing (International)",
+      "day": "Wednesday",
+      "sessionLabel": "5-8",
+      "start": "13:30",
+      "end": "17:00",
+      "location": "N301",
+      "programIds": [
+        "civil-engineering-2026s"
+      ],
+      "programNames": [
+        "Civil Engineering (International) 1"
+      ]
+    },
+    {
+      "semester": "2026-spring",
+      "course": "Discrete Mathematics (International)",
+      "day": "Wednesday",
+      "sessionLabel": "5-6",
+      "start": "13:30",
+      "end": "15:10",
+      "location": "N105",
+      "programIds": [
+        "cs-2026s"
+      ],
+      "programNames": [
+        "Computer Science and Technology (International) 1"
+      ]
+    },
+    {
+      "semester": "2026-spring",
+      "course": "Chinese, Major 1-2 (International)",
+      "day": "Wednesday",
+      "sessionLabel": "5-6",
+      "start": "13:30",
+      "end": "15:10",
+      "location": "N106",
+      "programIds": [
+        "chinese-lit-2026s"
+      ],
+      "programNames": [
+        "Chinese Language and Literature (International) 1"
+      ]
+    },
+    {
+      "semester": "2026-spring",
+      "course": "Chinese, Major 1-2 (International)",
+      "day": "Wednesday",
+      "sessionLabel": "1-4",
+      "start": "8:20",
+      "end": "12:00",
+      "location": "N106",
+      "programIds": [
+        "civil-engineering-2026s",
+        "ai-2026s",
+        "cs-2026s",
+        "business-2026s"
+      ],
+      "programNames": [
+        "Civil Engineering (International) 1",
+        "Artificial Intelligence (International) 1",
+        "Computer Science and Technology (International) 1",
+        "Business Administration (International) 1"
+      ]
+    }
+  ],
+  "sharedGroups": [
+    {
+      "semester": "2026-autumn",
+      "course": "Chinese Language",
+      "day": "Monday",
+      "sessionLabel": "1-2",
+      "start": "8:20",
+      "end": "10:00",
+      "location": "G410",
+      "programIds": [
+        "ai-2026a",
+        "civil-2026a",
+        "business-2026a",
+        "cs-2026a"
+      ],
+      "programNames": [
+        "Artificial Intelligence (International) 1",
+        "Civil Engineering (International) 1",
+        "Business Administration (International) 1",
+        "Computer Science and Technology (International) 1"
+      ]
+    },
+    {
+      "semester": "2026-autumn",
+      "course": "Chinese Language",
+      "day": "Wednesday",
+      "sessionLabel": "7-8",
+      "start": "15:20",
+      "end": "17:00",
+      "location": "G310",
+      "programIds": [
+        "ai-2026a",
+        "civil-2026a",
+        "business-2026a",
+        "cs-2026a"
+      ],
+      "programNames": [
+        "Artificial Intelligence (International) 1",
+        "Civil Engineering (International) 1",
+        "Business Administration (International) 1",
+        "Computer Science and Technology (International) 1"
+      ]
+    },
+    {
+      "semester": "2026-autumn",
+      "course": "Advanced Mathematics (A) 1",
+      "day": "Thursday",
+      "sessionLabel": "5-8",
+      "start": "13:30",
+      "end": "17:00",
+      "location": "G310",
+      "programIds": [
+        "ai-2026a",
+        "civil-2026a",
+        "business-2026a",
+        "cs-2026a"
+      ],
+      "programNames": [
+        "Artificial Intelligence (International) 1",
+        "Civil Engineering (International) 1",
+        "Business Administration (International) 1",
+        "Computer Science and Technology (International) 1"
+      ]
+    },
+    {
+      "semester": "2026-spring",
+      "course": "Chinese, Major 1-2 (International)",
+      "day": "Wednesday",
+      "sessionLabel": "1-4",
+      "start": "8:20",
+      "end": "12:00",
+      "location": "N106",
+      "programIds": [
+        "civil-engineering-2026s",
+        "ai-2026s",
+        "cs-2026s",
+        "business-2026s"
+      ],
+      "programNames": [
+        "Civil Engineering (International) 1",
+        "Artificial Intelligence (International) 1",
+        "Computer Science and Technology (International) 1",
+        "Business Administration (International) 1"
+      ]
+    },
+    {
+      "semester": "2026-spring",
+      "course": "University Physics A 1 (International)",
+      "day": "Thursday",
+      "sessionLabel": "5-8",
+      "start": "13:30",
+      "end": "17:00",
+      "location": "N107",
+      "programIds": [
+        "civil-engineering-2026s",
+        "ai-2026s",
+        "cs-2026s"
+      ],
+      "programNames": [
+        "Civil Engineering (International) 1",
+        "Artificial Intelligence (International) 1",
+        "Computer Science and Technology (International) 1"
+      ]
+    },
+    {
+      "semester": "2026-spring",
+      "course": "MATHS (A2) (International)",
+      "day": "Friday",
+      "sessionLabel": "1-4",
+      "start": "8:20",
+      "end": "12:00",
+      "location": "N106",
+      "programIds": [
+        "civil-engineering-2026s",
+        "ai-2026s",
+        "cs-2026s",
+        "business-2026s"
+      ],
+      "programNames": [
+        "Civil Engineering (International) 1",
+        "Artificial Intelligence (International) 1",
+        "Computer Science and Technology (International) 1",
+        "Business Administration (International) 1"
+      ]
+    },
+    {
+      "semester": "2025-autumn",
+      "course": "Chinese, Major 2-1 (International)",
+      "day": "Wednesday",
+      "sessionLabel": "1-2",
+      "start": "8:20",
+      "end": "10:00",
+      "location": "N107",
+      "programIds": [
+        "ai-2025a",
+        "cs-2025a",
+        "business-2025a",
+        "robotics-2025a"
+      ],
+      "programNames": [
+        "Artificial Intelligence (International) 1",
+        "Computer Science and Technology (International) 1",
+        "Business Administration (International) 1",
+        "Robotics Engineering (International) 1"
+      ]
+    },
+    {
+      "semester": "2025-autumn",
+      "course": "Chinese, Major 2-1 (International)",
+      "day": "Thursday",
+      "sessionLabel": "3-4",
+      "start": "10:20",
+      "end": "12:00",
+      "location": "N107",
+      "programIds": [
+        "ai-2025a",
+        "cs-2025a",
+        "business-2025a",
+        "robotics-2025a"
+      ],
+      "programNames": [
+        "Artificial Intelligence (International) 1",
+        "Computer Science and Technology (International) 1",
+        "Business Administration (International) 1",
+        "Robotics Engineering (International) 1"
+      ]
+    },
+    {
+      "semester": "2025-autumn",
+      "course": "Prompt Engineering (International)",
+      "day": "Thursday",
+      "sessionLabel": "5-8",
+      "start": "13:30",
+      "end": "17:00",
+      "location": "N103",
+      "programIds": [
+        "ai-2025a",
+        "robotics-2025a"
+      ],
+      "programNames": [
+        "Artificial Intelligence (International) 1",
+        "Robotics Engineering (International) 1"
+      ]
+    }
+  ],
+  "derivedSections": [
+    {
+      "semester": "2026-autumn",
+      "course": "Chinese Language",
+      "programIds": [
+        "chinese-elementary-2026a"
+      ],
+      "sessions": [
+        {
+          "day": "Monday",
+          "start": "13:30",
+          "end": "17:00",
+          "location": "N107"
+        },
+        {
+          "day": "Tuesday",
+          "start": "13:30",
+          "end": "17:00",
+          "location": "N107"
+        },
+        {
+          "day": "Thursday",
+          "start": "8:20",
+          "end": "12:00",
+          "location": "N106"
+        }
+      ]
+    },
+    {
+      "semester": "2026-autumn",
+      "course": "Chinese Language",
+      "programIds": [
+        "chinese-intermediate-2026a"
+      ],
+      "sessions": [
+        {
+          "day": "Monday",
+          "start": "8:20",
+          "end": "12:00",
+          "location": "N107"
+        },
+        {
+          "day": "Wednesday",
+          "start": "13:30",
+          "end": "17:00",
+          "location": "N107"
+        },
+        {
+          "day": "Friday",
+          "start": "8:20",
+          "end": "12:00",
+          "location": "N107"
+        }
+      ]
+    },
+    {
+      "semester": "2026-autumn",
+      "course": "Chinese Language",
+      "programIds": [
+        "ai-2026a",
+        "business-2026a",
+        "civil-2026a",
+        "cs-2026a"
+      ],
+      "sessions": [
+        {
+          "day": "Monday",
+          "start": "8:20",
+          "end": "10:00",
+          "location": "G410"
+        },
+        {
+          "day": "Wednesday",
+          "start": "15:20",
+          "end": "17:00",
+          "location": "G310"
+        }
+      ]
+    },
+    {
+      "semester": "2026-autumn",
+      "course": "Introduction to the Major",
+      "programIds": [
+        "ai-2026a"
+      ],
+      "sessions": [
+        {
+          "day": "Wednesday",
+          "start": "13:30",
+          "end": "15:10",
+          "location": "G309"
+        }
+      ]
+    },
+    {
+      "semester": "2026-autumn",
+      "course": "Advanced Mathematics (A) 1",
+      "programIds": [
+        "ai-2026a",
+        "business-2026a",
+        "civil-2026a",
+        "cs-2026a"
+      ],
+      "sessions": [
+        {
+          "day": "Thursday",
+          "start": "13:30",
+          "end": "17:00",
+          "location": "G310"
+        }
+      ]
+    },
+    {
+      "semester": "2026-autumn",
+      "course": "Introduction to the Major",
+      "programIds": [
+        "civil-2026a"
+      ],
+      "sessions": [
+        {
+          "day": "Tuesday",
+          "start": "13:30",
+          "end": "15:10",
+          "location": "G315"
+        }
+      ]
+    },
+    {
+      "semester": "2026-autumn",
+      "course": "Introduction to the Major",
+      "programIds": [
+        "business-2026a"
+      ],
+      "sessions": [
+        {
+          "day": "Monday",
+          "start": "13:30",
+          "end": "15:10",
+          "location": "G410"
+        }
+      ]
+    },
+    {
+      "semester": "2026-autumn",
+      "course": "Introduction to the Major (Group 2)",
+      "programIds": [
+        "cs-2026a"
+      ],
+      "sessions": [
+        {
+          "day": "Wednesday",
+          "start": "13:30",
+          "end": "15:10",
+          "location": "G315"
+        }
+      ]
+    },
+    {
+      "semester": "2026-autumn",
+      "course": "Introduction to the Major (Group 1)",
+      "programIds": [
+        "cs-2026a"
+      ],
+      "sessions": [
+        {
+          "day": "Monday",
+          "start": "13:30",
+          "end": "15:10",
+          "location": "G315"
+        }
+      ]
+    },
+    {
+      "semester": "2026-spring",
+      "course": "Architectural Mechanics (International)",
+      "programIds": [
+        "civil-engineering-2026s"
+      ],
+      "sessions": [
+        {
+          "day": "Monday",
+          "start": "13:30",
+          "end": "17:00",
+          "location": "N301"
+        },
+        {
+          "day": "Tuesday",
+          "start": "13:30",
+          "end": "17:00",
+          "location": "N301"
+        }
+      ]
+    },
+    {
+      "semester": "2026-spring",
+      "course": "Chinese, Major 1-2 (International)",
+      "programIds": [
+        "ai-2026s",
+        "business-2026s",
+        "civil-engineering-2026s",
+        "cs-2026s"
+      ],
+      "sessions": [
+        {
+          "day": "Wednesday",
+          "start": "8:20",
+          "end": "12:00",
+          "location": "N106"
+        }
+      ]
+    },
+    {
+      "semester": "2026-spring",
+      "course": "Civil Engineering Drawing (International)",
+      "programIds": [
+        "civil-engineering-2026s"
+      ],
+      "sessions": [
+        {
+          "day": "Wednesday",
+          "start": "13:30",
+          "end": "17:00",
+          "location": "N301"
+        },
+        {
+          "day": "Thursday",
+          "start": "8:20",
+          "end": "12:00",
+          "location": "N301"
+        }
+      ]
+    },
+    {
+      "semester": "2026-spring",
+      "course": "University Physics A 1 (International)",
+      "programIds": [
+        "ai-2026s",
+        "civil-engineering-2026s",
+        "cs-2026s"
+      ],
+      "sessions": [
+        {
+          "day": "Thursday",
+          "start": "13:30",
+          "end": "17:00",
+          "location": "N107"
+        }
+      ]
+    },
+    {
+      "semester": "2026-spring",
+      "course": "MATHS (A2) (International)",
+      "programIds": [
+        "ai-2026s",
+        "business-2026s",
+        "civil-engineering-2026s",
+        "cs-2026s"
+      ],
+      "sessions": [
+        {
+          "day": "Friday",
+          "start": "8:20",
+          "end": "12:00",
+          "location": "N106"
+        }
+      ]
+    },
+    {
+      "semester": "2026-spring",
+      "course": "Python Programming (International)",
+      "programIds": [
+        "ai-2026s"
+      ],
+      "sessions": [
+        {
+          "day": "Monday",
+          "start": "13:30",
+          "end": "15:10",
+          "location": "N302"
+        },
+        {
+          "day": "Tuesday",
+          "start": "13:30",
+          "end": "15:10",
+          "location": "N302"
+        }
+      ]
+    },
+    {
+      "semester": "2026-spring",
+      "course": "Prompt Engineering (International)",
+      "programIds": [
+        "ai-2026s"
+      ],
+      "sessions": [
+        {
+          "day": "Tuesday",
+          "start": "10:20",
+          "end": "12:00",
+          "location": "N103"
+        },
+        {
+          "day": "Thursday",
+          "start": "10:20",
+          "end": "12:00",
+          "location": "N103"
+        }
+      ]
+    },
+    {
+      "semester": "2026-spring",
+      "course": "Fundamentals of Programming (International)",
+      "programIds": [
+        "cs-2026s"
+      ],
+      "sessions": [
+        {
+          "day": "Tuesday",
+          "start": "13:30",
+          "end": "17:00",
+          "location": "N103"
+        }
+      ]
+    },
+    {
+      "semester": "2026-spring",
+      "course": "Discrete Mathematics (International)",
+      "programIds": [
+        "cs-2026s"
+      ],
+      "sessions": [
+        {
+          "day": "Wednesday",
+          "start": "13:30",
+          "end": "15:10",
+          "location": "N105"
+        },
+        {
+          "day": "Friday",
+          "start": "13:30",
+          "end": "15:10",
+          "location": "N105"
+        }
+      ]
+    },
+    {
+      "semester": "2026-spring",
+      "course": "Digital Electronic Technology",
+      "programIds": [
+        "cs-2026s"
+      ],
+      "sessions": [
+        {
+          "day": "Tuesday",
+          "start": "10:20",
+          "end": "12:00",
+          "location": "N302"
+        },
+        {
+          "day": "Thursday",
+          "start": "10:20",
+          "end": "12:00",
+          "location": "N302"
+        }
+      ]
+    },
+    {
+      "semester": "2026-spring",
+      "course": "Chinese, Major 1-2 (International)",
+      "programIds": [
+        "chinese-lit-2026s"
+      ],
+      "sessions": [
+        {
+          "day": "Monday",
+          "start": "13:30",
+          "end": "17:00",
+          "location": "N106"
+        },
+        {
+          "day": "Tuesday",
+          "start": "13:30",
+          "end": "17:00",
+          "location": "N106"
+        },
+        {
+          "day": "Wednesday",
+          "start": "13:30",
+          "end": "15:10",
+          "location": "N106"
+        }
+      ]
+    },
+    {
+      "semester": "2026-spring",
+      "course": "Management (International)",
+      "programIds": [
+        "business-2026s"
+      ],
+      "sessions": [
+        {
+          "day": "Monday",
+          "start": "13:30",
+          "end": "15:10",
+          "location": "N104"
+        }
+      ]
+    },
+    {
+      "semester": "2026-spring",
+      "course": "Human Resource Management (International)",
+      "programIds": [
+        "business-2026s"
+      ],
+      "sessions": [
+        {
+          "day": "Tuesday",
+          "start": "13:30",
+          "end": "15:10",
+          "location": "N104"
+        },
+        {
+          "day": "Tuesday",
+          "start": "15:20",
+          "end": "16:05",
+          "location": "N104"
+        }
+      ]
+    },
+    {
+      "semester": "2025-autumn",
+      "course": "AI Ethics (International)",
+      "programIds": [
+        "ai-2025a"
+      ],
+      "sessions": [
+        {
+          "day": "Monday",
+          "start": "10:20",
+          "end": "12:00",
+          "location": "N103"
+        },
+        {
+          "day": "Wednesday",
+          "start": "10:20",
+          "end": "12:00",
+          "location": "N103"
+        }
+      ]
+    },
+    {
+      "semester": "2025-autumn",
+      "course": "Chinese, Major 2-1 (International)",
+      "programIds": [
+        "ai-2025a",
+        "business-2025a",
+        "cs-2025a",
+        "robotics-2025a"
+      ],
+      "sessions": [
+        {
+          "day": "Wednesday",
+          "start": "8:20",
+          "end": "10:00",
+          "location": "N107"
+        },
+        {
+          "day": "Thursday",
+          "start": "10:20",
+          "end": "12:00",
+          "location": "N107"
+        }
+      ]
+    },
+    {
+      "semester": "2025-autumn",
+      "course": "Prompt Engineering (International)",
+      "programIds": [
+        "ai-2025a",
+        "robotics-2025a"
+      ],
+      "sessions": [
+        {
+          "day": "Thursday",
+          "start": "13:30",
+          "end": "17:00",
+          "location": "N103"
+        }
+      ]
+    },
+    {
+      "semester": "2025-autumn",
+      "course": "Data Structures and Algorithms (International)",
+      "programIds": [
+        "cs-2025a"
+      ],
+      "sessions": [
+        {
+          "day": "Monday",
+          "start": "8:20",
+          "end": "12:00",
+          "location": "N104"
+        }
+      ]
+    },
+    {
+      "semester": "2025-autumn",
+      "course": "Computer Organization Principles (International)",
+      "programIds": [
+        "cs-2025a"
+      ],
+      "sessions": [
+        {
+          "day": "Tuesday",
+          "start": "10:20",
+          "end": "12:00",
+          "location": "N302"
+        },
+        {
+          "day": "Friday",
+          "start": "10:20",
+          "end": "12:00",
+          "location": "N302"
+        }
+      ]
+    },
+    {
+      "semester": "2025-autumn",
+      "course": "Organizational Behavior (International)",
+      "programIds": [
+        "business-2025a"
+      ],
+      "sessions": [
+        {
+          "day": "Monday",
+          "start": "13:30",
+          "end": "15:10",
+          "location": "N105"
+        }
+      ]
+    },
+    {
+      "semester": "2025-autumn",
+      "course": "Business and Technology (International)",
+      "programIds": [
+        "business-2025a"
+      ],
+      "sessions": [
+        {
+          "day": "Tuesday",
+          "start": "10:20",
+          "end": "12:00",
+          "location": "N104"
+        }
+      ]
+    },
+    {
+      "semester": "2025-autumn",
+      "course": "Human Resource Management (International)",
+      "programIds": [
+        "business-2025a"
+      ],
+      "sessions": [
+        {
+          "day": "Tuesday",
+          "start": "13:30",
+          "end": "15:10",
+          "location": "N104"
+        },
+        {
+          "day": "Tuesday",
+          "start": "15:20",
+          "end": "16:05",
+          "location": "N104"
+        }
+      ]
+    },
+    {
+      "semester": "2025-autumn",
+      "course": "Microeconomics (International)",
+      "programIds": [
+        "business-2025a"
+      ],
+      "sessions": [
+        {
+          "day": "Wednesday",
+          "start": "10:20",
+          "end": "12:00",
+          "location": "N104"
+        }
+      ]
+    },
+    {
+      "semester": "2025-autumn",
+      "course": "AI Thinking and Ethics (International)",
+      "programIds": [
+        "robotics-2025a"
+      ],
+      "sessions": [
+        {
+          "day": "Monday",
+          "start": "10:20",
+          "end": "12:00",
+          "location": "N103"
+        },
+        {
+          "day": "Wednesday",
+          "start": "10:20",
+          "end": "12:00",
+          "location": "N103"
+        }
+      ]
+    },
+    {
+      "semester": "2025-autumn",
+      "course": "Fundamentals of Electronic Technology (International)",
+      "programIds": [
+        "robotics-2025a"
+      ],
+      "sessions": [
+        {
+          "day": "Tuesday",
+          "start": "13:30",
+          "end": "17:00",
+          "location": "N105"
+        }
+      ]
+    }
+  ],
+  "conflicts": {
+    "roomOverlaps": [
+      {
+        "key": "N103|Monday",
+        "a": {
+          "course": "AI Ethics (International)",
+          "start": "10:20",
+          "end": "12:00",
+          "programs": [
+            "ai-2025a"
+          ]
+        },
+        "b": {
+          "course": "AI Thinking and Ethics (International)",
+          "start": "10:20",
+          "end": "12:00",
+          "programs": [
+            "robotics-2025a"
+          ]
+        }
+      },
+      {
+        "key": "N103|Wednesday",
+        "a": {
+          "course": "AI Ethics (International)",
+          "start": "10:20",
+          "end": "12:00",
+          "programs": [
+            "ai-2025a"
+          ]
+        },
+        "b": {
+          "course": "AI Thinking and Ethics (International)",
+          "start": "10:20",
+          "end": "12:00",
+          "programs": [
+            "robotics-2025a"
+          ]
+        }
+      }
+    ],
+    "programOverlaps": []
+  },
+  "database": {
+    "periods": [
+      {
+        "code": "2026-FALL",
+        "name": "Fall 2026",
+        "start_date": "2026-09-01",
+        "end_date": "2026-12-20",
+        "status": "ACTIVE"
+      },
+      {
+        "code": "VFY1",
+        "name": "Verify Period",
+        "start_date": "2032-01-05",
+        "end_date": "2032-05-28",
+        "status": "PLANNED"
+      }
+    ],
+    "majors": [
+      {
+        "code": "CS",
+        "name": "Computer Science",
+        "programs": 1,
+        "students": 1
+      },
+      {
+        "code": "BUS",
+        "name": "Business Administration",
+        "programs": 1,
+        "students": 1
+      },
+      {
+        "code": "ENG",
+        "name": "English Language",
+        "programs": 1,
+        "students": 1
+      },
+      {
+        "code": "english",
+        "name": "Artificial Intelligence",
+        "programs": 0,
+        "students": 0
+      }
+    ],
+    "programs": [
+      {
+        "code": "BCS",
+        "name": "Bachelor of Computer Science",
+        "major_code": "CS",
+        "students": 1
+      },
+      {
+        "code": "BBA",
+        "name": "Bachelor of Business Administration",
+        "major_code": "BUS",
+        "students": 0
+      },
+      {
+        "code": "BAL",
+        "name": "Bachelor of Arts in English",
+        "major_code": "ENG",
+        "students": 1
+      }
+    ],
+    "courses": [
+      {
+        "code": "CS101",
+        "name": "Introduction to Programming",
+        "credits": 3,
+        "semester": 1,
+        "program_code": "BCS"
+      },
+      {
+        "code": "CS201",
+        "name": "Data Structures",
+        "credits": 3,
+        "semester": 2,
+        "program_code": "BCS"
+      },
+      {
+        "code": "CS301",
+        "name": "Operating Systems",
+        "credits": 3,
+        "semester": 3,
+        "program_code": "BCS"
+      },
+      {
+        "code": "BA101",
+        "name": "Principles of Business",
+        "credits": 3,
+        "semester": 1,
+        "program_code": "BBA"
+      },
+      {
+        "code": "BA201",
+        "name": "Marketing Fundamentals",
+        "credits": 3,
+        "semester": 2,
+        "program_code": "BBA"
+      },
+      {
+        "code": "EN101",
+        "name": "English Composition",
+        "credits": 3,
+        "semester": 1,
+        "program_code": "BAL"
+      },
+      {
+        "code": "EN201",
+        "name": "Creative Writing",
+        "credits": 3,
+        "semester": 2,
+        "program_code": "BAL"
+      }
+    ],
+    "classrooms": [
+      {
+        "room_code": "B18-301",
+        "building": "B18",
+        "capacity": 40,
+        "status": "AVAILABLE"
+      },
+      {
+        "room_code": "B18-302",
+        "building": "B18",
+        "capacity": 35,
+        "status": "AVAILABLE"
+      },
+      {
+        "room_code": "B18-401",
+        "building": "B18",
+        "capacity": 50,
+        "status": "AVAILABLE"
+      },
+      {
+        "room_code": "B19-201",
+        "building": "B19",
+        "capacity": 30,
+        "status": "AVAILABLE"
+      },
+      {
+        "room_code": "B19-202",
+        "building": "B19",
+        "capacity": 45,
+        "status": "AVAILABLE"
+      }
+    ],
+    "sections": [
+      {
+        "id": "7c126710-b5f9-4dac-99ae-26b31617eaaf",
+        "course": "CS101",
+        "section": "B",
+        "period": "2026-FALL",
+        "capacity": 35,
+        "enrolled": 0,
+        "status": "ACTIVE"
+      },
+      {
+        "id": "42ce0ec1-35c2-4e7e-9ccc-a4563bee610f",
+        "course": "CS201",
+        "section": "A",
+        "period": "2026-FALL",
+        "capacity": 30,
+        "enrolled": 0,
+        "status": "ACTIVE"
+      },
+      {
+        "id": "c3ffed66-81e9-4b8d-b4aa-174039f24bcc",
+        "course": "EN101",
+        "section": "A",
+        "period": "2026-FALL",
+        "capacity": 30,
+        "enrolled": 0,
+        "status": "ACTIVE"
+      },
+      {
+        "id": "3b5a9b13-0f40-4974-8b98-f568cdd4fa01",
+        "course": "BA101",
+        "section": "A",
+        "period": "2026-FALL",
+        "capacity": 40,
+        "enrolled": 12,
+        "status": "ACTIVE"
+      },
+      {
+        "id": "80ea7d52-9fb5-4b73-804d-aaa5194def60",
+        "course": "CS101",
+        "section": "A",
+        "period": "2026-FALL",
+        "capacity": 35,
+        "enrolled": 12,
+        "status": "ACTIVE"
+      }
+    ],
+    "timetable": [
+      {
+        "period": "2026-FALL",
+        "course": "CS201",
+        "section": "A",
+        "day": 5,
+        "start": "08:00:00",
+        "end": "09:00:00",
+        "room": "B18-301",
+        "deleted": false
+      },
+      {
+        "period": "2026-FALL",
+        "course": "BA101",
+        "section": "A",
+        "day": 1,
+        "start": "10:00:00",
+        "end": "11:30:00",
+        "room": "B18-302",
+        "deleted": false
+      },
+      {
+        "period": "2026-FALL",
+        "course": "BA101",
+        "section": "A",
+        "day": 3,
+        "start": "10:00:00",
+        "end": "11:30:00",
+        "room": "B18-302",
+        "deleted": false
+      },
+      {
+        "period": "2026-FALL",
+        "course": "CS101",
+        "section": "A",
+        "day": 0,
+        "start": "09:00:00",
+        "end": "10:00:00",
+        "room": "B18-301",
+        "deleted": false
+      },
+      {
+        "period": "2026-FALL",
+        "course": "CS101",
+        "section": "A",
+        "day": 2,
+        "start": "09:00:00",
+        "end": "10:00:00",
+        "room": "B18-301",
+        "deleted": false
+      },
+      {
+        "period": "2026-FALL",
+        "course": "CS101",
+        "section": "A",
+        "day": 4,
+        "start": "09:00:00",
+        "end": "10:00:00",
+        "room": "B18-301",
+        "deleted": false
+      }
+    ],
+    "counts": {
+      "enrollments": 24,
+      "attendance": 0,
+      "assessments": 0,
+      "grades": 0,
+      "history": 0,
+      "deleted_timetable": 0
+    }
+  },
+  "diff": {
+    "semesters": {
+      "source": [
+        "2026-autumn",
+        "2026-spring",
+        "2025-autumn"
+      ],
+      "candidateMatches": [
+        {
+          "source": "2026-autumn",
+          "database": "2026-FALL",
+          "confidence": "name-year-season",
+          "blocker": "Source supplies no semester dates; existing dates cannot be certified as official."
+        }
+      ],
+      "missing": [
+        "2026-spring",
+        "2025-autumn"
+      ],
+      "unmappedDatabase": [
+        "VFY1"
+      ]
+    },
+    "programs": {
+      "sourceOfferings": 15,
+      "distinctSourcePrograms": 8,
+      "candidateMatches": [
+        {
+          "source": "Business Administration",
+          "database": [
+            "BBA"
+          ],
+          "blocker": "Semantic match only; source uses semester offerings and different naming."
+        },
+        {
+          "source": "Computer Science and Technology",
+          "database": [
+            "BCS"
+          ],
+          "blocker": "Semantic match only; source uses semester offerings and different naming."
+        },
+        {
+          "source": "Artificial Intelligence",
+          "database": [],
+          "blocker": "Orphan major only; no program record."
+        }
+      ],
+      "missingParents": [
+        "Artificial Intelligence",
+        "Chinese Language (Elementary Level)",
+        "Chinese Language (Intermediate Level)",
+        "Civil Engineering",
+        "Chinese Language and Literature",
+        "Robotics Engineering"
+      ],
+      "unmappedDatabase": [
+        "BAL"
+      ]
+    },
+    "courses": {
+      "source": 26,
+      "database": 7,
+      "missing": 26,
+      "unmappedDatabase": [
+        "CS101",
+        "CS201",
+        "CS301",
+        "BA101",
+        "BA201",
+        "EN101",
+        "EN201"
+      ]
+    },
+    "rooms": {
+      "source": 11,
+      "database": 5,
+      "missing": [
+        "N103",
+        "N104",
+        "N105",
+        "N106",
+        "N107",
+        "N301",
+        "N302",
+        "G309",
+        "G310",
+        "G315",
+        "G410"
+      ],
+      "unmappedDatabase": [
+        "B18-301",
+        "B18-302",
+        "B18-401",
+        "B19-201",
+        "B19-202"
+      ]
+    },
+    "sections": {
+      "sourceDerived": 33,
+      "database": 5,
+      "missing": 33,
+      "unmappedDatabase": [
+        "CS101-B (2026-FALL)",
+        "CS201-A (2026-FALL)",
+        "EN101-A (2026-FALL)",
+        "BA101-A (2026-FALL)",
+        "CS101-A (2026-FALL)"
+      ]
+    },
+    "timetable": {
+      "sourceUniqueSessions": 52,
+      "database": 6,
+      "missing": 52,
+      "unmappedDatabase": [
+        "CS201-A 5 08:00-09:00 @B18-301",
+        "BA101-A 1 10:00-11:30 @B18-302",
+        "BA101-A 3 10:00-11:30 @B18-302",
+        "CS101-A 0 09:00-10:00 @B18-301",
+        "CS101-A 2 09:00-10:00 @B18-301",
+        "CS101-A 4 09:00-10:00 @B18-301"
+      ]
+    },
+    "approval": "pending"
+  },
+  "readOnly": true
+}

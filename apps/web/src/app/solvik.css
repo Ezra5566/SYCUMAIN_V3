@@ -1,0 +1,919 @@
+/* ------------------------------------------------------------------
+   SCU portal — Solvik UI kit shell
+   Top tab rail, floating dock, ambient backdrop and glass surfaces.
+   Colours come from the portal tokens (hsl triplets) so the light and
+   dark themes and the institutional blue accent both apply.
+------------------------------------------------------------------- */
+
+:root {
+  --scu-gutter: clamp(16px, 2vw, 34px);
+  --scu-top-h: 66px;
+  --scu-dock-w: 56px;
+  --scu-gap: 16px;
+  --scu-glass: hsl(var(--card) / 0.72);
+  --scu-glass-strong: hsl(var(--card) / 0.94);
+  --scu-soft: hsl(var(--muted) / 0.55);
+  --scu-line: hsl(var(--border));
+  --scu-blur: blur(24px) saturate(135%);
+}
+
+/* -------------------------------- backdrop -------------------------------- */
+
+.scu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  background:
+    radial-gradient(1100px 760px at 82% -8%, hsl(var(--gold) / 0.16), transparent 62%),
+    radial-gradient(900px 680px at 2% -12%, hsl(var(--primary) / 0.22), transparent 58%),
+    radial-gradient(900px 700px at 42% 108%, hsl(150 30% 30% / 0.28), transparent 62%),
+    linear-gradient(158deg, hsl(var(--background)), hsl(var(--background)) 45%, hsl(var(--background)));
+  transition: background 0.6s var(--ease);
+}
+
+:root:not(.dark) .scu-backdrop {
+  background:
+    radial-gradient(1100px 760px at 84% -10%, hsl(var(--gold) / 0.32), transparent 62%),
+    radial-gradient(900px 700px at 0% -14%, hsl(var(--primary) / 0.24), transparent 60%),
+    radial-gradient(900px 700px at 46% 112%, hsl(150 22% 60% / 0.28), transparent 62%),
+    linear-gradient(158deg, hsl(var(--background)), hsl(var(--background)) 45%, hsl(40 20% 92%));
+}
+
+.scu-backdrop__glow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.7;
+}
+
+.scu-backdrop__glow--one {
+  inset-block-start: 4vh;
+  inset-inline-end: -10vw;
+  width: 46vw;
+  height: 46vw;
+  background: radial-gradient(circle, hsl(var(--primary) / 0.36), transparent 68%);
+}
+
+.scu-backdrop__glow--two {
+  inset-block-end: -12vw;
+  inset-inline-start: 4vw;
+  width: 38vw;
+  height: 38vw;
+  background: radial-gradient(circle, hsl(160 30% 42% / 0.3), transparent 70%);
+}
+
+.scu-backdrop__grain {
+  position: absolute;
+  inset: 0;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='.6'/%3E%3C/svg%3E");
+  pointer-events: none;
+}
+
+/* --------------------------------- shell ---------------------------------- */
+
+.scu-shell {
+  position: relative;
+  min-height: 100dvh;
+}
+
+.scu-top {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  height: var(--scu-top-h);
+  padding: 0 var(--scu-gutter);
+  background: linear-gradient(180deg, hsl(var(--background) / 0.82), hsl(var(--background) / 0.36) 70%, transparent);
+  backdrop-filter: blur(16px) saturate(130%);
+  -webkit-backdrop-filter: blur(16px) saturate(130%);
+}
+
+.scu-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex: none;
+  min-width: 0;
+}
+
+.scu-brand__mark {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  background: #f7f4ec;
+  border: 1px solid hsl(var(--border));
+  box-shadow: 0 10px 24px -12px hsl(var(--primary) / 0.55), inset 0 1px 0 #ffffffaa;
+  overflow: hidden;
+}
+
+.scu-brand__text {
+  display: none;
+  flex-direction: column;
+  line-height: 1.05;
+  min-width: 0;
+}
+
+@media (min-width: 640px) {
+  .scu-brand__text {
+    display: flex;
+  }
+}
+
+.scu-brand__name {
+  font-size: 19px;
+  font-weight: 750;
+  letter-spacing: -0.03em;
+}
+
+.scu-brand__sub {
+  margin-top: 2px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: hsl(var(--muted-foreground));
+}
+
+/* ---------------------------------- tabs ---------------------------------- */
+
+.scu-tabs {
+  flex: 1 1 auto;
+  display: flex;
+  justify-content: center;
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* The viewport must be a block-level flex child that can shrink to zero,
+   otherwise its max-content track pushes the session tools off the bar. */
+.scu-tabs__viewport {
+  display: block;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.scu-tabs__viewport::-webkit-scrollbar {
+  display: none;
+}
+
+.scu-tabs__track {
+  position: relative;
+  display: flex;
+  margin-inline: auto;
+  align-items: center;
+  gap: 2px;
+  padding: 5px;
+  border-radius: 999px;
+  background: var(--scu-glass);
+  border: 1px solid var(--scu-line);
+  box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.1), 0 16px 34px -28px #000;
+  backdrop-filter: var(--scu-blur);
+  -webkit-backdrop-filter: var(--scu-blur);
+  width: max-content;
+}
+
+.scu-tabs__pill {
+  position: absolute;
+  top: 5px;
+  bottom: 5px;
+  inset-inline-start: 0;
+  border-radius: 999px;
+  background: hsl(var(--pill));
+  opacity: 0;
+  transition: transform 0.42s var(--ease), width 0.42s var(--ease), opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.scu-tabs__pill.is-ready {
+  opacity: 1;
+}
+
+.scu-tab {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 13px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: hsl(var(--muted-foreground));
+  white-space: nowrap;
+  transition: color 0.25s ease;
+}
+
+.scu-tab:hover {
+  color: hsl(var(--foreground));
+}
+
+.scu-tab.is-active {
+  color: hsl(var(--on-pill));
+  font-weight: 750;
+}
+
+/* ---------------------------------- tools --------------------------------- */
+
+.scu-tools {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: none;
+}
+
+.scu-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  color: hsl(var(--foreground));
+  background: var(--scu-glass);
+  border: 1px solid var(--scu-line);
+  box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.12);
+  backdrop-filter: var(--scu-blur);
+  -webkit-backdrop-filter: var(--scu-blur);
+  transition: background 0.2s ease, transform 0.2s var(--ease), color 0.2s ease;
+}
+
+.scu-icon:hover {
+  background: var(--scu-soft);
+  transform: translateY(-1px);
+}
+
+.scu-icon:active {
+  transform: scale(0.94);
+}
+
+.scu-lang select {
+  height: 36px !important;
+  width: 7.4rem;
+  border-radius: 999px !important;
+  border-color: var(--scu-line) !important;
+  background: var(--scu-glass) !important;
+  box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.12);
+  font-size: 12px !important;
+  font-weight: 650 !important;
+}
+
+.scu-me {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  border: 1px solid hsl(0 0% 100% / 0.22);
+  box-shadow: 0 10px 24px -14px hsl(var(--primary) / 0.8);
+  transition: transform 0.2s var(--ease);
+}
+
+.scu-me:hover {
+  transform: translateY(-1px);
+}
+
+/* ---------------------------------- dock ---------------------------------- */
+
+.scu-dock {
+  position: fixed;
+  z-index: 38;
+  inset-inline-start: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 7px;
+  border-radius: 999px;
+  background: var(--scu-glass);
+  border: 1px solid var(--scu-line);
+  box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.1), 0 24px 50px -32px #000;
+  backdrop-filter: var(--scu-blur);
+  -webkit-backdrop-filter: var(--scu-blur);
+}
+
+.scu-dock__btn {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  color: hsl(var(--muted-foreground));
+  transition: background 0.2s ease, color 0.2s ease, transform 0.2s var(--ease);
+}
+
+.scu-dock__btn:hover,
+.scu-dock__btn.is-active {
+  background: hsl(var(--muted) / 0.7);
+  color: hsl(var(--foreground));
+}
+
+.scu-dock__btn:active {
+  transform: scale(0.92);
+}
+
+.scu-dock__sep {
+  width: 20px;
+  height: 1px;
+  margin: 3px 0;
+  background: hsl(var(--border));
+}
+
+.scu-dock__tip {
+  position: absolute;
+  inset-inline-start: calc(100% + 12px);
+  top: 50%;
+  transform: translateY(-50%) translateX(-4px);
+  padding: 6px 10px;
+  border-radius: 9px;
+  background: var(--scu-glass-strong);
+  border: 1px solid var(--scu-line);
+  box-shadow: var(--shadow-raised);
+  font-size: 12px;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.16s ease, transform 0.16s var(--ease);
+  backdrop-filter: var(--scu-blur);
+  -webkit-backdrop-filter: var(--scu-blur);
+}
+
+[dir="rtl"] .scu-dock__tip {
+  transform: translateY(-50%) translateX(4px);
+}
+
+.scu-dock__btn:hover .scu-dock__tip,
+.scu-dock__btn:focus-visible .scu-dock__tip {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
+}
+
+/* ---------------------------------- main ---------------------------------- */
+
+.scu-main {
+  padding: 14px var(--scu-gutter) 80px;
+  padding-inline-start: calc(var(--scu-gutter) + 66px);
+  max-width: 1680px;
+  margin: 0 auto;
+}
+
+@media (max-width: 900px) {
+  .scu-dock {
+    display: none;
+  }
+
+  .scu-main {
+    padding-inline-start: var(--scu-gutter);
+    padding-bottom: 48px;
+  }
+
+  .scu-top {
+    gap: 8px;
+    padding: 0 12px;
+  }
+
+  .scu-tabs {
+    justify-content: flex-start;
+    overflow: hidden;
+  }
+
+  .scu-tab {
+    padding: 8px 11px;
+    font-size: 12.5px;
+  }
+
+  .scu-lang {
+    display: none;
+  }
+}
+
+/* -------------------------------- popovers -------------------------------- */
+
+.scu-pop {
+  z-index: 60;
+  min-width: 12rem;
+  border-radius: 16px;
+  border: 1px solid var(--scu-line);
+  background: var(--scu-glass-strong);
+  box-shadow: var(--shadow-raised);
+  backdrop-filter: blur(30px) saturate(140%);
+  -webkit-backdrop-filter: blur(30px) saturate(140%);
+  padding: 6px;
+  color: hsl(var(--foreground));
+  animation: scuMenuIn 0.22s var(--ease) both;
+  transform-origin: top right;
+}
+
+@keyframes scuMenuIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.97);
+  }
+}
+
+.scu-pop__item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 600;
+  color: hsl(var(--muted-foreground));
+  cursor: pointer;
+  outline: none;
+  transition: background 0.16s ease, color 0.16s ease;
+}
+
+.scu-pop__item:hover,
+.scu-pop__item:focus {
+  background: hsl(var(--muted) / 0.7);
+  color: hsl(var(--foreground));
+}
+
+.scu-pop__item--danger {
+  color: hsl(var(--destructive));
+}
+
+.scu-pop__sep {
+  display: block;
+  height: 1px;
+  margin: 4px 6px;
+  background: hsl(var(--border));
+}
+
+.scu-pop__head {
+  padding: 8px 10px 6px;
+}
+
+.scu-pop__head strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.scu-pop__head span {
+  display: block;
+  margin-top: 1px;
+  font-size: 11px;
+  color: hsl(var(--muted-foreground));
+}
+
+/* ------------------------------ page heads -------------------------------- */
+
+.scu-page-title {
+  font-size: clamp(30px, 3.4vw, 42px);
+  font-weight: 600;
+  letter-spacing: -0.045em;
+  line-height: 1.03;
+}
+
+/* Softens the legacy navy hero sections into Solvik panels. */
+.scu-hero-panel {
+  border-radius: var(--radius);
+  border: 1px solid var(--scu-line);
+  background: var(--scu-glass);
+  box-shadow: var(--shadow-card);
+  backdrop-filter: var(--scu-blur);
+  -webkit-backdrop-filter: var(--scu-blur);
+}
+
+/* ------------------------------------------------------------------
+   Kit details — the small Solvik styles that carry the feel:
+   pill search, segmented control, chips, keycaps, avatar tints,
+   link buttons, press/lift feedback and the shimmer placeholder.
+------------------------------------------------------------------- */
+
+/* Search sits in the field like Solvik's .search: a sunken pill with the
+   glyph inside and a soft accent rim on focus instead of a hard ring. */
+.scu-search input[type="search"] {
+  height: 2.375rem;
+  border-radius: 999px;
+  background: hsl(var(--muted) / 0.5);
+  border-color: var(--scu-line);
+  font-size: 13px;
+  font-weight: 550;
+  padding-inline: 2.35rem;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.25s ease;
+}
+
+.scu-search input[type="search"]::-webkit-search-cancel-button {
+  display: none;
+}
+
+.scu-search input[type="search"]:focus-visible {
+  background: hsl(var(--card) / 0.92);
+  border-color: hsl(var(--primary) / 0.45);
+  box-shadow: 0 0 0 3px hsl(var(--primary) / 0.16);
+  outline: none;
+}
+
+.scu-search:focus-within > svg {
+  color: hsl(var(--primary));
+}
+
+/* Segmented control (.seg) */
+.scu-seg {
+  gap: 2px;
+  padding: 3px;
+  border-radius: 999px;
+  background: hsl(var(--muted) / 0.6);
+  border: 1px solid var(--scu-line);
+}
+
+.scu-seg [role="tab"] {
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 650;
+  color: hsl(var(--muted-foreground));
+  transition:
+    background 0.22s ease,
+    color 0.22s ease,
+    box-shadow 0.22s ease;
+}
+
+.scu-seg [role="tab"]:hover {
+  color: hsl(var(--foreground));
+}
+
+.scu-seg [role="tab"][data-state="active"] {
+  background: hsl(var(--card) / 0.95);
+  color: hsl(var(--primary));
+  box-shadow:
+    0 6px 14px -10px #000,
+    inset 0 1px 0 hsl(var(--border));
+}
+
+/* Chips and legacy badges share the pill treatment (.chip / .badge) */
+.scu-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 650;
+  line-height: 1.5;
+  white-space: nowrap;
+  text-transform: capitalize;
+}
+
+/* Keycap hints used in the command palette. */
+.scu-kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 6px;
+  border: 1px solid var(--scu-line);
+  border-bottom-width: 2px;
+  background: hsl(var(--muted) / 0.6);
+  font-family: inherit;
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 1;
+  color: hsl(var(--muted-foreground));
+}
+
+/* Avatar tints — deterministic variety without a dependency. */
+.scu-avatar {
+  display: inline-grid;
+  place-items: center;
+  border-radius: 999px;
+  font-weight: 750;
+  letter-spacing: 0.02em;
+  color: #0d1a12;
+  background: hsl(var(--avatar-tint, 211 78% 72%));
+  border: 1px solid hsl(0 0% 100% / 0.3);
+  flex: none;
+  line-height: 1;
+  user-select: none;
+}
+
+.scu-avatar[data-tone="1"] { --avatar-tint: 211 78% 72%; }
+.scu-avatar[data-tone="2"] { --avatar-tint: 168 55% 68%; }
+.scu-avatar[data-tone="3"] { --avatar-tint: 42 82% 70%; }
+.scu-avatar[data-tone="4"] { --avatar-tint: 262 70% 80%; }
+.scu-avatar[data-tone="5"] { --avatar-tint: 344 78% 78%; }
+.scu-avatar[data-tone="6"] { --avatar-tint: 197 86% 70%; }
+
+/* Underlined inline action (.linkbtn) */
+.scu-linkbtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12.5px;
+  font-weight: 650;
+  color: hsl(var(--primary));
+  text-decoration: none;
+}
+
+.scu-linkbtn:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.scu-linkbtn svg {
+  transition: transform 0.2s var(--ease);
+}
+
+.scu-linkbtn:hover svg {
+  transform: translateX(2px);
+}
+
+[dir="rtl"] .scu-linkbtn:hover svg {
+  transform: translateX(-2px);
+}
+
+/* Interactive surfaces: lift on hover, compress on press. Transform only,
+   so nothing reflows and no neighbouring card moves. */
+.scu-lift {
+  transition:
+    transform 0.3s var(--ease),
+    box-shadow 0.3s ease,
+    border-color 0.3s ease;
+}
+
+@media (hover: hover) {
+  .scu-lift:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-raised);
+    border-color: hsl(var(--primary) / 0.26);
+  }
+}
+
+.scu-lift:active {
+  transform: translateY(-1px) scale(0.995);
+}
+
+.scu-press:active {
+  transform: scale(0.97);
+}
+
+/* Shimmer placeholder. */
+.scu-skeleton {
+  position: relative;
+  overflow: hidden;
+  border-radius: 10px;
+  background: hsl(var(--muted) / 0.85);
+}
+
+.scu-skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    hsl(0 0% 100% / 0.14),
+    transparent
+  );
+  animation: scuShimmer 1.7s ease-in-out infinite;
+}
+
+:root:not(.dark) .scu-skeleton::after {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    hsl(0 0% 100% / 0.7),
+    transparent
+  );
+}
+
+@keyframes scuShimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Feedback motion: a settled field and a rejected one. */
+.scu-valid {
+  animation: scuValid 0.45s var(--ease);
+}
+
+@keyframes scuValid {
+  0% {
+    transform: translateY(-3px);
+    opacity: 0.4;
+  }
+  60% {
+    transform: translateY(1px);
+    opacity: 1;
+  }
+  100% {
+    transform: none;
+  }
+}
+
+.scu-invalid {
+  animation: scuInvalid 0.4s ease;
+}
+
+@keyframes scuInvalid {
+  20% {
+    transform: translateX(-4px);
+  }
+  45% {
+    transform: translateX(4px);
+  }
+  70% {
+    transform: translateX(-2px);
+  }
+  100% {
+    transform: none;
+  }
+}
+
+.scu-toast {
+  animation: scuToastIn 0.32s var(--ease) both;
+}
+
+@keyframes scuToastIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.97);
+  }
+}
+
+/* Empty-state plate: dashed accent ring, softer than a solid grey disc. */
+.scu-empty__plate {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  border-radius: 18px;
+  border: 1px dashed hsl(var(--primary) / 0.38);
+  background: hsl(var(--primary) / 0.07);
+  color: hsl(var(--primary));
+}
+
+/* Thin, themed scrollbars (the kit's tables and rails use them). */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--border)) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--input));
+  background-clip: content-box;
+}
+
+::selection {
+  background: hsl(var(--primary) / 0.28);
+}
+
+/* Accent picker option in Settings. */
+.scu-accent-option:has(input:checked) {
+  box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.06);
+}
+
+/* ------------------------------- narrow screens --------------------------- */
+
+@media (max-width: 640px) {
+  /* Two rows: identity + tools on top, the whole rail underneath. Squeezing the
+     rail between them clips a tab mid-word and hides the More trigger. */
+  .scu-top {
+    flex-wrap: wrap;
+    height: auto;
+    gap: 6px;
+    padding: 8px 10px 6px;
+    row-gap: 2px;
+  }
+
+  .scu-brand {
+    flex: 1 1 auto;
+  }
+
+  .scu-tabs {
+    order: 3;
+    flex: 1 1 100%;
+    justify-content: flex-start;
+    padding-bottom: 6px;
+  }
+
+  .scu-tabs__track {
+    margin-inline: 0;
+  }
+
+  .scu-tabs__viewport {
+    scroll-padding-inline: 8px;
+  }
+
+  .scu-main {
+    padding-inline: 12px;
+    padding-inline-start: 12px;
+    padding-top: 8px;
+  }
+
+  .scu-tab {
+    padding: 7px 10px;
+    font-size: 12px;
+  }
+
+  .scu-tools {
+    gap: 4px;
+  }
+
+  .scu-icon,
+  .scu-me {
+    width: 34px;
+    height: 34px;
+  }
+
+  .scu-page-title {
+    font-size: clamp(26px, 8vw, 32px);
+    line-height: 1.08;
+  }
+
+  .scu-dock {
+    display: none;
+  }
+}
+
+@media (max-width: 400px) {
+  .scu-brand__mark {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+  }
+
+  .scu-tab {
+    padding: 7px 9px;
+  }
+}
+
+/* ------------------------------ reduced motion ---------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .scu-skeleton::after {
+    animation: none;
+    transform: none;
+    opacity: 0;
+  }
+
+  .scu-lift:hover,
+  .scu-lift:active,
+  .scu-press:active {
+    transform: none;
+  }
+
+  .scu-valid,
+  .scu-invalid,
+  .scu-toast {
+    animation: none !important;
+  }
+
+  .scu-linkbtn:hover svg {
+    transform: none;
+  }
+
+  .scu-dock__tip,
+  .scu-icon,
+  .scu-me {
+    transition: none !important;
+  }
+}
+
+/* Between 900 and 1280 the wordmark and the full rail compete for the same
+   row; the rail wins, because truncating navigation is worse than a seal-only
+   masthead. */
+@media (min-width: 641px) and (max-width: 1279px) {
+  .scu-brand__text {
+    display: none;
+  }
+}

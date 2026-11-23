@@ -1,0 +1,2097 @@
+{
+  "source": "docs/scu-timetable-reference.json",
+  "source_sha256": "91a36ccea191b0e205f828e138eb5d4d3afe3b9a0ae2aa46b442decc0eeb95d4",
+  "periods": [
+    {
+      "source_id": "2026-autumn",
+      "name": "2026 Autumn",
+      "name_zh": "2026秋季",
+      "offerings": [
+        {
+          "source_id": "chinese-elementary-2026a",
+          "name": "Chinese Language (Elementary Level) 1",
+          "name_zh": "初级汉语言文学（国际）1",
+          "schedule_rows": 3,
+          "subjects": [
+            {
+              "name": "Chinese Language",
+              "rows": 3,
+              "section_key": "ref:v1:section:ca3eee001d167c63c508",
+              "delivery": "exclusive",
+              "shared_with": []
+            }
+          ]
+        },
+        {
+          "source_id": "chinese-intermediate-2026a",
+          "name": "Chinese Language (Intermediate Level) 1",
+          "name_zh": "中级汉语言文学（国际）1",
+          "schedule_rows": 3,
+          "subjects": [
+            {
+              "name": "Chinese Language",
+              "rows": 3,
+              "section_key": "ref:v1:section:d1d486f9e2d28b85932f",
+              "delivery": "exclusive",
+              "shared_with": []
+            }
+          ]
+        },
+        {
+          "source_id": "ai-2026a",
+          "name": "Artificial Intelligence (International) 1",
+          "name_zh": "人工智能（国际）1",
+          "schedule_rows": 4,
+          "subjects": [
+            {
+              "name": "Chinese Language",
+              "rows": 2,
+              "section_key": "ref:v1:section:006815c6eddba07f37c6",
+              "delivery": "shared",
+              "shared_with": [
+                "business-2026a",
+                "civil-2026a",
+                "cs-2026a"
+              ]
+            },
+            {
+              "name": "Introduction to the Major",
+              "rows": 1,
+              "section_key": "ref:v1:section:083707aa1428c6e8bbfc",
+              "delivery": "exclusive",
+              "shared_with": []
+            },
+            {
+              "name": "Advanced Mathematics (A) 1",
+              "rows": 1,
+              "section_key": "ref:v1:section:866b54b20860e34c43b2",
+              "delivery": "shared",
+              "shared_with": [
+                "business-2026a",
+                "civil-2026a",
+                "cs-2026a"
+              ]
+            }
+          ]
+        },
+        {
+          "source_id": "civil-2026a",
+          "name": "Civil Engineering (International) 1",
+          "name_zh": "土木工程（国际）1",
+          "schedule_rows": 4,
+          "subjects": [
+            {
+              "name": "Chinese Language",
+              "rows": 2,
+              "section_key": "ref:v1:section:006815c6eddba07f37c6",
+              "delivery": "shared",
+              "shared_with": [
+                "ai-2026a",
+                "business-2026a",
+                "cs-2026a"
+              ]
+            },
+            {
+              "name": "Introduction to the Major",
+              "rows": 1,
+              "section_key": "ref:v1:section:0d226101ebc3e831f8cc",
+              "delivery": "exclusive",
+              "shared_with": []
+            },
+            {
+              "name": "Advanced Mathematics (A) 1",
+              "rows": 1,
+              "section_key": "ref:v1:section:866b54b20860e34c43b2",
+              "delivery": "shared",
+              "shared_with": [
+                "ai-2026a",
+                "business-2026a",
+                "cs-2026a"
+              ]
+            }
+          ]
+        },
+        {
+          "source_id": "business-2026a",
+          "name": "Business Administration (International) 1",
+          "name_zh": "工商管理（国际）1",
+          "schedule_rows": 4,
+          "subjects": [
+            {
+              "name": "Chinese Language",
+              "rows": 2,
+              "section_key": "ref:v1:section:006815c6eddba07f37c6",
+              "delivery": "shared",
+              "shared_with": [
+                "ai-2026a",
+                "civil-2026a",
+                "cs-2026a"
+              ]
+            },
+            {
+              "name": "Introduction to the Major",
+              "rows": 1,
+              "section_key": "ref:v1:section:81922c31678aaac0cb02",
+              "delivery": "exclusive",
+              "shared_with": []
+            },
+            {
+              "name": "Advanced Mathematics (A) 1",
+              "rows": 1,
+              "section_key": "ref:v1:section:866b54b20860e34c43b2",
+              "delivery": "shared",
+              "shared_with": [
+                "ai-2026a",
+                "civil-2026a",
+                "cs-2026a"
+              ]
+            }
+          ]
+        },
+        {
+          "source_id": "cs-2026a",
+          "name": "Computer Science and Technology (International) 1",
+          "name_zh": "计算机科学与技术（国际）1",
+          "schedule_rows": 5,
+          "subjects": [
+            {
+              "name": "Chinese Language",
+              "rows": 2,
+              "section_key": "ref:v1:section:006815c6eddba07f37c6",
+              "delivery": "shared",
+              "shared_with": [
+                "ai-2026a",
+                "business-2026a",
+                "civil-2026a"
+              ]
+            },
+            {
+              "name": "Introduction to the Major (Group 2)",
+              "rows": 1,
+              "section_key": "ref:v1:section:0f469177db9393732656",
+              "delivery": "exclusive",
+              "shared_with": []
+            },
+            {
+              "name": "Advanced Mathematics (A) 1",
+              "rows": 1,
+              "section_key": "ref:v1:section:866b54b20860e34c43b2",
+              "delivery": "shared",
+              "shared_with": [
+                "ai-2026a",
+                "business-2026a",
+                "civil-2026a"
+              ]
+            },
+            {
+              "name": "Introduction to the Major (Group 1)",
+              "rows": 1,
+              "section_key": "ref:v1:section:3c722ac84007113ae7a7",
+              "delivery": "exclusive",
+              "shared_with": []
+            }
+          ]
+        }
+      ],
+      "sections": [
+        {
+          "period": "2026-autumn",
+          "course": "Advanced Mathematics (A) 1",
+          "offerings": [
+            "ai-2026a",
+            "business-2026a",
+            "civil-2026a",
+            "cs-2026a"
+          ],
+          "sessions": [
+            {
+              "day": "Thursday",
+              "slot": "5-8",
+              "location": "G310"
+            }
+          ],
+          "source_key": "ref:v1:section:866b54b20860e34c43b2",
+          "shared": true,
+          "held": false
+        },
+        {
+          "period": "2026-autumn",
+          "course": "Chinese Language",
+          "offerings": [
+            "ai-2026a",
+            "business-2026a",
+            "civil-2026a",
+            "cs-2026a"
+          ],
+          "sessions": [
+            {
+              "day": "Monday",
+              "slot": "1-2",
+              "location": "G410"
+            },
+            {
+              "day": "Wednesday",
+              "slot": "7-8",
+              "location": "G310"
+            }
+          ],
+          "source_key": "ref:v1:section:006815c6eddba07f37c6",
+          "shared": true,
+          "held": false
+        },
+        {
+          "period": "2026-autumn",
+          "course": "Chinese Language",
+          "offerings": [
+            "chinese-elementary-2026a"
+          ],
+          "sessions": [
+            {
+              "day": "Monday",
+              "slot": "5-8",
+              "location": "N107"
+            },
+            {
+              "day": "Thursday",
+              "slot": "1-4",
+              "location": "N106"
+            },
+            {
+              "day": "Tuesday",
+              "slot": "5-8",
+              "location": "N107"
+            }
+          ],
+          "source_key": "ref:v1:section:ca3eee001d167c63c508",
+          "shared": false,
+          "held": false
+        },
+        {
+          "period": "2026-autumn",
+          "course": "Chinese Language",
+          "offerings": [
+            "chinese-intermediate-2026a"
+          ],
+          "sessions": [
+            {
+              "day": "Friday",
+              "slot": "1-4",
+              "location": "N107"
+            },
+            {
+              "day": "Monday",
+              "slot": "1-4",
+              "location": "N107"
+            },
+            {
+              "day": "Wednesday",
+              "slot": "5-8",
+              "location": "N107"
+            }
+          ],
+          "source_key": "ref:v1:section:d1d486f9e2d28b85932f",
+          "shared": false,
+          "held": false
+        },
+        {
+          "period": "2026-autumn",
+          "course": "Introduction to the Major",
+          "offerings": [
+            "ai-2026a"
+          ],
+          "sessions": [
+            {
+              "day": "Wednesday",
+              "slot": "5-6",
+              "location": "G309"
+            }
+          ],
+          "source_key": "ref:v1:section:083707aa1428c6e8bbfc",
+          "shared": false,
+          "held": false
+        },
+        {
+          "period": "2026-autumn",
+          "course": "Introduction to the Major",
+          "offerings": [
+            "civil-2026a"
+          ],
+          "sessions": [
+            {
+              "day": "Tuesday",
+              "slot": "5-6",
+              "location": "G315"
+            }
+          ],
+          "source_key": "ref:v1:section:0d226101ebc3e831f8cc",
+          "shared": false,
+          "held": false
+        },
+        {
+          "period": "2026-autumn",
+          "course": "Introduction to the Major",
+          "offerings": [
+            "business-2026a"
+          ],
+          "sessions": [
+            {
+              "day": "Monday",
+              "slot": "5-6",
+              "location": "G410"
+            }
+          ],
+          "source_key": "ref:v1:section:81922c31678aaac0cb02",
+          "shared": false,
+          "held": false
+        },
+        {
+          "period": "2026-autumn",
+          "course": "Introduction to the Major (Group 1)",
+          "offerings": [
+            "cs-2026a"
+          ],
+          "sessions": [
+            {
+              "day": "Monday",
+              "slot": "5-6",
+              "location": "G315"
+            }
+          ],
+          "source_key": "ref:v1:section:3c722ac84007113ae7a7",
+          "shared": false,
+          "held": false
+        },
+        {
+          "period": "2026-autumn",
+          "course": "Introduction to the Major (Group 2)",
+          "offerings": [
+            "cs-2026a"
+          ],
+          "sessions": [
+            {
+              "day": "Wednesday",
+              "slot": "5-6",
+              "location": "G315"
+            }
+          ],
+          "source_key": "ref:v1:section:0f469177db9393732656",
+          "shared": false,
+          "held": false
+        }
+      ]
+    },
+    {
+      "source_id": "2026-spring",
+      "name": "2026 Spring",
+      "name_zh": "2026春季",
+      "offerings": [
+        {
+          "source_id": "civil-engineering-2026s",
+          "name": "Civil Engineering (International) 1",
+          "name_zh": "土木工程（国际）1",
+          "schedule_rows": 7,
+          "subjects": [
+            {
+              "name": "Architectural Mechanics (International)",
+              "rows": 2,
+              "section_key": "ref:v1:section:f55345e90e5648c85bbe",
+              "delivery": "exclusive",
+              "shared_with": []
+            },
+            {
+              "name": "Chinese, Major 1-2 (International)",
+              "rows": 1,
+              "section_key": "ref:v1:section:ecfbfb8b0649fe4fb9ea",
+              "delivery": "shared",
+              "shared_with": [
+                "ai-2026s",
+                "business-2026s",
+                "cs-2026s"
+              ]
+            },
+            {
+              "name": "Civil Engineering Drawing (International)",
+              "rows": 2,
+              "section_key": "ref:v1:section:96d3623b2f2522083701",
+              "delivery": "exclusive",
+              "shared_with": []
+            },
+            {
+              "name": "University Physics A 1 (International)",
+              "rows": 1,
+              "section_key": "ref:v1:section:17bfebc7714fdef97beb",
+              "delivery": "shared",
+              "shared_with": [
+                "ai-2026s",
+                "cs-2026s"
+              ]
+            },
+            {
+              "name": "MATHS (A2) (International)",
+              "rows": 1,
+              "section_key": "ref:v1:section:f5b5ecfb8ca150a82568",
+              "delivery": "shared",
+              "shared_with": [
+                "ai-2026s",
+                "business-2026s",
+                "cs-2026s"
+              ]
+            }
+          ]
+        },
+        {
+          "source_id": "ai-2026s",
+          "name": "Artificial Intelligence (International) 1",
+          "name_zh": "人工智能（国际）1",
+          "schedule_rows": 7,
+          "subjects": [
+            {
+              "name": "Python Programming (International)",
+              "rows": 2,
+              "section_key": "ref:v1:section:db0fad16f1abbd622b3f",
+              "delivery": "exclusive",
+              "shared_with": []
+            },
+            {
+              "name": "Prompt Engineering (International)",
+              "rows": 2,
+              "section_key": "ref:v1:section:423235516af30c85b346",
+              "delivery": "exclusive",
+              "shared_with": []
+            },
+            {
+              "name": "Chinese, Major 1-2 (International)",
+              "rows": 1,
+              "section_key": "ref:v1:section:ecfbfb8b0649fe4fb9ea",
+              "delivery": "shared",
+              "shared_with": [
+                "business-2026s",
+                "civil-engineering-2026s",
+                "cs-2026s"
+              ]
+            },
+            {
+              "name": "University Physics A 1 (International)",
+              "rows": 1,
+              "section_key": "ref:v1:section:17bfebc7714fdef97beb",
+              "delivery": "shared",
+              "shared_with": [
+                "civil-engineering-2026s",
+                "cs-2026s"
+              ]
+            },
+            {
+              "name": "MATHS (A2) (International)",
+              "rows": 1,
+              "section_key": "ref:v1:section:f5b5ecfb8ca150a82568",
+              "delivery": "shared",
+              "shared_with": [
+                "business-2026s",
+                "civil-engineering-2026s",
+                "cs-2026s"
+              ]
+            }
+          ]
+        },
+        {
+          "source_id": "cs-2026s",
+          "name": "Computer Science and Technology (International) 1",
+          "name_zh": "计算机科学与技术（国际）1",
+          "schedule_rows": 8,
+          "subjects": [
+            {
+              "name": "Fundamentals of Programming (International)",
+              "rows": 1,
+              "section_key": "ref:v1:section:6c0ec4dd7daafe325d13",
+              "delivery": "exclusive",
+              "shared_with": []
+            },
+            {
+              "name": "Chinese, Major 1-2 (International)",
+              "rows": 1,
+              "section_key": "ref:v1:section:ecfbfb8b0649fe4fb9ea",
+              "delivery": "shared",
+              "shared_with": [
+                "ai-2026s",
+                "business-2026s",
+                "civil-engineering-2026s"
+              ]
+            },
+            {
+              "name": "Discrete Mathematics (International)",
+              "rows": 2,
+              "section_key": "ref:v1:section:4d6558ba9649b3b9c743",
+              "delivery": "exclusive",
+              "shared_with": []
+            },
+            {
+              "name": "University Physics A 1 (International)",
+              "rows": 1,
+              "section_key": "ref:v1:section:17bfebc7714fdef97beb",
+              "delivery": "shared",
+              "shared_with": [
+                "ai-2026s",
+                "civil-engineering-2026s"
+              ]
+            },
+            {
+              "name": "MATHS (A2) (International)",
+              "rows": 1,
+              "section_key": "ref:v1:section:f5b5ecfb8ca150a82568",
+              "delivery": "shared",
+              "shared_with": [
+                "ai-2026s",
+                "business-2026s",
+                "civil-engineering-2026s"
+              ]
+            },
+            {
+              "name": "Digital Electronic Technology",
+              "rows": 2,
+              "section_key": "ref:v1:section:276c1eca28c0bf95889f",
+              "delivery": "exclusive",
+              "shared_with": []
+            }
+          ]
+        },
+        {
+          "source_id": "chinese-lit-2026s",
+          "name": "Chinese Language and Literature (International) 1",
+          "name_zh": "汉语言文学（国际）1",
+          "schedule_rows": 3,
+          "subjects": [
+            {
+              "name": "Chinese, Major 1-2 (International)",
+              "rows": 3,
+              "section_key": "ref:v1:section:ec8ba49b25d82bc7a34e",
+              "delivery": "exclusive",
+              "shared_with": []
+            }
+          ]
+        },
+        {
+          "source_id": "business-2026s",
+          "name": "Business Administration (International) 1",
+          "name_zh": "工商管理（国际）1",
+          "schedule_rows": 5,
+          "subjects": [
+            {
+              "name": "Management (International)",
+              "rows": 1,
+              "section_key": "ref:v1:section:4c6835e32af575f4d12c",
+              "delivery": "exclusive",
+              "shared_with": []
+            },
+            {
+              "name": "Human Resource Management (International)",
+              "rows": 2,
+              "section_key": "ref:v1:section:4fb87df7bf87e94de6a9",
+              "delivery": "exclusive",
+              "shared_with": []
+            },
+            {
+              "name": "Chinese, Major 1-2 (International)",
+              "rows": 1,
+              "section_key": "ref:v1:section:ecfbfb8b0649fe4fb9ea",
+              "delivery": "shared",
+              "shared_with": [
+                "ai-2026s",
+                "civil-engineering-2026s",
+                "cs-2026s"
+              ]
+            },
+            {
+              "name": "MATHS (A2) (International)",
+              "rows": 1,
+              "section_key": "ref:v1:section:f5b5ecfb8ca150a82568",
+              "delivery": "shared",
+              "shared_with": [
+                "ai-2026s",
+                "civil-engineering-2026s",
+                "cs-2026s"
+              ]
+            }
+          ]
+        }
+      ],
+      "sections": [
+        {
+          "period": "2026-spring",
+          "course": "Architectural Mechanics (International)",
+          "offerings": [
+            "civil-engineering-2026s"
+          ],
+          "sessions": [
+            {
+              "day": "Monday",
+              "slot": "5-8",
+              "location": "N301"
+            },
+            {
+              "day": "Tuesday",
+              "slot": "5-8",
+              "location": "N301"
+            }
+          ],
+          "source_key": "ref:v1:section:f55345e90e5648c85bbe",
+          "shared": false,
+          "held": false
+        },
+        {
+          "period": "2026-spring",
+          "course": "Chinese, Major 1-2 (International)",
+          "offerings": [
+            "chinese-lit-2026s"
+          ],
+          "sessions": [
+            {
+              "day": "Monday",
+              "slot": "5-8",
+              "location": "N106"
+            },
+            {
+              "day": "Tuesday",
+              "slot": "5-8",
+              "location": "N106"
+            },
+            {
+              "day": "Wednesday",
+              "slot": "5-6",
+              "location": "N106"
+            }
+          ],
+          "source_key": "ref:v1:section:ec8ba49b25d82bc7a34e",
+          "shared": false,
+          "held": false
+        },
+        {
+          "period": "2026-spring",
+          "course": "Chinese, Major 1-2 (International)",
+          "offerings": [
+            "ai-2026s",
+            "business-2026s",
+            "civil-engineering-2026s",
+            "cs-2026s"
+          ],
+          "sessions": [
+            {
+              "day": "Wednesday",
+              "slot": "1-4",
+              "location": "N106"
+            }
+          ],
+          "source_key": "ref:v1:section:ecfbfb8b0649fe4fb9ea",
+          "shared": true,
+          "held": false
+        },
+        {
+          "period": "2026-spring",
+          "course": "Civil Engineering Drawing (International)",
+          "offerings": [
+            "civil-engineering-2026s"
+          ],
+          "sessions": [
+            {
+              "day": "Thursday",
+              "slot": "1-4",
+              "location": "N301"
+            },
+            {
+              "day": "Wednesday",
+              "slot": "5-8",
+              "location": "N301"
+            }
+          ],
+          "source_key": "ref:v1:section:96d3623b2f2522083701",
+          "shared": false,
+          "held": false
+        },
+        {
+          "period": "2026-spring",
+          "course": "Digital Electronic Technology",
+          "offerings": [
+            "cs-2026s"
+          ],
+          "sessions": [
+            {
+              "day": "Thursday",
+              "slot": "3-4",
+              "location": "N302"
+            },
+            {
+              "day": "Tuesday",
+              "slot": "3-4",
+              "location": "N302"
+            }
+          ],
+          "source_key": "ref:v1:section:276c1eca28c0bf95889f",
+          "shared": false,
+          "held": false
+        },
+        {
+          "period": "2026-spring",
+          "course": "Discrete Mathematics (International)",
+          "offerings": [
+            "cs-2026s"
+          ],
+          "sessions": [
+            {
+              "day": "Friday",
+              "slot": "5-6",
+              "location": "N105"
+            },
+            {
+              "day": "Wednesday",
+              "slot": "5-6",
+              "location": "N105"
+            }
+          ],
+          "source_key": "ref:v1:section:4d6558ba9649b3b9c743",
+          "shared": false,
+          "held": false
+        },
+        {
+          "period": "2026-spring",
+          "course": "Fundamentals of Programming (International)",
+          "offerings": [
+            "cs-2026s"
+          ],
+          "sessions": [
+            {
+              "day": "Tuesday",
+              "slot": "5-8",
+              "location": "N103"
+            }
+          ],
+          "source_key": "ref:v1:section:6c0ec4dd7daafe325d13",
+          "shared": false,
+          "held": false
+        },
+        {
+          "period": "2026-spring",
+          "course": "Human Resource Management (International)",
+          "offerings": [
+            "business-2026s"
+          ],
+          "sessions": [
+            {
+              "day": "Tuesday",
+              "slot": "5-6",
+              "location": "N104"
+            },
+            {
+              "day": "Tuesday",
+              "slot": "7",
+              "location": "N104"
+            }
+          ],
+          "source_key": "ref:v1:section:4fb87df7bf87e94de6a9",
+          "shared": false,
+          "held": false
+        },
+        {
+          "period": "2026-spring",
+          "course": "MATHS (A2) (International)",
+          "offerings": [
+            "ai-2026s",
+            "business-2026s",
+            "civil-engineering-2026s",
+            "cs-2026s"
+          ],
+          "sessions": [
+            {
+              "day": "Friday",
+              "slot": "1-4",
+              "location": "N106"
+            }
+          ],
+          "source_key": "ref:v1:section:f5b5ecfb8ca150a82568",
+          "shared": true,
+          "held": false
+        },
+        {
+          "period": "2026-spring",
+          "course": "Management (International)",
+          "offerings": [
+            "business-2026s"
+          ],
+          "sessions": [
+            {
+              "day": "Monday",
+              "slot": "5-6",
+              "location": "N104"
+            }
+          ],
+          "source_key": "ref:v1:section:4c6835e32af575f4d12c",
+          "shared": false,
+          "held": false
+        },
+        {
+          "period": "2026-spring",
+          "course": "Prompt Engineering (International)",
+          "offerings": [
+            "ai-2026s"
+          ],
+          "sessions": [
+            {
+              "day": "Thursday",
+              "slot": "3-4",
+              "location": "N103"
+            },
+            {
+              "day": "Tuesday",
+              "slot": "3-4",
+              "location": "N103"
+            }
+          ],
+          "source_key": "ref:v1:section:423235516af30c85b346",
+          "shared": false,
+          "held": false
+        },
+        {
+          "period": "2026-spring",
+          "course": "Python Programming (International)",
+          "offerings": [
+            "ai-2026s"
+          ],
+          "sessions": [
+            {
+              "day": "Monday",
+              "slot": "5-6",
+              "location": "N302"
+            },
+            {
+              "day": "Tuesday",
+              "slot": "5-6",
+              "location": "N302"
+            }
+          ],
+          "source_key": "ref:v1:section:db0fad16f1abbd622b3f",
+          "shared": false,
+          "held": false
+        },
+        {
+          "period": "2026-spring",
+          "course": "University Physics A 1 (International)",
+          "offerings": [
+            "ai-2026s",
+            "civil-engineering-2026s",
+            "cs-2026s"
+          ],
+          "sessions": [
+            {
+              "day": "Thursday",
+              "slot": "5-8",
+              "location": "N107"
+            }
+          ],
+          "source_key": "ref:v1:section:17bfebc7714fdef97beb",
+          "shared": true,
+          "held": false
+        }
+      ]
+    },
+    {
+      "source_id": "2025-autumn",
+      "name": "2025 Autumn",
+      "name_zh": "2025秋季",
+      "offerings": [
+        {
+          "source_id": "ai-2025a",
+          "name": "Artificial Intelligence (International) 1",
+          "name_zh": "人工智能（国际）1",
+          "schedule_rows": 5,
+          "subjects": [
+            {
+              "name": "AI Ethics (International)",
+              "rows": 2,
+              "section_key": "ref:v1:section:b3781e87f3fe230d6186",
+              "delivery": "held",
+              "shared_with": []
+            },
+            {
+              "name": "Chinese, Major 2-1 (International)",
+              "rows": 2,
+              "section_key": "ref:v1:section:feeccdd0c056db240de2",
+              "delivery": "shared",
+              "shared_with": [
+                "business-2025a",
+                "cs-2025a",
+                "robotics-2025a"
+              ]
+            },
+            {
+              "name": "Prompt Engineering (International)",
+              "rows": 1,
+              "section_key": "ref:v1:section:c4489c8850dfd91fbca5",
+              "delivery": "shared",
+              "shared_with": [
+                "robotics-2025a"
+              ]
+            }
+          ]
+        },
+        {
+          "source_id": "cs-2025a",
+          "name": "Computer Science and Technology (International) 1",
+          "name_zh": "计算机科学与技术（国际）1",
+          "schedule_rows": 5,
+          "subjects": [
+            {
+              "name": "Data Structures and Algorithms (International)",
+              "rows": 1,
+              "section_key": "ref:v1:section:9925cc2345c7b1446b7a",
+              "delivery": "exclusive",
+              "shared_with": []
+            },
+            {
+              "name": "Computer Organization Principles (International)",
+              "rows": 2,
+              "section_key": "ref:v1:section:e81f00eff6e4ca807dc4",
+              "delivery": "exclusive",
+              "shared_with": []
+            },
+            {
+              "name": "Chinese, Major 2-1 (International)",
+              "rows": 2,
+              "section_key": "ref:v1:section:feeccdd0c056db240de2",
+              "delivery": "shared",
+              "shared_with": [
+                "ai-2025a",
+                "business-2025a",
+                "robotics-2025a"
+              ]
+            }
+          ]
+        },
+        {
+          "source_id": "business-2025a",
+          "name": "Business Administration (International) 1",
+          "name_zh": "工商管理（国际）1",
+          "schedule_rows": 7,
+          "subjects": [
+            {
+              "name": "Organizational Behavior (International)",
+              "rows": 1,
+              "section_key": "ref:v1:section:15be152b200c5f48addc",
+              "delivery": "exclusive",
+              "shared_with": []
+            },
+            {
+              "name": "Business and Technology (International)",
+              "rows": 1,
+              "section_key": "ref:v1:section:d1dd8dab20738f4d6232",
+              "delivery": "exclusive",
+              "shared_with": []
+            },
+            {
+              "name": "Human Resource Management (International)",
+              "rows": 2,
+              "section_key": "ref:v1:section:1e7cd6fd797e2370bb54",
+              "delivery": "exclusive",
+              "shared_with": []
+            },
+            {
+              "name": "Chinese, Major 2-1 (International)",
+              "rows": 2,
+              "section_key": "ref:v1:section:feeccdd0c056db240de2",
+              "delivery": "shared",
+              "shared_with": [
+                "ai-2025a",
+                "cs-2025a",
+                "robotics-2025a"
+              ]
+            },
+            {
+              "name": "Microeconomics (International)",
+              "rows": 1,
+              "section_key": "ref:v1:section:8d77ce560b6b0ecb4cd9",
+              "delivery": "exclusive",
+              "shared_with": []
+            }
+          ]
+        },
+        {
+          "source_id": "robotics-2025a",
+          "name": "Robotics Engineering (International) 1",
+          "name_zh": "机器人工程（国际）1",
+          "schedule_rows": 6,
+          "subjects": [
+            {
+              "name": "AI Thinking and Ethics (International)",
+              "rows": 2,
+              "section_key": "ref:v1:section:72b4ca9503f2e4703c88",
+              "delivery": "held",
+              "shared_with": []
+            },
+            {
+              "name": "Fundamentals of Electronic Technology (International)",
+              "rows": 1,
+              "section_key": "ref:v1:section:5b7981573088f2d0a107",
+              "delivery": "exclusive",
+              "shared_with": []
+            },
+            {
+              "name": "Chinese, Major 2-1 (International)",
+              "rows": 2,
+              "section_key": "ref:v1:section:feeccdd0c056db240de2",
+              "delivery": "shared",
+              "shared_with": [
+                "ai-2025a",
+                "business-2025a",
+                "cs-2025a"
+              ]
+            },
+            {
+              "name": "Prompt Engineering (International)",
+              "rows": 1,
+              "section_key": "ref:v1:section:c4489c8850dfd91fbca5",
+              "delivery": "shared",
+              "shared_with": [
+                "ai-2025a"
+              ]
+            }
+          ]
+        }
+      ],
+      "sections": [
+        {
+          "period": "2025-autumn",
+          "course": "AI Ethics (International)",
+          "offerings": [
+            "ai-2025a"
+          ],
+          "sessions": [
+            {
+              "day": "Monday",
+              "slot": "3-4",
+              "location": "N103"
+            },
+            {
+              "day": "Wednesday",
+              "slot": "3-4",
+              "location": "N103"
+            }
+          ],
+          "source_key": "ref:v1:section:b3781e87f3fe230d6186",
+          "shared": false,
+          "held": true
+        },
+        {
+          "period": "2025-autumn",
+          "course": "AI Thinking and Ethics (International)",
+          "offerings": [
+            "robotics-2025a"
+          ],
+          "sessions": [
+            {
+              "day": "Monday",
+              "slot": "3-4",
+              "location": "N103"
+            },
+            {
+              "day": "Wednesday",
+              "slot": "3-4",
+              "location": "N103"
+            }
+          ],
+          "source_key": "ref:v1:section:72b4ca9503f2e4703c88",
+          "shared": false,
+          "held": true
+        },
+        {
+          "period": "2025-autumn",
+          "course": "Business and Technology (International)",
+          "offerings": [
+            "business-2025a"
+          ],
+          "sessions": [
+            {
+              "day": "Tuesday",
+              "slot": "3-4",
+              "location": "N104"
+            }
+          ],
+          "source_key": "ref:v1:section:d1dd8dab20738f4d6232",
+          "shared": false,
+          "held": false
+        },
+        {
+          "period": "2025-autumn",
+          "course": "Chinese, Major 2-1 (International)",
+          "offerings": [
+            "ai-2025a",
+            "business-2025a",
+            "cs-2025a",
+            "robotics-2025a"
+          ],
+          "sessions": [
+            {
+              "day": "Thursday",
+              "slot": "3-4",
+              "location": "N107"
+            },
+            {
+              "day": "Wednesday",
+              "slot": "1-2",
+              "location": "N107"
+            }
+          ],
+          "source_key": "ref:v1:section:feeccdd0c056db240de2",
+          "shared": true,
+          "held": false
+        },
+        {
+          "period": "2025-autumn",
+          "course": "Computer Organization Principles (International)",
+          "offerings": [
+            "cs-2025a"
+          ],
+          "sessions": [
+            {
+              "day": "Friday",
+              "slot": "3-4",
+              "location": "N302"
+            },
+            {
+              "day": "Tuesday",
+              "slot": "3-4",
+              "location": "N302"
+            }
+          ],
+          "source_key": "ref:v1:section:e81f00eff6e4ca807dc4",
+          "shared": false,
+          "held": false
+        },
+        {
+          "period": "2025-autumn",
+          "course": "Data Structures and Algorithms (International)",
+          "offerings": [
+            "cs-2025a"
+          ],
+          "sessions": [
+            {
+              "day": "Monday",
+              "slot": "1-4",
+              "location": "N104"
+            }
+          ],
+          "source_key": "ref:v1:section:9925cc2345c7b1446b7a",
+          "shared": false,
+          "held": false
+        },
+        {
+          "period": "2025-autumn",
+          "course": "Fundamentals of Electronic Technology (International)",
+          "offerings": [
+            "robotics-2025a"
+          ],
+          "sessions": [
+            {
+              "day": "Tuesday",
+              "slot": "5-8",
+              "location": "N105"
+            }
+          ],
+          "source_key": "ref:v1:section:5b7981573088f2d0a107",
+          "shared": false,
+          "held": false
+        },
+        {
+          "period": "2025-autumn",
+          "course": "Human Resource Management (International)",
+          "offerings": [
+            "business-2025a"
+          ],
+          "sessions": [
+            {
+              "day": "Tuesday",
+              "slot": "5-6",
+              "location": "N104"
+            },
+            {
+              "day": "Tuesday",
+              "slot": "7",
+              "location": "N104"
+            }
+          ],
+          "source_key": "ref:v1:section:1e7cd6fd797e2370bb54",
+          "shared": false,
+          "held": false
+        },
+        {
+          "period": "2025-autumn",
+          "course": "Microeconomics (International)",
+          "offerings": [
+            "business-2025a"
+          ],
+          "sessions": [
+            {
+              "day": "Wednesday",
+              "slot": "3-4",
+              "location": "N104"
+            }
+          ],
+          "source_key": "ref:v1:section:8d77ce560b6b0ecb4cd9",
+          "shared": false,
+          "held": false
+        },
+        {
+          "period": "2025-autumn",
+          "course": "Organizational Behavior (International)",
+          "offerings": [
+            "business-2025a"
+          ],
+          "sessions": [
+            {
+              "day": "Monday",
+              "slot": "5-6",
+              "location": "N105"
+            }
+          ],
+          "source_key": "ref:v1:section:15be152b200c5f48addc",
+          "shared": false,
+          "held": false
+        },
+        {
+          "period": "2025-autumn",
+          "course": "Prompt Engineering (International)",
+          "offerings": [
+            "ai-2025a",
+            "robotics-2025a"
+          ],
+          "sessions": [
+            {
+              "day": "Thursday",
+              "slot": "5-8",
+              "location": "N103"
+            }
+          ],
+          "source_key": "ref:v1:section:c4489c8850dfd91fbca5",
+          "shared": true,
+          "held": false
+        }
+      ]
+    }
+  ],
+  "shared_sections": [
+    {
+      "period": "2025-autumn",
+      "course": "Chinese, Major 2-1 (International)",
+      "offerings": [
+        "ai-2025a",
+        "business-2025a",
+        "cs-2025a",
+        "robotics-2025a"
+      ],
+      "sessions": [
+        {
+          "day": "Thursday",
+          "slot": "3-4",
+          "location": "N107"
+        },
+        {
+          "day": "Wednesday",
+          "slot": "1-2",
+          "location": "N107"
+        }
+      ],
+      "source_key": "ref:v1:section:feeccdd0c056db240de2",
+      "shared": true,
+      "held": false
+    },
+    {
+      "period": "2025-autumn",
+      "course": "Prompt Engineering (International)",
+      "offerings": [
+        "ai-2025a",
+        "robotics-2025a"
+      ],
+      "sessions": [
+        {
+          "day": "Thursday",
+          "slot": "5-8",
+          "location": "N103"
+        }
+      ],
+      "source_key": "ref:v1:section:c4489c8850dfd91fbca5",
+      "shared": true,
+      "held": false
+    },
+    {
+      "period": "2026-autumn",
+      "course": "Advanced Mathematics (A) 1",
+      "offerings": [
+        "ai-2026a",
+        "business-2026a",
+        "civil-2026a",
+        "cs-2026a"
+      ],
+      "sessions": [
+        {
+          "day": "Thursday",
+          "slot": "5-8",
+          "location": "G310"
+        }
+      ],
+      "source_key": "ref:v1:section:866b54b20860e34c43b2",
+      "shared": true,
+      "held": false
+    },
+    {
+      "period": "2026-autumn",
+      "course": "Chinese Language",
+      "offerings": [
+        "ai-2026a",
+        "business-2026a",
+        "civil-2026a",
+        "cs-2026a"
+      ],
+      "sessions": [
+        {
+          "day": "Monday",
+          "slot": "1-2",
+          "location": "G410"
+        },
+        {
+          "day": "Wednesday",
+          "slot": "7-8",
+          "location": "G310"
+        }
+      ],
+      "source_key": "ref:v1:section:006815c6eddba07f37c6",
+      "shared": true,
+      "held": false
+    },
+    {
+      "period": "2026-spring",
+      "course": "Chinese, Major 1-2 (International)",
+      "offerings": [
+        "ai-2026s",
+        "business-2026s",
+        "civil-engineering-2026s",
+        "cs-2026s"
+      ],
+      "sessions": [
+        {
+          "day": "Wednesday",
+          "slot": "1-4",
+          "location": "N106"
+        }
+      ],
+      "source_key": "ref:v1:section:ecfbfb8b0649fe4fb9ea",
+      "shared": true,
+      "held": false
+    },
+    {
+      "period": "2026-spring",
+      "course": "MATHS (A2) (International)",
+      "offerings": [
+        "ai-2026s",
+        "business-2026s",
+        "civil-engineering-2026s",
+        "cs-2026s"
+      ],
+      "sessions": [
+        {
+          "day": "Friday",
+          "slot": "1-4",
+          "location": "N106"
+        }
+      ],
+      "source_key": "ref:v1:section:f5b5ecfb8ca150a82568",
+      "shared": true,
+      "held": false
+    },
+    {
+      "period": "2026-spring",
+      "course": "University Physics A 1 (International)",
+      "offerings": [
+        "ai-2026s",
+        "civil-engineering-2026s",
+        "cs-2026s"
+      ],
+      "sessions": [
+        {
+          "day": "Thursday",
+          "slot": "5-8",
+          "location": "N107"
+        }
+      ],
+      "source_key": "ref:v1:section:17bfebc7714fdef97beb",
+      "shared": true,
+      "held": false
+    }
+  ],
+  "counts": {
+    "periods": 3,
+    "offerings": 15,
+    "offering_subject_pairs": 51,
+    "distinct_subjects": 26,
+    "sections": 33,
+    "section_offering_links": 51,
+    "sessions": 52,
+    "raw_schedule_rows": 76,
+    "merged_rows": 24,
+    "shared_session_groups": 9,
+    "shared_sections": 7,
+    "held_sections": 2,
+    "held_sessions": 4
+  },
+  "subject_rows": [
+    {
+      "period": "2026 Autumn",
+      "period_id": "2026-autumn",
+      "offering": "Chinese Language (Elementary Level) 1",
+      "offering_id": "chinese-elementary-2026a",
+      "subject": "Chinese Language",
+      "rows": 3,
+      "delivery": "exclusive",
+      "section_key": "ref:v1:section:ca3eee001d167c63c508",
+      "shared_with": []
+    },
+    {
+      "period": "2026 Autumn",
+      "period_id": "2026-autumn",
+      "offering": "Chinese Language (Intermediate Level) 1",
+      "offering_id": "chinese-intermediate-2026a",
+      "subject": "Chinese Language",
+      "rows": 3,
+      "delivery": "exclusive",
+      "section_key": "ref:v1:section:d1d486f9e2d28b85932f",
+      "shared_with": []
+    },
+    {
+      "period": "2026 Autumn",
+      "period_id": "2026-autumn",
+      "offering": "Artificial Intelligence (International) 1",
+      "offering_id": "ai-2026a",
+      "subject": "Chinese Language",
+      "rows": 2,
+      "delivery": "shared",
+      "section_key": "ref:v1:section:006815c6eddba07f37c6",
+      "shared_with": [
+        "business-2026a",
+        "civil-2026a",
+        "cs-2026a"
+      ]
+    },
+    {
+      "period": "2026 Autumn",
+      "period_id": "2026-autumn",
+      "offering": "Artificial Intelligence (International) 1",
+      "offering_id": "ai-2026a",
+      "subject": "Introduction to the Major",
+      "rows": 1,
+      "delivery": "exclusive",
+      "section_key": "ref:v1:section:083707aa1428c6e8bbfc",
+      "shared_with": []
+    },
+    {
+      "period": "2026 Autumn",
+      "period_id": "2026-autumn",
+      "offering": "Artificial Intelligence (International) 1",
+      "offering_id": "ai-2026a",
+      "subject": "Advanced Mathematics (A) 1",
+      "rows": 1,
+      "delivery": "shared",
+      "section_key": "ref:v1:section:866b54b20860e34c43b2",
+      "shared_with": [
+        "business-2026a",
+        "civil-2026a",
+        "cs-2026a"
+      ]
+    },
+    {
+      "period": "2026 Autumn",
+      "period_id": "2026-autumn",
+      "offering": "Civil Engineering (International) 1",
+      "offering_id": "civil-2026a",
+      "subject": "Chinese Language",
+      "rows": 2,
+      "delivery": "shared",
+      "section_key": "ref:v1:section:006815c6eddba07f37c6",
+      "shared_with": [
+        "ai-2026a",
+        "business-2026a",
+        "cs-2026a"
+      ]
+    },
+    {
+      "period": "2026 Autumn",
+      "period_id": "2026-autumn",
+      "offering": "Civil Engineering (International) 1",
+      "offering_id": "civil-2026a",
+      "subject": "Introduction to the Major",
+      "rows": 1,
+      "delivery": "exclusive",
+      "section_key": "ref:v1:section:0d226101ebc3e831f8cc",
+      "shared_with": []
+    },
+    {
+      "period": "2026 Autumn",
+      "period_id": "2026-autumn",
+      "offering": "Civil Engineering (International) 1",
+      "offering_id": "civil-2026a",
+      "subject": "Advanced Mathematics (A) 1",
+      "rows": 1,
+      "delivery": "shared",
+      "section_key": "ref:v1:section:866b54b20860e34c43b2",
+      "shared_with": [
+        "ai-2026a",
+        "business-2026a",
+        "cs-2026a"
+      ]
+    },
+    {
+      "period": "2026 Autumn",
+      "period_id": "2026-autumn",
+      "offering": "Business Administration (International) 1",
+      "offering_id": "business-2026a",
+      "subject": "Chinese Language",
+      "rows": 2,
+      "delivery": "shared",
+      "section_key": "ref:v1:section:006815c6eddba07f37c6",
+      "shared_with": [
+        "ai-2026a",
+        "civil-2026a",
+        "cs-2026a"
+      ]
+    },
+    {
+      "period": "2026 Autumn",
+      "period_id": "2026-autumn",
+      "offering": "Business Administration (International) 1",
+      "offering_id": "business-2026a",
+      "subject": "Introduction to the Major",
+      "rows": 1,
+      "delivery": "exclusive",
+      "section_key": "ref:v1:section:81922c31678aaac0cb02",
+      "shared_with": []
+    },
+    {
+      "period": "2026 Autumn",
+      "period_id": "2026-autumn",
+      "offering": "Business Administration (International) 1",
+      "offering_id": "business-2026a",
+      "subject": "Advanced Mathematics (A) 1",
+      "rows": 1,
+      "delivery": "shared",
+      "section_key": "ref:v1:section:866b54b20860e34c43b2",
+      "shared_with": [
+        "ai-2026a",
+        "civil-2026a",
+        "cs-2026a"
+      ]
+    },
+    {
+      "period": "2026 Autumn",
+      "period_id": "2026-autumn",
+      "offering": "Computer Science and Technology (International) 1",
+      "offering_id": "cs-2026a",
+      "subject": "Chinese Language",
+      "rows": 2,
+      "delivery": "shared",
+      "section_key": "ref:v1:section:006815c6eddba07f37c6",
+      "shared_with": [
+        "ai-2026a",
+        "business-2026a",
+        "civil-2026a"
+      ]
+    },
+    {
+      "period": "2026 Autumn",
+      "period_id": "2026-autumn",
+      "offering": "Computer Science and Technology (International) 1",
+      "offering_id": "cs-2026a",
+      "subject": "Introduction to the Major (Group 2)",
+      "rows": 1,
+      "delivery": "exclusive",
+      "section_key": "ref:v1:section:0f469177db9393732656",
+      "shared_with": []
+    },
+    {
+      "period": "2026 Autumn",
+      "period_id": "2026-autumn",
+      "offering": "Computer Science and Technology (International) 1",
+      "offering_id": "cs-2026a",
+      "subject": "Advanced Mathematics (A) 1",
+      "rows": 1,
+      "delivery": "shared",
+      "section_key": "ref:v1:section:866b54b20860e34c43b2",
+      "shared_with": [
+        "ai-2026a",
+        "business-2026a",
+        "civil-2026a"
+      ]
+    },
+    {
+      "period": "2026 Autumn",
+      "period_id": "2026-autumn",
+      "offering": "Computer Science and Technology (International) 1",
+      "offering_id": "cs-2026a",
+      "subject": "Introduction to the Major (Group 1)",
+      "rows": 1,
+      "delivery": "exclusive",
+      "section_key": "ref:v1:section:3c722ac84007113ae7a7",
+      "shared_with": []
+    },
+    {
+      "period": "2026 Spring",
+      "period_id": "2026-spring",
+      "offering": "Civil Engineering (International) 1",
+      "offering_id": "civil-engineering-2026s",
+      "subject": "Architectural Mechanics (International)",
+      "rows": 2,
+      "delivery": "exclusive",
+      "section_key": "ref:v1:section:f55345e90e5648c85bbe",
+      "shared_with": []
+    },
+    {
+      "period": "2026 Spring",
+      "period_id": "2026-spring",
+      "offering": "Civil Engineering (International) 1",
+      "offering_id": "civil-engineering-2026s",
+      "subject": "Chinese, Major 1-2 (International)",
+      "rows": 1,
+      "delivery": "shared",
+      "section_key": "ref:v1:section:ecfbfb8b0649fe4fb9ea",
+      "shared_with": [
+        "ai-2026s",
+        "business-2026s",
+        "cs-2026s"
+      ]
+    },
+    {
+      "period": "2026 Spring",
+      "period_id": "2026-spring",
+      "offering": "Civil Engineering (International) 1",
+      "offering_id": "civil-engineering-2026s",
+      "subject": "Civil Engineering Drawing (International)",
+      "rows": 2,
+      "delivery": "exclusive",
+      "section_key": "ref:v1:section:96d3623b2f2522083701",
+      "shared_with": []
+    },
+    {
+      "period": "2026 Spring",
+      "period_id": "2026-spring",
+      "offering": "Civil Engineering (International) 1",
+      "offering_id": "civil-engineering-2026s",
+      "subject": "University Physics A 1 (International)",
+      "rows": 1,
+      "delivery": "shared",
+      "section_key": "ref:v1:section:17bfebc7714fdef97beb",
+      "shared_with": [
+        "ai-2026s",
+        "cs-2026s"
+      ]
+    },
+    {
+      "period": "2026 Spring",
+      "period_id": "2026-spring",
+      "offering": "Civil Engineering (International) 1",
+      "offering_id": "civil-engineering-2026s",
+      "subject": "MATHS (A2) (International)",
+      "rows": 1,
+      "delivery": "shared",
+      "section_key": "ref:v1:section:f5b5ecfb8ca150a82568",
+      "shared_with": [
+        "ai-2026s",
+        "business-2026s",
+        "cs-2026s"
+      ]
+    },
+    {
+      "period": "2026 Spring",
+      "period_id": "2026-spring",
+      "offering": "Artificial Intelligence (International) 1",
+      "offering_id": "ai-2026s",
+      "subject": "Python Programming (International)",
+      "rows": 2,
+      "delivery": "exclusive",
+      "section_key": "ref:v1:section:db0fad16f1abbd622b3f",
+      "shared_with": []
+    },
+    {
+      "period": "2026 Spring",
+      "period_id": "2026-spring",
+      "offering": "Artificial Intelligence (International) 1",
+      "offering_id": "ai-2026s",
+      "subject": "Prompt Engineering (International)",
+      "rows": 2,
+      "delivery": "exclusive",
+      "section_key": "ref:v1:section:423235516af30c85b346",
+      "shared_with": []
+    },
+    {
+      "period": "2026 Spring",
+      "period_id": "2026-spring",
+      "offering": "Artificial Intelligence (International) 1",
+      "offering_id": "ai-2026s",
+      "subject": "Chinese, Major 1-2 (International)",
+      "rows": 1,
+      "delivery": "shared",
+      "section_key": "ref:v1:section:ecfbfb8b0649fe4fb9ea",
+      "shared_with": [
+        "business-2026s",
+        "civil-engineering-2026s",
+        "cs-2026s"
+      ]
+    },
+    {
+      "period": "2026 Spring",
+      "period_id": "2026-spring",
+      "offering": "Artificial Intelligence (International) 1",
+      "offering_id": "ai-2026s",
+      "subject": "University Physics A 1 (International)",
+      "rows": 1,
+      "delivery": "shared",
+      "section_key": "ref:v1:section:17bfebc7714fdef97beb",
+      "shared_with": [
+        "civil-engineering-2026s",
+        "cs-2026s"
+      ]
+    },
+    {
+      "period": "2026 Spring",
+      "period_id": "2026-spring",
+      "offering": "Artificial Intelligence (International) 1",
+      "offering_id": "ai-2026s",
+      "subject": "MATHS (A2) (International)",
+      "rows": 1,
+      "delivery": "shared",
+      "section_key": "ref:v1:section:f5b5ecfb8ca150a82568",
+      "shared_with": [
+        "business-2026s",
+        "civil-engineering-2026s",
+        "cs-2026s"
+      ]
+    },
+    {
+      "period": "2026 Spring",
+      "period_id": "2026-spring",
+      "offering": "Computer Science and Technology (International) 1",
+      "offering_id": "cs-2026s",
+      "subject": "Fundamentals of Programming (International)",
+      "rows": 1,
+      "delivery": "exclusive",
+      "section_key": "ref:v1:section:6c0ec4dd7daafe325d13",
+      "shared_with": []
+    },
+    {
+      "period": "2026 Spring",
+      "period_id": "2026-spring",
+      "offering": "Computer Science and Technology (International) 1",
+      "offering_id": "cs-2026s",
+      "subject": "Chinese, Major 1-2 (International)",
+      "rows": 1,
+      "delivery": "shared",
+      "section_key": "ref:v1:section:ecfbfb8b0649fe4fb9ea",
+      "shared_with": [
+        "ai-2026s",
+        "business-2026s",
+        "civil-engineering-2026s"
+      ]
+    },
+    {
+      "period": "2026 Spring",
+      "period_id": "2026-spring",
+      "offering": "Computer Science and Technology (International) 1",
+      "offering_id": "cs-2026s",
+      "subject": "Discrete Mathematics (International)",
+      "rows": 2,
+      "delivery": "exclusive",
+      "section_key": "ref:v1:section:4d6558ba9649b3b9c743",
+      "shared_with": []
+    },
+    {
+      "period": "2026 Spring",
+      "period_id": "2026-spring",
+      "offering": "Computer Science and Technology (International) 1",
+      "offering_id": "cs-2026s",
+      "subject": "University Physics A 1 (International)",
+      "rows": 1,
+      "delivery": "shared",
+      "section_key": "ref:v1:section:17bfebc7714fdef97beb",
+      "shared_with": [
+        "ai-2026s",
+        "civil-engineering-2026s"
+      ]
+    },
+    {
+      "period": "2026 Spring",
+      "period_id": "2026-spring",
+      "offering": "Computer Science and Technology (International) 1",
+      "offering_id": "cs-2026s",
+      "subject": "MATHS (A2) (International)",
+      "rows": 1,
+      "delivery": "shared",
+      "section_key": "ref:v1:section:f5b5ecfb8ca150a82568",
+      "shared_with": [
+        "ai-2026s",
+        "business-2026s",
+        "civil-engineering-2026s"
+      ]
+    },
+    {
+      "period": "2026 Spring",
+      "period_id": "2026-spring",
+      "offering": "Computer Science and Technology (International) 1",
+      "offering_id": "cs-2026s",
+      "subject": "Digital Electronic Technology",
+      "rows": 2,
+      "delivery": "exclusive",
+      "section_key": "ref:v1:section:276c1eca28c0bf95889f",
+      "shared_with": []
+    },
+    {
+      "period": "2026 Spring",
+      "period_id": "2026-spring",
+      "offering": "Chinese Language and Literature (International) 1",
+      "offering_id": "chinese-lit-2026s",
+      "subject": "Chinese, Major 1-2 (International)",
+      "rows": 3,
+      "delivery": "exclusive",
+      "section_key": "ref:v1:section:ec8ba49b25d82bc7a34e",
+      "shared_with": []
+    },
+    {
+      "period": "2026 Spring",
+      "period_id": "2026-spring",
+      "offering": "Business Administration (International) 1",
+      "offering_id": "business-2026s",
+      "subject": "Management (International)",
+      "rows": 1,
+      "delivery": "exclusive",
+      "section_key": "ref:v1:section:4c6835e32af575f4d12c",
+      "shared_with": []
+    },
+    {
+      "period": "2026 Spring",
+      "period_id": "2026-spring",
+      "offering": "Business Administration (International) 1",
+      "offering_id": "business-2026s",
+      "subject": "Human Resource Management (International)",
+      "rows": 2,
+      "delivery": "exclusive",
+      "section_key": "ref:v1:section:4fb87df7bf87e94de6a9",
+      "shared_with": []
+    },
+    {
+      "period": "2026 Spring",
+      "period_id": "2026-spring",
+      "offering": "Business Administration (International) 1",
+      "offering_id": "business-2026s",
+      "subject": "Chinese, Major 1-2 (International)",
+      "rows": 1,
+      "delivery": "shared",
+      "section_key": "ref:v1:section:ecfbfb8b0649fe4fb9ea",
+      "shared_with": [
+        "ai-2026s",
+        "civil-engineering-2026s",
+        "cs-2026s"
+      ]
+    },
+    {
+      "period": "2026 Spring",
+      "period_id": "2026-spring",
+      "offering": "Business Administration (International) 1",
+      "offering_id": "business-2026s",
+      "subject": "MATHS (A2) (International)",
+      "rows": 1,
+      "delivery": "shared",
+      "section_key": "ref:v1:section:f5b5ecfb8ca150a82568",
+      "shared_with": [
+        "ai-2026s",
+        "civil-engineering-2026s",
+        "cs-2026s"
+      ]
+    },
+    {
+      "period": "2025 Autumn",
+      "period_id": "2025-autumn",
+      "offering": "Artificial Intelligence (International) 1",
+      "offering_id": "ai-2025a",
+      "subject": "AI Ethics (International)",
+      "rows": 2,
+      "delivery": "held",
+      "section_key": "ref:v1:section:b3781e87f3fe230d6186",
+      "shared_with": []
+    },
+    {
+      "period": "2025 Autumn",
+      "period_id": "2025-autumn",
+      "offering": "Artificial Intelligence (International) 1",
+      "offering_id": "ai-2025a",
+      "subject": "Chinese, Major 2-1 (International)",
+      "rows": 2,
+      "delivery": "shared",
+      "section_key": "ref:v1:section:feeccdd0c056db240de2",
+      "shared_with": [
+        "business-2025a",
+        "cs-2025a",
+        "robotics-2025a"
+      ]
+    },
+    {
+      "period": "2025 Autumn",
+      "period_id": "2025-autumn",
+      "offering": "Artificial Intelligence (International) 1",
+      "offering_id": "ai-2025a",
+      "subject": "Prompt Engineering (International)",
+      "rows": 1,
+      "delivery": "shared",
+      "section_key": "ref:v1:section:c4489c8850dfd91fbca5",
+      "shared_with": [
+        "robotics-2025a"
+      ]
+    },
+    {
+      "period": "2025 Autumn",
+      "period_id": "2025-autumn",
+      "offering": "Computer Science and Technology (International) 1",
+      "offering_id": "cs-2025a",
+      "subject": "Data Structures and Algorithms (International)",
+      "rows": 1,
+      "delivery": "exclusive",
+      "section_key": "ref:v1:section:9925cc2345c7b1446b7a",
+      "shared_with": []
+    },
+    {
+      "period": "2025 Autumn",
+      "period_id": "2025-autumn",
+      "offering": "Computer Science and Technology (International) 1",
+      "offering_id": "cs-2025a",
+      "subject": "Computer Organization Principles (International)",
+      "rows": 2,
+      "delivery": "exclusive",
+      "section_key": "ref:v1:section:e81f00eff6e4ca807dc4",
+      "shared_with": []
+    },
+    {
+      "period": "2025 Autumn",
+      "period_id": "2025-autumn",
+      "offering": "Computer Science and Technology (International) 1",
+      "offering_id": "cs-2025a",
+      "subject": "Chinese, Major 2-1 (International)",
+      "rows": 2,
+      "delivery": "shared",
+      "section_key": "ref:v1:section:feeccdd0c056db240de2",
+      "shared_with": [
+        "ai-2025a",
+        "business-2025a",
+        "robotics-2025a"
+      ]
+    },
+    {
+      "period": "2025 Autumn",
+      "period_id": "2025-autumn",
+      "offering": "Business Administration (International) 1",
+      "offering_id": "business-2025a",
+      "subject": "Organizational Behavior (International)",
+      "rows": 1,
+      "delivery": "exclusive",
+      "section_key": "ref:v1:section:15be152b200c5f48addc",
+      "shared_with": []
+    },
+    {
+      "period": "2025 Autumn",
+      "period_id": "2025-autumn",
+      "offering": "Business Administration (International) 1",
+      "offering_id": "business-2025a",
+      "subject": "Business and Technology (International)",
+      "rows": 1,
+      "delivery": "exclusive",
+      "section_key": "ref:v1:section:d1dd8dab20738f4d6232",
+      "shared_with": []
+    },
+    {
+      "period": "2025 Autumn",
+      "period_id": "2025-autumn",
+      "offering": "Business Administration (International) 1",
+      "offering_id": "business-2025a",
+      "subject": "Human Resource Management (International)",
+      "rows": 2,
+      "delivery": "exclusive",
+      "section_key": "ref:v1:section:1e7cd6fd797e2370bb54",
+      "shared_with": []
+    },
+    {
+      "period": "2025 Autumn",
+      "period_id": "2025-autumn",
+      "offering": "Business Administration (International) 1",
+      "offering_id": "business-2025a",
+      "subject": "Chinese, Major 2-1 (International)",
+      "rows": 2,
+      "delivery": "shared",
+      "section_key": "ref:v1:section:feeccdd0c056db240de2",
+      "shared_with": [
+        "ai-2025a",
+        "cs-2025a",
+        "robotics-2025a"
+      ]
+    },
+    {
+      "period": "2025 Autumn",
+      "period_id": "2025-autumn",
+      "offering": "Business Administration (International) 1",
+      "offering_id": "business-2025a",
+      "subject": "Microeconomics (International)",
+      "rows": 1,
+      "delivery": "exclusive",
+      "section_key": "ref:v1:section:8d77ce560b6b0ecb4cd9",
+      "shared_with": []
+    },
+    {
+      "period": "2025 Autumn",
+      "period_id": "2025-autumn",
+      "offering": "Robotics Engineering (International) 1",
+      "offering_id": "robotics-2025a",
+      "subject": "AI Thinking and Ethics (International)",
+      "rows": 2,
+      "delivery": "held",
+      "section_key": "ref:v1:section:72b4ca9503f2e4703c88",
+      "shared_with": []
+    },
+    {
+      "period": "2025 Autumn",
+      "period_id": "2025-autumn",
+      "offering": "Robotics Engineering (International) 1",
+      "offering_id": "robotics-2025a",
+      "subject": "Fundamentals of Electronic Technology (International)",
+      "rows": 1,
+      "delivery": "exclusive",
+      "section_key": "ref:v1:section:5b7981573088f2d0a107",
+      "shared_with": []
+    },
+    {
+      "period": "2025 Autumn",
+      "period_id": "2025-autumn",
+      "offering": "Robotics Engineering (International) 1",
+      "offering_id": "robotics-2025a",
+      "subject": "Chinese, Major 2-1 (International)",
+      "rows": 2,
+      "delivery": "shared",
+      "section_key": "ref:v1:section:feeccdd0c056db240de2",
+      "shared_with": [
+        "ai-2025a",
+        "business-2025a",
+        "cs-2025a"
+      ]
+    },
+    {
+      "period": "2025 Autumn",
+      "period_id": "2025-autumn",
+      "offering": "Robotics Engineering (International) 1",
+      "offering_id": "robotics-2025a",
+      "subject": "Prompt Engineering (International)",
+      "rows": 1,
+      "delivery": "shared",
+      "section_key": "ref:v1:section:c4489c8850dfd91fbca5",
+      "shared_with": [
+        "ai-2025a"
+      ]
+    }
+  ]
+}

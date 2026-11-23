@@ -1,0 +1,751 @@
+/* ------------------------------------------------------------------
+   SCU Portal V2 — motion layer
+   Ported from the Solvik design system: ambient drift, shell intro,
+   pointer physics, spotlight surfaces, entrance choreography, table and
+   chart draws, overlay springs, drag feedback and page transitions.
+
+   Every rule is opt-in through a class or data attribute so the existing
+   institutional interface keeps its own visual language. Colour comes
+   from the portal tokens, never from hard-coded hex values.
+------------------------------------------------------------------- */
+
+:root {
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --px: 0px;
+  --py: 0px;
+  --spot: hsl(var(--primary) / 0.1);
+}
+
+.dark {
+  --spot: hsl(var(--primary) / 0.16);
+}
+
+/* ------------------------------ ambient life ------------------------------ */
+
+.motion-ambient {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  transform: translate3d(var(--px, 0px), var(--py, 0px), 0) scale(1.045);
+  transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.motion-ambient__glow {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(52px);
+  will-change: transform;
+}
+
+.motion-ambient__glow--one {
+  inset-block-start: -15rem;
+  inset-inline-end: -12rem;
+  width: 36rem;
+  height: 36rem;
+  background: radial-gradient(circle, hsl(var(--gold) / 0.24), transparent 68%);
+  animation: scuDriftOne 28s ease-in-out infinite alternate;
+}
+
+.motion-ambient__glow--two {
+  inset-block-end: -18rem;
+  inset-inline-start: -10rem;
+  width: 32rem;
+  height: 32rem;
+  background: radial-gradient(circle, hsl(var(--primary) / 0.4), transparent 70%);
+  animation: scuDriftTwo 34s ease-in-out infinite alternate;
+}
+
+@keyframes scuDriftOne {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(-4%, 4%, 0) scale(1.12);
+  }
+}
+
+@keyframes scuDriftTwo {
+  from {
+    transform: translate3d(0, 0, 0) scale(1.05);
+  }
+  to {
+    transform: translate3d(5%, -3%, 0) scale(1);
+  }
+}
+
+/* ------------------------------- shell intro ------------------------------ */
+
+.motion-drop {
+  animation: scuDropIn 0.75s var(--ease) both;
+}
+
+.motion-side {
+  animation: scuSideIn 0.6s var(--ease) both;
+}
+
+.motion-hero {
+  animation: scuFadeUp 0.8s var(--ease) both;
+}
+
+@keyframes scuDropIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes scuSideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-14px);
+  }
+}
+
+@keyframes scuFadeUp {
+  from {
+    opacity: 0;
+    filter: blur(4px);
+  }
+}
+
+@keyframes scuFadeIn {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes scuFadeOut {
+  to {
+    opacity: 0;
+  }
+}
+
+/* -------------------------------- magnetic -------------------------------- */
+
+[data-magnetic] {
+  translate: var(--mag-x, 0px) var(--mag-y, 0px);
+  transition:
+    translate 0.24s var(--ease),
+    transform 0.2s var(--ease),
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.motion-ripple-host {
+  position: relative;
+  overflow: hidden;
+}
+
+.motion-ripple {
+  position: absolute;
+  z-index: 0;
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.28;
+  pointer-events: none;
+  animation: scuRipple 0.65s ease-out forwards;
+}
+
+.motion-ripple-host > :not(.motion-ripple) {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes scuRipple {
+  to {
+    transform: scale(22);
+    opacity: 0;
+  }
+}
+
+/* ------------------------------- spotlight -------------------------------- */
+
+[data-spotlight] {
+  position: relative;
+  isolation: isolate;
+}
+
+[data-spotlight]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(
+    250px circle at var(--mx, 50%) var(--my, 0%),
+    var(--spot),
+    transparent 62%
+  );
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+[data-spotlight]:hover::after {
+  opacity: 1;
+}
+
+/* ------------------------------ choreography ------------------------------ */
+
+.motion-page {
+  animation: scuPageIn 0.44s var(--ease) both;
+}
+
+@keyframes scuPageIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.996);
+  }
+}
+
+.motion-head {
+  animation: scuRise 0.65s var(--ease) both;
+}
+
+.motion-enter {
+  animation: scuRise 0.4s var(--ease) both;
+}
+
+.motion-title {
+  animation: scuTitleIn 0.9s 0.04s var(--ease) both;
+}
+
+@keyframes scuTitleIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+    filter: blur(6px);
+  }
+  to {
+    filter: blur(0);
+  }
+}
+
+@keyframes scuRise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+.motion-kpis > * {
+  animation: scuRise 0.55s var(--ease) both;
+}
+
+.motion-kpis > *:nth-child(2) {
+  animation-delay: 0.05s;
+}
+.motion-kpis > *:nth-child(3) {
+  animation-delay: 0.1s;
+}
+.motion-kpis > *:nth-child(4) {
+  animation-delay: 0.15s;
+}
+.motion-kpis > *:nth-child(5) {
+  animation-delay: 0.2s;
+}
+
+.motion-grid > * {
+  animation: scuRise 0.62s var(--ease) both;
+  animation-delay: calc(80ms + var(--i, 0) * 45ms);
+}
+
+.motion-grid > *:nth-child(1) {
+  animation-delay: 0.06s;
+}
+.motion-grid > *:nth-child(2) {
+  animation-delay: 0.1s;
+}
+.motion-grid > *:nth-child(3) {
+  animation-delay: 0.14s;
+}
+.motion-grid > *:nth-child(4) {
+  animation-delay: 0.18s;
+}
+.motion-grid > *:nth-child(5) {
+  animation-delay: 0.22s;
+}
+.motion-grid > *:nth-child(6) {
+  animation-delay: 0.26s;
+}
+.motion-grid > *:nth-child(7) {
+  animation-delay: 0.3s;
+}
+.motion-grid > *:nth-child(n + 8) {
+  animation-delay: 0.34s;
+}
+
+.motion-grid > * {
+  transition:
+    transform 0.4s var(--ease),
+    border-color 0.3s ease,
+    box-shadow 0.4s var(--ease);
+}
+
+@media (hover: hover) {
+  .motion-grid > *:hover {
+    transform: translateY(-2px);
+  }
+}
+
+.motion-list > * {
+  animation: scuRowIn 0.4s var(--ease) both;
+}
+
+.motion-list > *:nth-child(2) {
+  animation-delay: 0.04s;
+}
+.motion-list > *:nth-child(3) {
+  animation-delay: 0.08s;
+}
+.motion-list > *:nth-child(4) {
+  animation-delay: 0.12s;
+}
+.motion-list > *:nth-child(n + 5) {
+  animation-delay: 0.16s;
+}
+
+@keyframes scuRowIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+/* ------------------------------- navigation ------------------------------- */
+
+.motion-nav-item {
+  animation: scuRowIn 0.42s var(--ease) both;
+  animation-delay: calc(90ms + var(--i, 0) * 22ms);
+  transition:
+    color 0.25s ease,
+    transform 0.25s var(--ease),
+    background-color 0.2s ease;
+}
+
+@media (hover: hover) {
+  .motion-nav-item:hover {
+    transform: translateX(2px);
+  }
+
+  [dir="rtl"] .motion-nav-item:hover {
+    transform: translateX(-2px);
+  }
+}
+
+/* --------------------------------- tables -------------------------------- */
+
+.motion-table tbody tr {
+  animation: scuRowIn 0.42s var(--ease) both;
+  transition:
+    transform 0.22s var(--ease),
+    background-color 0.2s ease;
+}
+
+.motion-table tbody tr:nth-child(1) {
+  animation-delay: 0.04s;
+}
+.motion-table tbody tr:nth-child(2) {
+  animation-delay: 0.07s;
+}
+.motion-table tbody tr:nth-child(3) {
+  animation-delay: 0.1s;
+}
+.motion-table tbody tr:nth-child(4) {
+  animation-delay: 0.13s;
+}
+.motion-table tbody tr:nth-child(5) {
+  animation-delay: 0.16s;
+}
+.motion-table tbody tr:nth-child(6) {
+  animation-delay: 0.19s;
+}
+.motion-table tbody tr:nth-child(7) {
+  animation-delay: 0.22s;
+}
+.motion-table tbody tr:nth-child(8) {
+  animation-delay: 0.25s;
+}
+.motion-table tbody tr:nth-child(n + 9) {
+  animation-delay: 0.28s;
+}
+
+@media (hover: hover) {
+  .motion-table tbody tr:hover {
+    transform: translateX(2px);
+  }
+
+  [dir="rtl"] .motion-table tbody tr:hover {
+    transform: translateX(-2px);
+  }
+}
+
+/* --------------------------------- metrics -------------------------------- */
+
+.motion-stat__icon {
+  transition: transform 0.35s var(--ease);
+}
+
+.motion-stat:hover .motion-stat__icon {
+  transform: rotate(-8deg) scale(1.08);
+}
+
+.motion-badge {
+  animation: scuBadgePop 0.5s var(--ease) both;
+}
+
+@keyframes scuBadgePop {
+  from {
+    opacity: 0;
+    scale: 0.6;
+  }
+  60% {
+    scale: 1.12;
+  }
+}
+
+/* --------------------------------- charts -------------------------------- */
+
+.motion-donut {
+  animation: scuDonutIn 0.9s var(--ease) both;
+  transform-origin: center;
+}
+
+@keyframes scuDonutIn {
+  from {
+    opacity: 0;
+    transform: rotate(-24deg) scale(0.94);
+  }
+}
+
+.motion-bar {
+  transform-origin: left center;
+  animation: scuGrowX 0.9s var(--ease) both;
+  animation-delay: calc(var(--i, 0) * 60ms);
+}
+
+[dir="rtl"] .motion-bar {
+  transform-origin: right center;
+}
+
+@keyframes scuGrowX {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+.motion-column {
+  transform-origin: 50% 100%;
+  animation: scuBarIn 0.85s var(--ease) both;
+  animation-delay: calc(var(--i, 0) * 55ms);
+}
+
+@keyframes scuBarIn {
+  from {
+    transform: scaleY(0);
+    opacity: 0.3;
+  }
+}
+
+.motion-room-grid {
+  animation: scuAreaIn 0.8s var(--ease) both;
+  transform-origin: 50% 100%;
+}
+
+@keyframes scuAreaIn {
+  from {
+    opacity: 0;
+    transform: scaleY(0.86);
+  }
+}
+
+/* ------------------------------- overlays -------------------------------- */
+
+.motion-overlay {
+  animation: scuFadeIn 0.22s ease both;
+}
+
+.motion-overlay[data-state="closed"] {
+  animation: scuFadeOut 0.18s ease both;
+}
+
+/* Spring overlays use the independent translate/scale properties so the
+   dialog keeps its transform-based centring untouched. */
+.motion-dialog[data-state="open"] {
+  animation: scuSpringIn 0.42s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.motion-dialog[data-state="closed"] {
+  animation: scuSpringOut 0.18s ease both;
+}
+
+@keyframes scuSpringIn {
+  from {
+    opacity: 0;
+    translate: 0 16px;
+    scale: 0.975;
+  }
+}
+
+@keyframes scuSpringOut {
+  to {
+    opacity: 0;
+    translate: 0 8px;
+    scale: 0.985;
+  }
+}
+
+.motion-sheet {
+  animation: scuSheetSpring 0.46s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes scuSheetSpring {
+  from {
+    opacity: 0;
+    translate: -46px 0;
+  }
+}
+
+[dir="rtl"] .motion-sheet {
+  animation-name: scuSheetSpringRtl;
+}
+
+@keyframes scuSheetSpringRtl {
+  from {
+    opacity: 0;
+    translate: 46px 0;
+  }
+}
+
+.motion-finder > li {
+  animation: scuRowIn 0.35s var(--ease) both;
+}
+
+.motion-finder > li:nth-child(2) {
+  animation-delay: 0.03s;
+}
+.motion-finder > li:nth-child(3) {
+  animation-delay: 0.06s;
+}
+.motion-finder > li:nth-child(4) {
+  animation-delay: 0.09s;
+}
+.motion-finder > li:nth-child(n + 5) {
+  animation-delay: 0.12s;
+}
+
+/* --------------------------------- tabs ---------------------------------- */
+
+.motion-tab {
+  transition:
+    color 0.25s ease,
+    transform 0.25s var(--ease),
+    background-color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+@media (hover: hover) {
+  .motion-tab:hover {
+    transform: translateY(-1px);
+  }
+}
+
+.motion-tabpanel {
+  animation: scuRowIn 0.32s var(--ease) both;
+}
+
+/* ------------------------------ page reveal ------------------------------- */
+
+html.motion-ready [data-reveal] {
+  opacity: 0;
+  transform: translateY(10px);
+  transition:
+    opacity 0.6s var(--ease),
+    transform 0.6s var(--ease);
+}
+
+html.motion-ready [data-reveal].is-revealed {
+  opacity: 1;
+  transform: none;
+}
+
+/* -------------------------- persist / feedback ---------------------------- */
+
+.motion-sticky-feedback {
+  animation: scuRise 0.24s var(--ease) both;
+}
+
+/* --------------------------------- drag ---------------------------------- */
+
+.drag-ghost {
+  position: fixed;
+  z-index: 400;
+  margin: 0;
+  pointer-events: none;
+  border-radius: 14px;
+  box-shadow:
+    0 30px 60px -22px hsl(218 38% 13% / 0.55),
+    0 0 0 1px hsl(var(--primary) / 0.55);
+  opacity: 0.97;
+  will-change: transform;
+  cursor: grabbing;
+  transform-origin: center;
+}
+
+.drag-ghost * {
+  pointer-events: none !important;
+}
+
+[data-drag-card] {
+  cursor: grab;
+  touch-action: pan-y;
+}
+
+body.is-dragging-card {
+  cursor: grabbing;
+  user-select: none;
+}
+
+[data-drag-card].is-dragging {
+  opacity: 0.28;
+  filter: saturate(0.5);
+}
+
+[data-drop] {
+  position: relative;
+  transition:
+    border-color 0.22s ease,
+    background-color 0.22s ease,
+    transform 0.25s var(--ease);
+}
+
+[data-drop].is-drop-target {
+  border-color: hsl(var(--primary) / 0.7) !important;
+  background-color: hsl(var(--primary) / 0.06) !important;
+  box-shadow: inset 0 0 0 1px hsl(var(--primary) / 0.25);
+}
+
+[data-drop].is-hit {
+  animation: scuHitPulse 0.62s var(--ease);
+}
+
+@keyframes scuHitPulse {
+  35% {
+    transform: scale(1.012);
+  }
+}
+
+.motion-landed {
+  animation: scuLandPulse 0.9s var(--ease);
+}
+
+@keyframes scuLandPulse {
+  0% {
+    transform: scale(0.96);
+  }
+  45% {
+    transform: scale(1.02);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* -------------------------------- details -------------------------------- */
+
+.switch__dot {
+  transition:
+    transform 0.32s cubic-bezier(0.34, 1.56, 0.64, 1),
+    background-color 0.25s ease;
+}
+
+/* ------------------------------ reduced motion ---------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .motion-ambient,
+  .motion-ambient__glow,
+  .motion-drop,
+  .motion-side,
+  .motion-hero,
+  .motion-page,
+  .motion-head,
+  .motion-enter,
+  .motion-title,
+  .motion-kpis > *,
+  .motion-grid > *,
+  .motion-list > *,
+  .motion-nav-item,
+  .motion-table tbody tr,
+  .motion-badge,
+  .motion-donut,
+  .motion-bar,
+  .motion-column,
+  .motion-room-grid,
+  .motion-overlay,
+  .motion-dialog,
+  .motion-sheet,
+  .motion-finder > li,
+  .motion-tabpanel,
+  .motion-sticky-feedback {
+    animation: none !important;
+  }
+
+  [data-magnetic],
+  .motion-grid > *,
+  .motion-nav-item,
+  .motion-tab,
+  .switch__dot,
+  [data-drop],
+  .motion-stat__icon {
+    transition: none !important;
+    translate: none;
+  }
+
+  .motion-ripple {
+    display: none;
+  }
+
+  .motion-ambient {
+    transform: none;
+  }
+
+  html.motion-ready [data-reveal] {
+    opacity: 1;
+    transform: none;
+  }
+
+  .motion-grid > *:hover {
+    transform: none;
+  }
+}
+
+@media (max-width: 700px) {
+  .motion-grid > * {
+    animation-delay: calc(50ms + var(--i, 0) * 30ms);
+  }
+
+  .motion-table tbody tr:nth-child(n) {
+    animation-delay: 0.05s;
+  }
+
+  .motion-ambient__glow--one,
+  .motion-ambient__glow--two {
+    animation-duration: 46s;
+  }
+}
+
+@media (hover: none) {
+  [data-spotlight]::after {
+    display: none;
+  }
+
+  .motion-table tbody tr:hover,
+  .motion-nav-item:hover {
+    transform: none;
+  }
+}
