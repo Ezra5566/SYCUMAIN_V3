@@ -310,3 +310,71 @@ class PasswordChangeResponse(BaseModel):
     changed: bool
     sessions_revoked: int
     must_change_password: bool
+
+
+class ActivationComplete(BaseModel):
+    """Exchange a single-use activation token for the password the student chooses."""
+
+    token: str = Field(..., min_length=16, max_length=512)
+    new_password: str = Field(..., max_length=PASSWORD_MAX_LENGTH)
+
+    @field_validator("new_password")
+    @classmethod
+    def _valid_password(cls, value: str) -> str:
+        return validate_password_strength(value)
+
+
+class ActivationCompletedResponse(BaseModel):
+    """Confirmation only. Never echoes the token or the password."""
+
+    activated: bool
+    email: str
+
+
+class ActivationPreviewResponse(BaseModel):
+    """Whether a link can still be used, and whose account it belongs to."""
+
+    state: str
+    email_masked: str | None = None
+    expires_at: datetime | None = None
+
+
+class ActivationIssue(BaseModel):
+    """Staff-initiated activation link.
+
+    Unknown fields are rejected so a misspelt verification field cannot be
+    silently ignored and turn into an unverified issue.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    identity_verified: bool = False
+    verification_reference: str | None = Field(default=None, max_length=120)
+    delivery: str = Field(default="ADMIN_COUNTER", max_length=20)
+
+
+class ActivationIssueResponse(BaseModel):
+    """Result of issuing a link.
+
+    ``activation_url`` is populated only when the development channel is
+    enabled (`ACTIVATION_RETURN_LINK`). In production the link travels through
+    the delivery channel and this field is null.
+    """
+
+    user_id: uuid.UUID
+    state: str
+    expires_at: datetime | None = None
+    delivery: str
+    activation_url: str | None = None
+
+
+class ActivationStateResponse(BaseModel):
+    """Activation state of one account, without any credential material."""
+
+    user_id: uuid.UUID
+    state: str
+    activation_required: bool
+    activated_at: datetime | None = None
+    expires_at: datetime | None = None
+    issued_at: datetime | None = None
+    delivery: str | None = None

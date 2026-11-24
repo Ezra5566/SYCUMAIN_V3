@@ -24,6 +24,7 @@ from app.database.session import Base
 
 if TYPE_CHECKING:
     from app.models.immigration import ImmigrationProfile
+    from app.models.session import AccountActivationToken
 
 
 class StudentStatus(enum.StrEnum):
@@ -78,6 +79,16 @@ class User(Base):
     must_change_password: Mapped[bool] = mapped_column(
         Boolean, default=False, nullable=False
     )
+
+    # A provisioned account that has never established its own password. The
+    # stored hash is a marker that no input can satisfy, and login refuses the
+    # account with ACCOUNT_NOT_ACTIVATED until the single-use activation link
+    # is completed. Migration therefore never hands out a working password.
+    activation_required: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=False, index=True
+    )
+    activated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     created_at: Mapped[datetime] = mapped_column(
@@ -92,6 +103,11 @@ class User(Base):
         secondary=user_roles, back_populates="users", lazy="selectin"
     )
     student: Mapped[Student | None] = relationship(back_populates="user", uselist=False)
+    activations: Mapped[list[AccountActivationToken]] = relationship(
+        "AccountActivationToken",
+        back_populates="user",
+        foreign_keys="AccountActivationToken.user_id",
+    )
     staff: Mapped[Staff | None] = relationship(back_populates="user", uselist=False)
 
 

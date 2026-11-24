@@ -99,7 +99,6 @@ export function ImportStudentsDialog({
   };
 
   const localized = localizeError(error);
-  const created = report?.rows.filter((row) => row.status === "CREATED") ?? [];
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -187,18 +186,44 @@ export function ImportStudentsDialog({
                 </table>
               </div>
 
-              {created.length > 0 && (
-                <div className="space-y-2 rounded-md border p-3">
-                  <p className="text-sm font-medium">{t("credentialsHeading")}</p>
+              {report.accounts && report.created > 0 && (
+                <div className="space-y-1.5 rounded-md border p-3">
+                  <p className="text-sm font-medium">{t("accountsHeading")}</p>
                   <p className="text-xs text-muted-foreground">
-                    {t("credentialsHint")}
+                    {t("accountsHint")}
                   </p>
-                  <ul className="space-y-1 text-xs">
-                    {created.map((row) => (
-                      <li key={row.row_number} className="font-mono">
-                        {row.student_number}: {row.temporary_password}
+                  <ul className="space-y-0.5 text-xs">
+                    <li>
+                      {t("accountsCreated", {
+                        count: report.accounts.created ?? 0,
+                      })}
+                    </li>
+                    <li>
+                      {t("accountsAwaitingActivation", {
+                        count: report.accounts.activation_required ?? 0,
+                      })}
+                    </li>
+                    {(report.accounts.matched ?? 0) > 0 && (
+                      <li>
+                        {t("accountsMatched", {
+                          count: report.accounts.matched,
+                        })}
                       </li>
-                    ))}
+                    )}
+                    {(report.accounts.missing_contact ?? 0) > 0 && (
+                      <li className="text-destructive">
+                        {t("accountsMissingContact", {
+                          count: report.accounts.missing_contact,
+                        })}
+                      </li>
+                    )}
+                    {(report.accounts.ambiguous ?? 0) > 0 && (
+                      <li className="text-destructive">
+                        {t("accountsAmbiguous", {
+                          count: report.accounts.ambiguous,
+                        })}
+                      </li>
+                    )}
                   </ul>
                 </div>
               )}

@@ -31,6 +31,10 @@ SAFE_PRODUCTION = {
     "STORAGE_BACKEND": "local",
     "STORAGE_LOCAL_ROOT": "/app/var/storage",
     "MALWARE_SCANNER": "clamav",
+    # Activation links are delivered out of band in production; returning the
+    # token over HTTP is a development convenience only.
+    "ACTIVATION_RETURN_LINK": False,
+    "ACTIVATION_LINK_BASE": "https://portal.example.edu",
 }
 
 
@@ -74,6 +78,14 @@ def test_development_configuration_is_not_policed():
         (
             {"PASSWORD_RESET_DELIVERY": "dev"},
             "PASSWORD_RESET_DELIVERY must not be 'dev'",
+        ),
+        (
+            {"ACTIVATION_RETURN_LINK": True},
+            "ACTIVATION_RETURN_LINK must be false in production",
+        ),
+        (
+            {"ACTIVATION_LINK_BASE": "http://portal.example.edu"},
+            "ACTIVATION_LINK_BASE must be an https:// origin",
         ),
         (
             {"DATABASE_URL": "postgresql://portal:portal@db:5432/portal"},

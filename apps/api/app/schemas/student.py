@@ -338,8 +338,10 @@ class StudentImportRow(BaseModel):
     ``code`` is the reason a row was skipped or rejected; it is one of the
     codes in ``errors.codes.*`` so the message is translated client-side.
 
-    ``temporary_password`` is present only on a row created by this import. It
-    is returned exactly once and never stored in plaintext.
+    A created row's account has no password: it is provisioned for activation
+    and cannot sign in until the student completes their single-use link.
+    ``account_status`` says that in one token; no credential is ever present in
+    an import report.
     """
 
     row_number: int
@@ -348,7 +350,7 @@ class StudentImportRow(BaseModel):
     status: str
     code: str | None = None
     message: str | None = None
-    temporary_password: str | None = None
+    account_status: str | None = None
 
 
 class StudentImportReport(BaseModel):
@@ -362,4 +364,7 @@ class StudentImportReport(BaseModel):
     created: int
     skipped: int
     failed: int
+    #: Account outcomes for the file: created, matched, activation_required,
+    #: missing_contact, ambiguous, requires_admin.
+    accounts: dict[str, int] = Field(default_factory=dict)
     rows: list[StudentImportRow]

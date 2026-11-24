@@ -229,7 +229,26 @@
     "portalEyebrow": "国际学生管理",
     "portalTagline": "覆盖国际学生学习与生活全流程的一体化安全平台。",
     "portalSummary": "学生档案、出入境合规、校内住宿与教学事务，由国际学院统一管理。",
-    "secureAccess": "仅限学校授权教职工及学生访问"
+    "secureAccess": "仅限学校授权教职工及学生访问",
+    "activate": {
+      "title": "激活账户",
+      "subtitle": "设置密码以激活您的学生账户。",
+      "newPassword": "密码",
+      "confirmPassword": "确认密码",
+      "requirements": "至少 {min} 个字符。",
+      "tooShort": "密码至少需要 {min} 个字符。",
+      "mismatch": "两次输入的密码不一致。",
+      "submit": "激活账户",
+      "submitting": "正在激活…",
+      "missingToken": "激活链接不完整。请联系国际办公室获取新链接。",
+      "invalid": "激活链接无效或已过期。请联系国际办公室获取新链接。",
+      "used": "该激活链接已被使用。请使用您的密码登录，或申请新链接。",
+      "checking": "正在检查链接…",
+      "forMasked": "正在激活 {email}",
+      "successTitle": "账户已激活",
+      "successNotice": "密码已设置，现在可以登录。",
+      "goToSignIn": "前往登录"
+    }
   },
   "dashboard": {
     "title": "工作台",
@@ -543,8 +562,6 @@
       "running": "处理中…",
       "aborted": "未写入任何数据。请修正标记为错误的行后重新导入。",
       "summary": "共 {total} 行 · {valid} 行可导入 · 已创建 {created} · 已跳过 {skipped} · 错误 {failed}",
-      "credentialsHeading": "临时密码",
-      "credentialsHint": "每个密码只显示一次。请交给学生，学生登录后必须自行修改。",
       "rowHeader": "行",
       "numberHeader": "学号",
       "resultHeader": "结果",
@@ -553,7 +570,14 @@
         "CREATED": "已创建",
         "SKIPPED": "已存在",
         "ERROR": "错误"
-      }
+      },
+      "accountsHeading": "学生账户",
+      "accountsHint": "账户创建时不设密码。每位学生通过一次性链接激活；本报告中不包含任何登录凭据。",
+      "accountsCreated": "已创建 {count} 个账户（需要激活）",
+      "accountsAwaitingActivation": "{count} 个等待激活",
+      "accountsMatched": "{count} 个已匹配到现有账户",
+      "accountsMissingContact": "{count} 行缺少电子邮箱——请在账户页面处理",
+      "accountsAmbiguous": "{count} 行身份不明确——请在导入前解决"
     },
     "filterByOriginalIntake": "原始入学批次",
     "filterByCurrentIntake": "当前编班批次",
@@ -1721,7 +1745,10 @@
         "activated": "已启用账户",
         "deactivated": "已停用账户",
         "password_reset": "已重置密码",
-        "sessions_revoked": "已撤销会话"
+        "sessions_revoked": "已撤销会话",
+        "activation_issued": "已签发激活链接",
+        "activation_completed": "账户持有人已完成激活",
+        "activation_revoked": "已撤回激活链接"
       },
       "immigration": {
         "change_request": {
@@ -1872,6 +1899,10 @@
         "commencement": {
           "approved": "已审批考勤起算日期",
           "corrected": "已更正考勤起算日期"
+        },
+        "intake_planned": "已规划批次",
+        "intake": {
+          "planned": "已规划入学批次"
         }
       },
       "attendance": {
@@ -2020,7 +2051,7 @@
       "ADMISSION_TERMINAL": "已完成、已退学或已取消的录取不能变更。请新建录取记录。",
       "ADMISSION_TRANSITION_NOT_ALLOWED": "不允许进行此状态变更。",
       "ADMISSIONS_WRITE_DISABLED": "入学写入当前已停用。",
-      "INTAKE_DATES_INVALID": "招生批次的结束日期不能早于开始日期。",
+      "INTAKE_DATES_INVALID": "该批次的结束日期早于开始日期。",
       "INTAKE_DATES_REQUIRED": "招生批次必须同时具有正式开始和结束日期。",
       "ACCOUNT_DISABLED": "此账户已被停用。",
       "ACCOUNT_INACTIVE": "该账户已停用。",
@@ -2254,7 +2285,14 @@
       "IMPORT_UNRESOLVED_REFERENCE": "楼栋、房间或床位不存在。请先创建结构或修正该行。",
       "IMPORT_INVALID_DATE": "日期格式必须为 YYYY-MM-DD，且结束日期不能早于开始日期。",
       "IMPORT_MISSING_FIELDS": "缺少一个或多个必填值。",
-      "IMPORT_TOO_LARGE": "文件过大，无法一次导入。"
+      "IMPORT_TOO_LARGE": "文件过大，无法一次导入。",
+      "MISSING_CONTACT": "创建账户需要电子邮箱地址。",
+      "IDENTITY_MISMATCH": "该学号已存在，但邮箱地址不同。需要管理员处理。",
+      "AMBIGUOUS_IDENTITY": "该邮箱地址已属于另一个学号。需要管理员处理。",
+      "EXISTING_STUDENT_MATCHED": "已匹配现有学生记录，未做任何更改。",
+      "ACCOUNT_NOT_ACTIVATED": "该账户尚未激活。请使用注册时收到的激活链接。",
+      "FUTURE_INTAKE_CANNOT_BE_ACTIVE": "未来开始的批次必须为计划状态，不能处于活动状态。",
+      "INTAKE_CODE_REQUIRED": "需要批次代码。"
     }
   },
   "theme": {
@@ -2332,7 +2370,13 @@
     "requestReplacementDescription": "系统将要求学生提交 {title} 的新版本，当前版本会保留在历史中。",
     "replacementNoteLabel": "需要更正什么？",
     "replacementNoteHint": "学生将看到此原因，并可上传新版本重新接受审核。",
-    "visaEntries": "签证入境次数"
+    "visaEntries": "签证入境次数",
+    "issueActivation": "生成激活链接",
+    "issueActivationDescription": "请确认您已核对 {name} 的身份证件。系统将生成一次性激活链接，由学生自行设置密码。",
+    "activationLink": "激活链接",
+    "activationLinkHint": "将此一次性链接交给学生。链接 7 天后过期，使用后立即失效。",
+    "activationIssuedNoLink": "激活链接已生成，将通过已配置的邮件渠道发送。",
+    "copyLink": "复制链接"
   },
   "admissionVerification": {
     "title": "入学核验",

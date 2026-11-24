@@ -20,8 +20,11 @@ that file and the database, and it is deliberately strict:
   ``-`` or ``@`` are neutralised, because a student name is attacker-supplied
   text and a spreadsheet would otherwise execute it as a formula.
 
-Every row that is created gets a one-time temporary password in the report. It
-is never stored in plaintext and cannot be retrieved again.
+Every row that is created gets an account with **no password**. The account is
+provisioned for activation: it holds a single-use token (stored only as a
+hash) and cannot sign in until the student completes the activation link. The
+import report therefore contains no credential of any kind, and re-running the
+same file matches the existing record instead of creating a second account.
 """
 
 from __future__ import annotations
@@ -35,6 +38,7 @@ from typing import TYPE_CHECKING, Any
 from sqlalchemy import func
 
 from app.audit import record_audit
+from app.auth.activation import issue_activation
 from app.config.settings import get_settings
 from app.models.identity import Student, StudentStatus, User
 from app.schemas.student import StudentImportReport, StudentImportRow, is_valid_email
@@ -173,7 +177,10 @@ class _Row:
     skipped: bool = False
     #: Set by the write phase.
     created: bool = False
-    temporary_password: str | None = None
+    #: An existing account with the same student number and address.
+    matched: bool = False
+    #: A required address is absent; the student cannot be provisioned yet.
+    contact_missing: bool = False
     extra: dict[str, Any] = field(default_factory=dict)
 
     @property
@@ -280,8 +287,8 @@ def parse_rows(raw: bytes, *, max_rows: int) -> list[_Row]:
 def _validate_row(
     row: _Row,
     *,
-    existing_numbers: set[str],
-    existing_emails: set[str],
+    existing_numbers: dict[str, str],
+    existing_emails: dict[str, str],
     seen_numbers: set[str],
     seen_emails: set[str],
 ) -> None:
@@ -312,6 +319,17 @@ def _validate_row(
     number = values["student_id"]
     email = values["email"].strip().lower()
 
+    # A student without an address cannot be provisioned: the account is the
+    # only way into the portal, and there is nowhere to deliver an activation
+    # link. This is reported as its own category so the office can collect the
+    # address rather than seeing a generic validation failure.
+    if not email:
+        row.code = "MISSING_CONTACT"
+        row.message = "An email address is required to provision the account."
+        row.contact_missing = True
+        row.skipped = True
+        return
+
     if not is_valid_email(email):
         row.fail("INVALID_EMAIL", "That email address is not valid.")
         return
@@ -328,12 +346,26 @@ def _validate_row(
     # intended end state of an import. It is reported so the operator can see
     # the file was applied rather than ignore a silent no-op.
     if number in existing_numbers:
-        row.fail("DUPLICATE_STUDENT_NUMBER", "This student number already exists.")
+        existing_email = existing_numbers[number]
+        if existing_email and existing_email.lower() != email:
+            # The number belongs to a record whose address has changed. Linking
+            # automatically could hand one person's account to another; a human
+            # has to resolve it.
+            row.fail(
+                "IDENTITY_MISMATCH",
+                "This student number already exists with a different email address.",
+            )
+            return
+        row.code = "EXISTING_STUDENT_MATCHED"
+        row.message = "Existing student record matched; nothing was changed."
+        row.matched = True
         row.skipped = True
         return
     if email in existing_emails:
-        row.fail("DUPLICATE_EMAIL", "An account with this email already exists.")
-        row.skipped = True
+        row.fail(
+            "AMBIGUOUS_IDENTITY",
+            "This email address already belongs to a different student number.",
+        )
         return
 
     birth = values.get("date_of_birth")
@@ -387,23 +419,25 @@ def import_students(
     # round trips, and a slow import is the one operators retry blindly.
     existing_numbers = (
         {
-            value
-            for (value,) in db.query(Student.student_id)
+            number: (email or "")
+            for number, email in db.query(Student.student_id, User.email)
+            .join(User, User.id == Student.user_id)
             .filter(Student.student_id.in_(numbers))
             .all()
         }
         if numbers
-        else set()
+        else {}
     )
     existing_emails = (
         {
-            value.lower()
-            for (value,) in db.query(User.email)
+            email.lower(): student_number
+            for email, student_number in db.query(User.email, Student.student_id)
+            .join(Student, Student.user_id == User.id)
             .filter(func.lower(User.email).in_(emails))
             .all()
         }
         if emails
-        else set()
+        else {}
     )
 
     seen_numbers: set[str] = set()
@@ -427,12 +461,22 @@ def import_students(
             for row in rows:
                 if row.invalid or row.skipped:
                     continue
-                user, temporary_password = create_account(
+                user, _ = create_account(
                     db,
                     email=row.values["email"],
                     full_name=row.name,
                     roles=["STUDENT"],
-                    must_change_password=True,
+                    activation_required=True,
+                )
+                # The token is created and stored as a hash; the raw value is
+                # never placed in the report. Delivery is a separate, audited
+                # step so a link is only ever handed to a verified person.
+                issue_activation(
+                    db,
+                    user,
+                    reason="MIGRATION",
+                    delivery="MIGRATION_PENDING",
+                    audit=False,
                 )
                 student = Student(
                     user_id=user.id,
@@ -456,7 +500,6 @@ def import_students(
                 db.add(student)
                 db.flush()
                 row.created = True
-                row.temporary_password = temporary_password
 
             created = sum(1 for row in rows if row.created)
             record_audit(
@@ -466,9 +509,12 @@ def import_students(
                 entity_type="student",
                 context={
                     "created": created,
+                    "matched": sum(1 for row in rows if row.matched),
                     "skipped": sum(1 for row in rows if row.skipped),
                     "failed": len(failed),
                     "dry_run": False,
+                    "activation_required": created,
+                    "missing_contact": sum(1 for row in rows if row.contact_missing),
                 },
                 request=request,
             )
@@ -487,6 +533,18 @@ def import_students(
         created=sum(1 for row in rows if row.created),
         skipped=sum(1 for row in rows if row.skipped),
         failed=len(failed),
+        accounts={
+            "created": sum(1 for row in rows if row.created),
+            "matched": sum(1 for row in rows if row.matched),
+            "activation_required": sum(1 for row in rows if row.created),
+            "missing_contact": sum(1 for row in rows if row.contact_missing),
+            "ambiguous": sum(
+                1
+                for row in rows
+                if row.code in {"AMBIGUOUS_IDENTITY", "IDENTITY_MISMATCH"}
+            ),
+            "requires_admin": sum(1 for row in rows if row.invalid),
+        },
         rows=[
             StudentImportRow(
                 row_number=row.row_number,
@@ -497,13 +555,21 @@ def import_students(
                     if row.invalid
                     else "CREATED"
                     if row.created
+                    else "MATCHED"
+                    if row.matched
                     else "SKIPPED"
                     if row.skipped
                     else "VALID"
                 ),
                 code=row.code,
                 message=row.message,
-                temporary_password=row.temporary_password,
+                account_status=(
+                    "ACTIVATION_REQUIRED"
+                    if row.created
+                    else "MATCHED"
+                    if row.matched
+                    else None
+                ),
             )
             for row in rows
         ],

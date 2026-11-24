@@ -46,6 +46,7 @@ from app.schemas.academic import (
     GradeCreate,
     GradeResponse,
     GradeUpdate,
+    IntakePlanRequest,
     MajorCreate,
     MajorListResponse,
     MajorResponse,
@@ -69,8 +70,10 @@ from app.schemas.academic import (
     TimetableListResponse,
 )
 from app.services import academic as svc
+from app.services import intake_plan as intake_svc
 from app.services import period_correction as correction_svc
 from app.services import source_intakes as source_intake_svc
+from app.services import timetable_reconciliation as reconciliation_svc
 
 router = APIRouter(prefix="/academics", tags=["academics"])
 
@@ -1427,3 +1430,80 @@ def get_student_grades(
 ):
     _check_student_scope(current_user, student_id, db)
     return svc.list_grades_for_student(db, student_id)
+
+
+# ── Intakes and timetable reconciliation ──
+
+
+@router.post("/intakes/plan")
+def plan_intakes(
+    data: IntakePlanRequest,
+    request: Request,
+    current_user: User = Depends(require_permission("academic.manage_periods")),
+    db: DBSession = Depends(get_db),
+):
+    """Create missing intakes, idempotently.
+
+    Re-running the same plan changes nothing. A plan that disagrees with an
+    existing intake's dates is reported as a CONFLICT and left untouched: an
+    intake that already has students must not have its dates rewritten by a
+    spreadsheet.
+    """
+    specs = [
+        intake_svc.IntakeSpec(
+            code=item.code.strip(),
+            name=item.name.strip(),
+            start_date=item.start_date,
+            end_date=item.end_date,
+            status=item.status.strip().upper(),
+            offerings=tuple(
+                intake_svc.IntakeOfferingSpec(
+                    source_id=offering.source_id.strip(),
+                    name=offering.name.strip(),
+                    program_code=(
+                        offering.program_code.strip() if offering.program_code else None
+                    ),
+                )
+                for offering in item.offerings
+            ),
+        )
+        for item in data.intakes
+    ]
+    try:
+        report = intake_svc.plan_intakes(
+            db, specs, actor_id=current_user.id, request=request
+        )
+    except intake_svc.IntakePlanError as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=409,
+            detail={"error": {"code": exc.code, "message": exc.message}},
+        ) from exc
+    return report
+
+
+@router.get("/intakes/summary")
+def intake_summary(
+    current_user: User = Depends(require_permission("academic.view")),
+    db: DBSession = Depends(get_db),
+):
+    """Per-intake counts: offerings, sections, students placed."""
+    return {"items": intake_svc.intake_summary(db)}
+
+
+@router.get("/timetable/reconciliation")
+def timetable_reconciliation(
+    period_id: uuid.UUID | None = None,
+    current_user: User = Depends(require_permission("academic.manage_timetable")),
+    db: DBSession = Depends(get_db),
+):
+    """Report where the existing timetable disagrees with the academic model.
+
+    Read-only. Repair happens through the normal audited timetable endpoints,
+    one row at a time, after a person has read this report.
+    """
+    if period_id is not None:
+        period = svc.resolve_period(db, period_id)
+        if period is None:
+            raise HTTPException(status_code=404, detail="Academic period not found")
+    return reconciliation_svc.reconcile_timetable(db, period_id=period_id)

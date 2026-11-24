@@ -23,6 +23,10 @@ ACCESS_PERMITTING_STUDENT_STATUSES = frozenset({StudentStatus.ACTIVE})
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+#: Marker stored for accounts that have not established a password yet. It is
+#: not a valid bcrypt hash, so verification can never succeed.
+UNUSABLE_PASSWORD_HASH = "!"
+
 
 def hash_password(password: str) -> str:
     """Hash a password using bcrypt."""
@@ -30,8 +34,18 @@ def hash_password(password: str) -> str:
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify a password against its hash."""
-    return pwd_context.verify(plain_password, hashed_password)
+    """Verify a password against its hash.
+
+    An account provisioned for activation carries the unusable marker instead
+    of a hash; no input may satisfy it, and bcrypt must never be asked to try.
+    """
+    if not hashed_password or hashed_password == UNUSABLE_PASSWORD_HASH:
+        return False
+    try:
+        return pwd_context.verify(plain_password, hashed_password)
+    except (ValueError, TypeError):
+        # A malformed stored hash is a data fault, not a valid credential.
+        return False
 
 
 def hash_token(token: str) -> str:

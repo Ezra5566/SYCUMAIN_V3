@@ -18,7 +18,7 @@ import uuid
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session as DBSession
 
-from app.auth.service import hash_password, verify_password
+from app.auth.service import UNUSABLE_PASSWORD_HASH, hash_password, verify_password
 from app.models.identity import Role, Staff, Student, User
 from app.models.session import UserSession
 
@@ -120,6 +120,7 @@ def create_account(
     username: str | None = None,
     password: str | None = None,
     must_change_password: bool = True,
+    activation_required: bool = False,
     is_active: bool = True,
     staff_id: str | None = None,
     department: str | None = None,
@@ -141,7 +142,14 @@ def create_account(
     _assert_staff_number_available(db, staff_id if has_staff_role else None)
 
     temporary_password: str | None = None
-    if password is None:
+    if activation_required:
+        # Provisioned accounts get no password at all. The stored marker can
+        # never be matched, and login refuses the account until the student
+        # completes a single-use activation link.
+        password = None
+        temporary_password = None
+        must_change_password = False
+    elif password is None:
         password = generate_temporary_password()
         temporary_password = password
         must_change_password = True
@@ -161,11 +169,14 @@ def create_account(
     user = User(
         email=email,
         username=candidate,
-        hashed_password=hash_password(password),
+        hashed_password=(
+            UNUSABLE_PASSWORD_HASH if activation_required else hash_password(password)
+        ),
         full_name=full_name.strip(),
         is_active=is_active,
         is_superuser=False,
         must_change_password=must_change_password,
+        activation_required=activation_required,
     )
     user.roles.extend(role_rows)
     db.add(user)

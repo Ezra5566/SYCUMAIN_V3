@@ -9,6 +9,11 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session as DBSession
 
 from app.audit import record_audit
+from app.auth.activation import (
+    ActivationError,
+    consume_activation,
+    preview_activation,
+)
 from app.auth.dependencies import (
     SESSION_COOKIE_NAME,
     CurrentUser,
@@ -41,6 +46,9 @@ from app.core.ratelimit import (
 from app.database.session import get_db
 from app.models.identity import User
 from app.schemas.account import (
+    ActivationComplete,
+    ActivationCompletedResponse,
+    ActivationPreviewResponse,
     PasswordChange,
     PasswordChangeResponse,
     PasswordRecoveryAvailability,
@@ -203,6 +211,36 @@ def login(
 
     # Find user by email
     user = db.query(User).filter(User.email == body.email).first()
+
+
+    # A provisioned account has no password at all: it is waiting for its
+    # single-use activation link. Answered before any credential comparison,
+    # because there is no credential to compare — and because a student who
+    # has just been registered needs to be told what to do. This does disclose
+    # that an address has a pending account, the same disclosure the password
+    # reset endpoint deliberately avoids; it is rate limited and audited.
+    if user is not None and user.activation_required:
+        record_audit(
+            db,
+            action="auth.login_failed",
+            entity_type="user",
+            entity_id=user.id,
+            context={"reason": "activation_required"},
+            request=request,
+        )
+        db.commit()
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "error": {
+                    "code": "ACCOUNT_NOT_ACTIVATED",
+                    "message": (
+                        "This account has not been activated yet. Use the "
+                        "activation link issued at registration."
+                    ),
+                }
+            },
+        )
 
     # Verify credentials (constant-time comparison via bcrypt)
     if not user or not verify_password(body.password, user.hashed_password):
@@ -623,3 +661,83 @@ def complete_reset(
         ) from exc
 
     return PasswordResetCompletedResponse(reset=True, sessions_revoked=True)
+
+
+# --- Account activation ----------------------------------------------------
+# A migrated account has no password. These two endpoints are the only way to
+# turn a single-use activation link into one. Neither ever returns a password,
+# and the token is never logged.
+
+
+@router.get("/activation/{token}", response_model=ActivationPreviewResponse)
+def activation_preview(
+    token: str,
+    request: Request,
+    db: Annotated[DBSession, Depends(get_db)],
+) -> ActivationPreviewResponse:
+    """Describe an activation link without consuming it."""
+    _enforce_rate_limit(
+        db,
+        request,
+        limits=[
+            (
+                Limit(
+                    "activation-preview:ip",
+                    settings.RATE_LIMIT_RESET_REQUEST_PER_IP,
+                    settings.RATE_LIMIT_RESET_WINDOW_SECONDS,
+                ),
+                _client_ip(request) or "unknown",
+            )
+        ],
+        scope="activation_preview",
+    )
+    return ActivationPreviewResponse(**preview_activation(db, token))
+
+
+@router.post("/activation", response_model=ActivationCompletedResponse)
+def complete_activation(
+    body: ActivationComplete,
+    request: Request,
+    db: Annotated[DBSession, Depends(get_db)],
+) -> ActivationCompletedResponse:
+    """Establish the account's own password from an activation token.
+
+    The token is single-use and expires; completing activation revokes any
+    session that existed before the account had a password.
+    """
+    _enforce_rate_limit(
+        db,
+        request,
+        limits=[
+            (
+                Limit(
+                    "activation:ip",
+                    settings.RATE_LIMIT_RESET_SUBMIT_PER_IP,
+                    settings.RATE_LIMIT_RESET_WINDOW_SECONDS,
+                ),
+                _client_ip(request) or "unknown",
+            )
+        ],
+        scope="account_activation",
+    )
+
+    try:
+        user = consume_activation(
+            db,
+            token=body.token,
+            password=body.new_password,
+            request=request,
+        )
+    except ActivationError as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=(
+                status.HTTP_404_NOT_FOUND
+                if exc.not_found
+                else status.HTTP_400_BAD_REQUEST
+            ),
+            detail={"error": {"code": exc.code, "message": exc.message}},
+        ) from exc
+
+    db.commit()
+    return ActivationCompletedResponse(activated=True, email=user.email)

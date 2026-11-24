@@ -63,8 +63,11 @@ def test_dry_run_validates_without_writing(client, db_session):
     )
 
 
-def test_import_creates_student_and_working_account(client, db_session):
+def test_import_creates_a_student_account_that_cannot_sign_in_until_activated(
+    client, db_session
+):
     from app.models.identity import Student
+    from app.models.session import AccountActivationToken
 
     _login(client)
     number = _number()
@@ -73,19 +76,34 @@ def test_import_creates_student_and_working_account(client, db_session):
 
     report = _upload(client, content).json()
     assert report["created"] == 1, report
-    password = report["rows"][0]["temporary_password"]
-    assert password
+    assert report["accounts"]["created"] == 1
+    assert report["accounts"]["activation_required"] == 1
+
+    # No credential appears anywhere in the report.
+    assert "temporary_password" not in report["rows"][0]
+    serialized = str(report)
+    assert "activation_url" not in serialized
 
     student = db_session.query(Student).filter(Student.student_id == number).first()
     assert student is not None
     assert student.user.email == email
-    assert student.user.must_change_password is True
+    assert student.user.activation_required is True
+    assert student.user.hashed_password == "!"
+    assert student.user.activated_at is None
 
-    # The one-time credential is real: the imported student can sign in with it.
-    login = client.post(
-        "/api/v1/auth/login", json={"email": email, "password": password}
+    token = (
+        db_session.query(AccountActivationToken)
+        .filter(AccountActivationToken.user_id == student.user_id)
+        .first()
     )
-    assert login.status_code == 200, login.text
+    assert token is not None and token.used_at is None
+
+    # The provisioned account has no working password at all.
+    login = client.post(
+        "/api/v1/auth/login", json={"email": email, "password": "password123"}
+    )
+    assert login.status_code == 403, login.text
+    assert login.json()["error"]["code"] == "ACCOUNT_NOT_ACTIVATED"
 
 
 def test_import_rejects_populated_legacy_placement_columns(client, db_session):
@@ -252,10 +270,14 @@ def test_skip_invalid_imports_only_the_valid_rows(client, db_session):
     assert db_session.query(Student).filter(Student.student_id == bad).first() is None
 
 
-def test_reimporting_the_same_file_skips_duplicates(client):
+def test_reimporting_the_same_file_matches_instead_of_duplicating(client, db_session):
+    """A re-run is the intended end state, not an error: one record, one account."""
+    from app.models.identity import Student, User
+
     _login(client)
     number = _number()
-    content = (VALID_HEADER + f"{number},Anna,Kowalska,{number.lower()}@example.com\n").encode()
+    email = f"{number.lower()}@example.com"
+    content = (VALID_HEADER + f"{number},Anna,Kowalska,{email}\n").encode()
 
     assert _upload(client, content).json()["created"] == 1
 
@@ -263,7 +285,12 @@ def test_reimporting_the_same_file_skips_duplicates(client):
     assert second["created"] == 0
     assert second["skipped"] == 1
     assert second["aborted"] is False
-    assert second["rows"][0]["code"] == "DUPLICATE_STUDENT_NUMBER"
+    assert second["rows"][0]["status"] == "MATCHED"
+    assert second["rows"][0]["code"] == "EXISTING_STUDENT_MATCHED"
+    assert second["accounts"]["matched"] == 1
+
+    assert db_session.query(Student).filter(Student.student_id == number).count() == 1
+    assert db_session.query(User).filter(User.email == email).count() == 1
 
 
 def test_duplicate_rows_inside_one_file_are_skipped(client):

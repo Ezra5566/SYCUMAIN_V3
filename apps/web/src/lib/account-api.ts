@@ -127,6 +127,56 @@ export const accountApi = {
       { method: "POST" },
     );
   },
+
+  /**
+   * Issue a single-use activation link for an account that has no password.
+   *
+   * The server requires an explicit identity-verification assertion: a staff
+   * member must have looked at the person's identity document. The link is
+   * returned only by the development channel; in production it is delivered
+   * out of band and `activation_url` is null.
+   */
+  issueActivation(
+    userId: string,
+    data: { identity_verified: boolean; verification_reference?: string },
+  ): Promise<{
+    user_id: string;
+    state: string;
+    expires_at: string | null;
+    delivery: string;
+    activation_url: string | null;
+  }> {
+    return apiFetch(`/api/v1/users/${userId}/activation`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  },
+
+  /** Whether the account still needs activation. Never returns the link. */
+  activationState(userId: string): Promise<{
+    user_id: string;
+    state: string;
+    activation_required: boolean;
+    activated_at: string | null;
+    expires_at: string | null;
+  }> {
+    return apiFetch(`/api/v1/users/${userId}/activation`);
+  },
+
+  /** Migration account report: counts and masked addresses, no credentials. */
+  migrationAccountReport(): Promise<{
+    totals: Record<string, number>;
+    by_intake: {
+      intake: string;
+      students: number;
+      activated: number;
+      activation_pending: number;
+      needs_intervention: number;
+    }[];
+    excludes: string[];
+  }> {
+    return apiFetch("/api/v1/users/migration/account-report");
+  },
 };
 
 /**
@@ -160,6 +210,31 @@ export const recoveryApi = {
     return apiFetch("/api/v1/auth/password/reset-request", {
       method: "POST",
       body: JSON.stringify({ email }),
+    });
+  },
+
+  /** Check an activation link without consuming it. */
+  activationPreview(token: string): Promise<{
+    state: "VALID" | "EXPIRED" | "USED" | "UNKNOWN";
+    email_masked: string | null;
+    expires_at: string | null;
+  }> {
+    return apiFetch(`/api/v1/auth/activation/${encodeURIComponent(token)}`);
+  },
+
+  /**
+   * Exchange the single-use activation token for the student's own password.
+   *
+   * Nothing is returned but confirmation; the account holds no password until
+   * this call succeeds.
+   */
+  activate(
+    token: string,
+    newPassword: string,
+  ): Promise<{ activated: boolean; email: string }> {
+    return apiFetch("/api/v1/auth/activation", {
+      method: "POST",
+      body: JSON.stringify({ token, new_password: newPassword }),
     });
   },
 

@@ -204,6 +204,19 @@ class Settings(BaseSettings):
     PASSWORD_RESET_DELIVERY: str = "disabled"
     PASSWORD_RESET_EXPIRE_MINUTES: int = 30
 
+    # --- Account activation ------------------------------------------------
+    # A migrated account has no password until the student completes a
+    # single-use activation link. Seven days covers a registration week without
+    # leaving a working link in an inbox for a month.
+    ACTIVATION_EXPIRE_HOURS: int = 168
+    # Where the activation link points. The console origin, not the API.
+    ACTIVATION_LINK_BASE: str = "http://localhost:3101"
+    # Development only: return the link to the issuing administrator so the
+    # flow can be exercised without a mail provider. In production the token
+    # must travel through a configured delivery channel, never an HTTP
+    # response that a third party could read.
+    ACTIVATION_RETURN_LINK: bool = True
+
     # Localization
     SUPPORTED_LOCALES: list[str] = ["en", "zh", "fr", "ar", "ru"]
     DEFAULT_LOCALE: str = "en"
@@ -257,6 +270,14 @@ class Settings(BaseSettings):
 
         if self.PASSWORD_RESET_DELIVERY.strip().lower() == "dev":
             problems.append("PASSWORD_RESET_DELIVERY must not be 'dev' in production")
+
+        if self.ACTIVATION_RETURN_LINK:
+            problems.append(
+                "ACTIVATION_RETURN_LINK must be false in production; activation "
+                "tokens must be delivered out of band, not returned over HTTP"
+            )
+        if not self.ACTIVATION_LINK_BASE.startswith("https://"):
+            problems.append("ACTIVATION_LINK_BASE must be an https:// origin in production")
 
         scanner = self.MALWARE_SCANNER.strip().lower()
         if scanner in {"eicar-test", "dev-clean"}:

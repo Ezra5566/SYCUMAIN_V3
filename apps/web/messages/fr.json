@@ -229,7 +229,26 @@
     "portalEyebrow": "Gestion des étudiants internationaux",
     "portalTagline": "Un espace sécurisé pour chaque étape du parcours de l’étudiant international.",
     "portalSummary": "Dossiers étudiants, conformité migratoire, hébergement et vie académique, réunis par le Bureau international.",
-    "secureAccess": "Réservé au personnel et aux étudiants autorisés de l’université"
+    "secureAccess": "Réservé au personnel et aux étudiants autorisés de l’université",
+    "activate": {
+      "title": "Activez votre compte",
+      "subtitle": "Choisissez un mot de passe pour activer votre compte étudiant.",
+      "newPassword": "Mot de passe",
+      "confirmPassword": "Confirmez le mot de passe",
+      "requirements": "Au moins {min} caractères.",
+      "tooShort": "Le mot de passe doit contenir au moins {min} caractères.",
+      "mismatch": "Les deux mots de passe ne correspondent pas.",
+      "submit": "Activer le compte",
+      "submitting": "Activation…",
+      "missingToken": "Ce lien d'activation est incomplet. Demandez-en un nouveau au bureau international.",
+      "invalid": "Ce lien d'activation est invalide ou a expiré. Demandez-en un nouveau au bureau international.",
+      "used": "Ce lien a déjà été utilisé. Connectez-vous avec votre mot de passe ou demandez un nouveau lien.",
+      "checking": "Vérification du lien…",
+      "forMasked": "Activation de {email}",
+      "successTitle": "Compte activé",
+      "successNotice": "Votre mot de passe est défini. Vous pouvez vous connecter.",
+      "goToSignIn": "Continuer vers la connexion"
+    }
   },
   "dashboard": {
     "title": "Tableau de bord",
@@ -543,8 +562,6 @@
       "running": "Traitement…",
       "aborted": "Rien n'a été écrit. Corrigez les lignes en erreur puis réimportez le fichier.",
       "summary": "{total} lignes · {valid} prêtes · {created} créées · {skipped} ignorées · {failed} en erreur",
-      "credentialsHeading": "Mots de passe temporaires",
-      "credentialsHint": "Chaque mot de passe n'est affiché qu'une fois. Remettez-le à l'étudiant ; il devra le changer après connexion.",
       "rowHeader": "Ligne",
       "numberHeader": "Numéro d'étudiant",
       "resultHeader": "Résultat",
@@ -553,7 +570,14 @@
         "CREATED": "Créée",
         "SKIPPED": "Existe déjà",
         "ERROR": "Erreur"
-      }
+      },
+      "accountsHeading": "Comptes étudiants",
+      "accountsHint": "Les comptes sont créés sans mot de passe. Chaque étudiant l'active avec un lien à usage unique ; aucun identifiant n'apparaît dans ce rapport.",
+      "accountsCreated": "{count} comptes créés (activation requise)",
+      "accountsAwaitingActivation": "{count} en attente d'activation",
+      "accountsMatched": "{count} associés à des comptes existants",
+      "accountsMissingContact": "{count} lignes sans adresse e-mail — à traiter dans la page des comptes",
+      "accountsAmbiguous": "{count} lignes à l'identité ambiguë — à résoudre avant l'import"
     },
     "filterByOriginalIntake": "Promotion d'admission d'origine",
     "filterByCurrentIntake": "Promotion d'affectation actuelle",
@@ -1721,7 +1745,10 @@
         "activated": "Compte activé",
         "deactivated": "Compte désactivé",
         "password_reset": "Mot de passe réinitialisé",
-        "sessions_revoked": "Sessions révoquées"
+        "sessions_revoked": "Sessions révoquées",
+        "activation_issued": "Lien d'activation émis",
+        "activation_completed": "Compte activé par le titulaire",
+        "activation_revoked": "Lien d'activation retiré"
       },
       "immigration": {
         "change_request": {
@@ -1872,6 +1899,10 @@
         "commencement": {
           "approved": "Date de début de présence approuvée",
           "corrected": "Date de début de présence corrigée"
+        },
+        "intake_planned": "Promotion planifiée",
+        "intake": {
+          "planned": "Cohorte d'admission planifiée"
         }
       },
       "attendance": {
@@ -2020,7 +2051,7 @@
       "ADMISSION_TERMINAL": "Une admission terminée, retirée ou annulée ne peut pas être modifiée. Enregistrez une nouvelle admission.",
       "ADMISSION_TRANSITION_NOT_ALLOWED": "Cette transition de statut n'est pas autorisée.",
       "ADMISSIONS_WRITE_DISABLED": "L'écriture des admissions est actuellement désactivée.",
-      "INTAKE_DATES_INVALID": "La date de fin de la promotion ne peut pas précéder sa date de début.",
+      "INTAKE_DATES_INVALID": "La période se termine avant de commencer.",
       "INTAKE_DATES_REQUIRED": "La promotion doit avoir une date de début et une date de fin officielles.",
       "ACCOUNT_DISABLED": "Ce compte a été désactivé.",
       "ACCOUNT_INACTIVE": "Ce compte n'est pas actif.",
@@ -2254,7 +2285,14 @@
       "IMPORT_UNRESOLVED_REFERENCE": "Le bâtiment, la chambre ou le lit n'existe pas. Créez la structure ou corrigez la ligne.",
       "IMPORT_INVALID_DATE": "Les dates doivent être au format AAAA-MM-JJ et la date de fin ne peut précéder la date de début.",
       "IMPORT_MISSING_FIELDS": "Une ou plusieurs valeurs obligatoires sont manquantes.",
-      "IMPORT_TOO_LARGE": "Le fichier est trop volumineux pour un seul lot."
+      "IMPORT_TOO_LARGE": "Le fichier est trop volumineux pour un seul lot.",
+      "MISSING_CONTACT": "Une adresse e-mail est nécessaire pour créer le compte.",
+      "IDENTITY_MISMATCH": "Ce numéro d'étudiant existe déjà avec une autre adresse e-mail. Un administrateur doit le résoudre.",
+      "AMBIGUOUS_IDENTITY": "Cette adresse e-mail appartient déjà à un autre numéro d'étudiant. Un administrateur doit le résoudre.",
+      "EXISTING_STUDENT_MATCHED": "Un dossier étudiant existant a été rapproché. Aucune modification n'a été apportée.",
+      "ACCOUNT_NOT_ACTIVATED": "Ce compte n'a pas encore été activé. Utilisez le lien d'activation remis lors de l'inscription.",
+      "FUTURE_INTAKE_CANNOT_BE_ACTIVE": "Une promotion qui commence dans le futur doit être planifiée, pas active.",
+      "INTAKE_CODE_REQUIRED": "Un code de promotion est requis."
     }
   },
   "theme": {
@@ -2332,7 +2370,13 @@
     "requestReplacementDescription": "L’étudiant devra fournir une nouvelle version de {title}. La version actuelle reste dans l’historique.",
     "replacementNoteLabel": "Que faut-il corriger ?",
     "replacementNoteHint": "L’étudiant voit ce motif et peut téléverser une nouvelle version pour un nouvel examen.",
-    "visaEntries": "Entrées du visa"
+    "visaEntries": "Entrées du visa",
+    "issueActivation": "Émettre un lien d'activation",
+    "issueActivationDescription": "Confirmez avoir vérifié la pièce d'identité de {name}. Un lien d'activation à usage unique sera émis et l'étudiant choisit lui-même son mot de passe.",
+    "activationLink": "Lien d'activation",
+    "activationLinkHint": "Remettez ce lien à usage unique à l'étudiant. Il expire après 7 jours et cesse de fonctionner une fois utilisé.",
+    "activationIssuedNoLink": "Lien d'activation émis. Il sera transmis par le canal e-mail configuré.",
+    "copyLink": "Copier le lien"
   },
   "admissionVerification": {
     "title": "Vérification des admissions",

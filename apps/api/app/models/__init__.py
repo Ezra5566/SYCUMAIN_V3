@@ -108,7 +108,11 @@ from app.models.platform import (
     SupportTicketStatus,
 )
 from app.models.ratelimit import AuthRateLimit
-from app.models.session import PasswordResetToken, UserSession
+from app.models.session import (
+    AccountActivationToken,
+    PasswordResetToken,
+    UserSession,
+)
 
 __all__ = [
     "User",
@@ -118,6 +122,8 @@ __all__ = [
     "StudentStatus",
     "Staff",
     "UserSession",
+    "AccountActivationToken",
+    "PasswordResetToken",
     "user_roles",
     "role_permissions",
     "Building",

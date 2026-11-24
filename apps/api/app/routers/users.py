@@ -21,7 +21,15 @@ from fastapi import status as http_status
 from sqlalchemy.orm import Session as DBSession
 
 from app.audit import record_audit
+from app.auth.activation import (
+    ActivationError,
+    activation_state,
+    activation_url,
+    issue_activation,
+    revoke_activation,
+)
 from app.auth.dependencies import CurrentUser
+from app.config.settings import get_settings
 from app.database.session import get_db
 from app.models.identity import Role, User
 from app.permissions.checks import has_permission
@@ -32,6 +40,9 @@ from app.schemas.account import (
     AccountResponse,
     AccountRolesUpdate,
     AccountUpdate,
+    ActivationIssue,
+    ActivationIssueResponse,
+    ActivationStateResponse,
     ActiveUpdate,
     PasswordReset,
     SessionInfo,
@@ -51,6 +62,7 @@ from app.services.account import (
     set_account_roles,
     update_account,
 )
+from app.services.migration_report import student_account_migration_report
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -539,3 +551,115 @@ def revoke_user_sessions(
     )
     db.commit()
     return {"user_id": str(user.id), "sessions_revoked": revoked}
+
+
+# --- Account activation ----------------------------------------------------
+
+
+def _activation_error(exc: ActivationError) -> HTTPException:
+    return HTTPException(
+        status_code=(
+            http_status.HTTP_404_NOT_FOUND
+            if exc.not_found
+            else http_status.HTTP_409_CONFLICT
+        ),
+        detail={"error": {"code": exc.code, "message": exc.message}},
+    )
+
+
+@router.get("/migration/account-report")
+def migration_account_report(
+    current_user: CurrentUser,
+    db: Annotated[DBSession, Depends(get_db)],
+):
+    """Institutional report of provisioned student accounts.
+
+    Contains counts and masked addresses only: no password and no activation
+    token can appear in a document that gets exported and forwarded.
+    """
+    _require(current_user, "users.view")
+    return student_account_migration_report(db)
+
+
+@router.get("/{user_id}/activation", response_model=ActivationStateResponse)
+def get_activation_state(
+    current_user: CurrentUser,
+    db: Annotated[DBSession, Depends(get_db)],
+    user_id: uuid.UUID,
+):
+    """Whether this account still needs activation. Never returns the link."""
+    _require(current_user, "users.view")
+    user = get_account(db, user_id)
+    if user is None:
+        raise _not_found()
+    _assert_can_administer(current_user, user)
+    return ActivationStateResponse(**activation_state(db, user))
+
+
+@router.post("/{user_id}/activation", response_model=ActivationIssueResponse)
+def issue_activation_link(
+    current_user: CurrentUser,
+    db: Annotated[DBSession, Depends(get_db)],
+    user_id: uuid.UUID,
+    request: Request,
+    data: ActivationIssue | None = None,
+):
+    """Issue (or re-issue) a single-use activation link for an account.
+
+    Staff-initiated issues require an explicit identity-verification assertion,
+    because handing out a working link to the wrong person is the whole risk of
+    this flow. The audit entry records that verification, never the token.
+    """
+    _require(current_user, "users.view")
+    user = get_account(db, user_id)
+    if user is None:
+        raise _not_found()
+    _assert_can_administer(current_user, user)
+
+    payload = data or ActivationIssue()
+    try:
+        record, raw_token = issue_activation(
+            db,
+            user,
+            actor_id=current_user.id,
+            reason="ADMIN",
+            delivery=payload.delivery,
+            identity_verified=payload.identity_verified,
+            verification_reference=payload.verification_reference,
+            request=request,
+        )
+    except ActivationError as exc:
+        db.rollback()
+        raise _activation_error(exc) from exc
+
+    db.commit()
+    db.refresh(record)
+
+    return ActivationIssueResponse(
+        user_id=user.id,
+        state=activation_state(db, user)["state"],
+        expires_at=record.expires_at,
+        delivery=record.delivery,
+        activation_url=(
+            activation_url(raw_token)
+            if get_settings().ACTIVATION_RETURN_LINK
+            else None
+        ),
+    )
+
+
+@router.delete("/{user_id}/activation", status_code=204)
+def revoke_activation_link(
+    current_user: CurrentUser,
+    db: Annotated[DBSession, Depends(get_db)],
+    user_id: uuid.UUID,
+    request: Request,
+):
+    """Withdraw an unused activation link."""
+    _require(current_user, "users.view")
+    user = get_account(db, user_id)
+    if user is None:
+        raise _not_found()
+    _assert_can_administer(current_user, user)
+    revoke_activation(db, user, actor_id=current_user.id, request=request)
+    db.commit()

@@ -5,7 +5,7 @@ from __future__ import annotations
 import uuid  # noqa: TC003
 from datetime import date, datetime, time  # noqa: TC003
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.models.academic import (  # noqa: TC001
     AcademicPeriodStatus,
@@ -747,3 +747,36 @@ class SourceIntakeListResponse(BaseModel):
 class TimetableListResponse(BaseModel):
     items: list[TimetableEntryResponse]
     meta: PaginationMeta | None = None
+
+
+class IntakeOfferingPlan(BaseModel):
+    """One intake-specific programme offering to create if absent."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    source_id: str = Field(..., min_length=1, max_length=80)
+    name: str = Field(..., min_length=1, max_length=200)
+    program_code: str | None = Field(default=None, max_length=20)
+
+
+class IntakePlanItem(BaseModel):
+    """One academic intake to plan.
+
+    ``status`` may not be ACTIVE for an intake whose start date is in the
+    future; a prepared intake is PLANNED until the institution opens it.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    code: str = Field(..., min_length=2, max_length=20)
+    name: str = Field(..., min_length=1, max_length=100)
+    start_date: date
+    end_date: date
+    status: str = Field(default="PLANNED", max_length=20)
+    offerings: list[IntakeOfferingPlan] = Field(default_factory=list)
+
+
+class IntakePlanRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    intakes: list[IntakePlanItem] = Field(..., min_length=1, max_length=20)

@@ -1,0 +1,162 @@
+{
+  "generated_at": "2026-11-24T07:45:06.744578",
+  "database": "scumain_rehearsal",
+  "intakes_planned": {
+    "intakes": [
+      {
+        "intake": "2025-FALL",
+        "status": "CREATED",
+        "period_id": "e052c137-731a-420a-9b79-b0a529cf37f2",
+        "period_status": "PLANNED",
+        "offerings_created": 1,
+        "offerings": [
+          {
+            "source_id": "rh-2025-fall",
+            "status": "CREATED",
+            "program_offering_id": "453ce473-c168-4607-82a4-e4e528762dcb"
+          }
+        ]
+      },
+      {
+        "intake": "2026-SPRING",
+        "status": "CREATED",
+        "period_id": "de35dba5-b51d-4ed0-98a8-23b6a53aae63",
+        "period_status": "PLANNED",
+        "offerings_created": 1,
+        "offerings": [
+          {
+            "source_id": "rh-2026-spring",
+            "status": "CREATED",
+            "program_offering_id": "41a3868c-490b-402c-ab68-65a202aecf60"
+          }
+        ]
+      },
+      {
+        "intake": "2026-FALL",
+        "status": "CREATED",
+        "period_id": "2291dd4a-dc31-409d-aaf8-9e9632753c84",
+        "period_status": "ACTIVE",
+        "offerings_created": 1,
+        "offerings": [
+          {
+            "source_id": "rh-2026-fall",
+            "status": "CREATED",
+            "program_offering_id": "1e4ecc20-2517-4a48-abd1-a2a6e7afbfb2"
+          }
+        ]
+      },
+      {
+        "intake": "2027-SPRING",
+        "status": "CREATED",
+        "period_id": "daa089b5-0292-42df-9371-61bfb02c528e",
+        "period_status": "PLANNED",
+        "offerings_created": 1,
+        "offerings": [
+          {
+            "source_id": "rh-2027-spring",
+            "status": "CREATED",
+            "program_offering_id": "2334174d-3f39-4761-95b3-f47ec958a631"
+          }
+        ]
+      }
+    ],
+    "created": 4,
+    "existing": 0,
+    "conflicts": 0
+  },
+  "students": 12,
+  "students_by_intake": {
+    "2025-FALL": 3,
+    "2026-SPRING": 3,
+    "2026-FALL": 3,
+    "2027-SPRING": 3
+  },
+  "housing": {
+    "created": 12,
+    "skipped": 0,
+    "errors": 0
+  },
+  "immigration": {
+    "profiles": 12,
+    "conflicts": 0,
+    "auto_verified": 0
+  },
+  "activation": {
+    "issued": 12,
+    "completed": 4
+  },
+  "accounts": {
+    "students": 13,
+    "accounts": 13,
+    "activated": 5,
+    "activation_pending": 8,
+    "activation_expired": 0,
+    "activation_link_missing": 0,
+    "disabled_accounts": 0,
+    "no_intake_assignment": 1,
+    "no_placement": 1,
+    "missing_contact": 0
+  },
+  "per_intake": [
+    {
+      "intake": "2025-FALL",
+      "name": "Fall 2025",
+      "status": "PLANNED",
+      "start_date": "2025-09-01",
+      "end_date": "2025-12-20",
+      "placed_students": 3,
+      "housed_students": 3,
+      "immigration_profiles": 3,
+      "timetable_sections": 1,
+      "timetable_status": "CLEAN",
+      "blocking_findings": 0,
+      "warnings": 0,
+      "findings": []
+    },
+    {
+      "intake": "2026-SPRING",
+      "name": "Spring 2026",
+      "status": "PLANNED",
+      "start_date": "2026-02-01",
+      "end_date": "2026-06-15",
+      "placed_students": 3,
+      "housed_students": 3,
+      "immigration_profiles": 3,
+      "timetable_sections": 1,
+      "timetable_status": "CLEAN",
+      "blocking_findings": 0,
+      "warnings": 0,
+      "findings": []
+    },
+    {
+      "intake": "2026-FALL",
+      "name": "Fall 2026",
+      "status": "ACTIVE",
+      "start_date": "2026-09-01",
+      "end_date": "2026-12-20",
+      "placed_students": 3,
+      "housed_students": 3,
+      "immigration_profiles": 3,
+      "timetable_sections": 1,
+      "timetable_status": "CLEAN",
+      "blocking_findings": 0,
+      "warnings": 0,
+      "findings": []
+    },
+    {
+      "intake": "2027-SPRING",
+      "name": "Spring 2027",
+      "status": "PLANNED",
+      "start_date": "2027-02-01",
+      "end_date": "2027-06-15",
+      "placed_students": 3,
+      "housed_students": 3,
+      "immigration_profiles": 3,
+      "timetable_sections": 1,
+      "timetable_status": "CLEAN",
+      "blocking_findings": 0,
+      "warnings": 0,
+      "findings": []
+    }
+  ]
+}

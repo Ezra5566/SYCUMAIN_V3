@@ -2,7 +2,15 @@
 
 import { useCallback, useState } from "react";
 import { useTranslations } from "next-intl";
-import { KeyRound, Pencil, Plus, ShieldCheck, UserCheck, UserX } from "lucide-react";
+import {
+  KeyRound,
+  Link2,
+  Pencil,
+  Plus,
+  ShieldCheck,
+  UserCheck,
+  UserX,
+} from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { accountApi } from "@/lib/account-api";
 import { useApi } from "@/lib/use-api";
@@ -34,7 +42,9 @@ const STAFF_ROLES: RoleName[] = ["TEACHER", "MANAGEMENT", "ADMIN"];
 
 interface Credential {
   email: string;
-  password: string;
+  password?: string;
+  /** Activation link, present only in environments that return it. */
+  activationUrl?: string;
 }
 
 export default function AccountsPage() {
@@ -151,6 +161,31 @@ export default function AccountsPage() {
           >
             <ShieldCheck className="h-4 w-4" aria-hidden="true" />
           </Button>
+          {account.roles.some((role) => role.name === "STUDENT") && (
+            <ConfirmDialog
+              title={t("issueActivation")}
+              description={t("issueActivationDescription", {
+                name: account.full_name,
+              })}
+              confirmLabel={t("issueActivation")}
+              triggerLabel={t("issueActivation")}
+              triggerIcon={<Link2 className="h-4 w-4" aria-hidden="true" />}
+              size="icon"
+              onConfirm={async () => {
+                const result = await accountApi.issueActivation(account.id, {
+                  identity_verified: true,
+                  verification_reference: "COUNTER-CHECK",
+                });
+                setCredential({
+                  email: account.email,
+                  activationUrl: result.activation_url ?? undefined,
+                });
+                if (!result.activation_url) {
+                  toast.success(t("activationIssuedNoLink"));
+                }
+              }}
+            />
+          )}
           <ConfirmDialog
             title={t("resetPassword")}
             description={t("resetPasswordDescription", { name: account.full_name })}
@@ -160,7 +195,10 @@ export default function AccountsPage() {
             size="icon"
             onConfirm={async () => {
               const result = await accountApi.resetPassword(account.id);
-              setCredential({ email: account.email, password: result.temporary_password });
+              setCredential({
+                email: account.email,
+                password: result.temporary_password ?? "",
+              });
             }}
           />
           <ConfirmDialog
@@ -283,6 +321,37 @@ export default function AccountsPage() {
         />
       )}
 
+      {credential?.activationUrl && (
+        <Dialog open onOpenChange={() => setCredential(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{t("activationLink")}</DialogTitle>
+              <DialogDescription>{t("activationLinkHint")}</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-2 rounded-lg border bg-muted/30 p-4">
+              <p className="text-xs text-muted-foreground">{credential.email}</p>
+              <p className="break-all font-mono text-sm" dir="ltr">
+                {credential.activationUrl}
+              </p>
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  void navigator.clipboard.writeText(credential.activationUrl ?? "");
+                  toast.success(t("copied"));
+                }}
+              >
+                {t("copyLink")}
+              </Button>
+              <Button onClick={() => setCredential(null)}>
+                {tCommon("actions.done")}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+
       {credential?.password && (
         <Dialog open onOpenChange={() => setCredential(null)}>
           <DialogContent>
@@ -300,7 +369,7 @@ export default function AccountsPage() {
               <Button
                 variant="outline"
                 onClick={() => {
-                  void navigator.clipboard.writeText(credential.password);
+                  void navigator.clipboard.writeText(credential.password ?? "");
                   toast.success(t("copied"));
                 }}
               >

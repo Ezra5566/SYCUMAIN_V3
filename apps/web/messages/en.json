@@ -229,7 +229,26 @@
     "portalEyebrow": "International Student Management",
     "portalTagline": "One secure workspace for every stage of the international student journey.",
     "portalSummary": "Student records, immigration compliance, campus housing and academic life, managed together by the International Office.",
-    "secureAccess": "Authorized university staff and students only"
+    "secureAccess": "Authorized university staff and students only",
+    "activate": {
+      "title": "Activate your account",
+      "subtitle": "Choose a password to activate your student account.",
+      "newPassword": "Password",
+      "confirmPassword": "Confirm password",
+      "requirements": "At least {min} characters.",
+      "tooShort": "Password must be at least {min} characters.",
+      "mismatch": "The two passwords do not match.",
+      "submit": "Activate account",
+      "submitting": "Activating…",
+      "missingToken": "This activation link is incomplete. Ask the international office for a new one.",
+      "invalid": "This activation link is invalid or has expired. Ask the international office for a new one.",
+      "used": "This activation link has already been used. Sign in with your password, or ask for a new link.",
+      "checking": "Checking your link…",
+      "forMasked": "Activating {email}",
+      "successTitle": "Account activated",
+      "successNotice": "Your password is set. You can sign in now.",
+      "goToSignIn": "Continue to sign in"
+    }
   },
   "dashboard": {
     "title": "Dashboard",
@@ -543,8 +562,6 @@
       "running": "Working…",
       "aborted": "Nothing was written. Fix the rows marked as errors and import again.",
       "summary": "{total} rows · {valid} ready · {created} created · {skipped} skipped · {failed} with errors",
-      "credentialsHeading": "Temporary passwords",
-      "credentialsHint": "Each password is shown once. Give it to the student; they must choose a new one after signing in.",
       "rowHeader": "Row",
       "numberHeader": "Student number",
       "resultHeader": "Result",
@@ -553,7 +570,14 @@
         "CREATED": "Created",
         "SKIPPED": "Already exists",
         "ERROR": "Error"
-      }
+      },
+      "accountsHeading": "Student accounts",
+      "accountsHint": "Accounts are created without a password. Each student activates with a single-use link; no credential appears in this report.",
+      "accountsCreated": "{count} accounts created (activation required)",
+      "accountsAwaitingActivation": "{count} waiting for activation",
+      "accountsMatched": "{count} matched to existing accounts",
+      "accountsMissingContact": "{count} rows have no email address — handle them on the accounts page",
+      "accountsAmbiguous": "{count} rows have ambiguous identity — resolve before importing"
     },
     "filterByOriginalIntake": "Original admission intake",
     "filterByCurrentIntake": "Current placement intake",
@@ -1721,7 +1745,10 @@
         "activated": "Account activated",
         "deactivated": "Account deactivated",
         "password_reset": "Password reset",
-        "sessions_revoked": "Sessions revoked"
+        "sessions_revoked": "Sessions revoked",
+        "activation_issued": "Activation link issued",
+        "activation_completed": "Account activated by the holder",
+        "activation_revoked": "Activation link withdrawn"
       },
       "immigration": {
         "change_request": {
@@ -1872,6 +1899,10 @@
         "commencement": {
           "approved": "Attendance commencement approved",
           "corrected": "Attendance commencement corrected"
+        },
+        "intake_planned": "Intake planned",
+        "intake": {
+          "planned": "Intake planned"
         }
       },
       "attendance": {
@@ -2020,7 +2051,7 @@
       "ADMISSION_TERMINAL": "A completed, withdrawn or cancelled admission cannot be changed. Record a new admission instead.",
       "ADMISSION_TRANSITION_NOT_ALLOWED": "That status transition is not allowed.",
       "ADMISSIONS_WRITE_DISABLED": "Admission writes are currently disabled.",
-      "INTAKE_DATES_INVALID": "The intake end date cannot precede its start date.",
+      "INTAKE_DATES_INVALID": "The intake ends before it starts.",
       "INTAKE_DATES_REQUIRED": "The intake must have both an official start and end date.",
       "ACCOUNT_DISABLED": "This account has been disabled.",
       "ACCOUNT_INACTIVE": "This account is not active.",
@@ -2254,7 +2285,14 @@
       "IMPORT_UNRESOLVED_REFERENCE": "The building, room or bed does not exist. Create the structure first or correct the row.",
       "IMPORT_INVALID_DATE": "Dates must be written as YYYY-MM-DD and the end date cannot precede the start date.",
       "IMPORT_MISSING_FIELDS": "One or more required values are missing.",
-      "IMPORT_TOO_LARGE": "The file is too large to import in one batch."
+      "IMPORT_TOO_LARGE": "The file is too large to import in one batch.",
+      "MISSING_CONTACT": "An email address is required to provision the account.",
+      "IDENTITY_MISMATCH": "This student number already exists with a different email address. An administrator must resolve it.",
+      "AMBIGUOUS_IDENTITY": "This email address already belongs to a different student number. An administrator must resolve it.",
+      "EXISTING_STUDENT_MATCHED": "An existing student record was matched. Nothing was changed.",
+      "ACCOUNT_NOT_ACTIVATED": "This account has not been activated yet. Use the activation link issued at registration.",
+      "FUTURE_INTAKE_CANNOT_BE_ACTIVE": "An intake that starts in the future must be planned, not active.",
+      "INTAKE_CODE_REQUIRED": "An intake code is required."
     }
   },
   "theme": {
@@ -2332,7 +2370,13 @@
     "requestReplacementDescription": "The student will be asked for a new version of {title}. The current version remains in history.",
     "replacementNoteLabel": "What must be corrected?",
     "replacementNoteHint": "The student sees this reason and can upload a new version for fresh review.",
-    "visaEntries": "Visa entries"
+    "visaEntries": "Visa entries",
+    "issueActivation": "Issue activation link",
+    "issueActivationDescription": "Confirm you have checked {name}'s identity document. A single-use activation link will be issued and the student chooses their own password.",
+    "activationLink": "Activation link",
+    "activationLinkHint": "Give this single-use link to the student. It expires in 7 days and stops working once used.",
+    "activationIssuedNoLink": "Activation link issued. It will be delivered through the configured email channel.",
+    "copyLink": "Copy link"
   },
   "admissionVerification": {
     "title": "Admission verification",
