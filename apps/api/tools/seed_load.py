@@ -41,6 +41,14 @@ from app.models.academic import (
     Enrollment,
     EnrollmentStatus,
 )
+from app.models.housing import (
+    Bed,
+    Building,
+    Floor,
+    HousingAssignment,
+    HousingAssignmentStatus,
+    Room,
+)
 from app.models.identity import Role, Staff, Student, StudentStatus, User, user_roles
 from app.models.immigration import ImmigrationProfile
 from app.models.platform import (
@@ -49,14 +57,6 @@ from app.models.platform import (
     DocumentScanStatus,
     DocumentStatus,
     DocumentVisibility,
-)
-from app.models.housing import (
-    Bed,
-    Building,
-    Floor,
-    HousingAssignment,
-    HousingAssignmentStatus,
-    Room,
 )
 from app.storage import get_storage
 

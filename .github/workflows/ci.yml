@@ -4,6 +4,23 @@ name: CI
 # The pipeline exists so none of them is optional. It uses a throwaway
 # PostgreSQL service with synthetic credentials: no development, staging or
 # production database, credential or secret is referenced anywhere.
+#
+# Jobs, and why each one exists:
+#   changes   decides whether the expensive browser suite has anything new to
+#             cover, so a documentation-only change does not run it
+#   backend   lint, migrations against a fresh empty database, model/migration
+#             parity, and the full pytest suite
+#   contract  the committed OpenAPI document still describes the application
+#   frontend  install from the lockfile, types, lint, five-locale parity, a
+#             production build, and the built app's locale routes incl. Arabic RTL
+#   images    both runtime images build, contain no environment files or private
+#             keys, and the production Compose model resolves
+#   security  currently installed dependency advisories (advisory) plus a check
+#             that no real environment file is tracked
+#   e2e       the critical Chromium paths against a disposable stack
+#
+# Every third-party action is pinned to an exact commit rather than a floating
+# tag: a tag can be moved, and a moved tag runs code nobody reviewed.
 
 on:
   push:
@@ -20,9 +37,60 @@ concurrency:
 
 env:
   PYTHON_VERSION: "3.11"
-  NODE_VERSION: "20"
+  # Node 20 reached end of life on 2026-04-30. 24 is the current Maintenance
+  # LTS (supported to 2028-04-30) and matches `FROM node:24-alpine` in
+  # infra/docker/Dockerfile.web; the `images` job fails if the two ever diverge.
+  NODE_VERSION: "24"
+  # Must stay on the major that reads `allowBuilds` from pnpm-workspace.yaml;
+  # the pinned action version and the workspace settings are a pair.
+  PNPM_VERSION: "12"
 
 jobs:
+  changes:
+    name: Detect code changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      code: ${{ steps.diff.outputs.code }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # The comparison needs the base commit, which a depth-1 clone lacks.
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Decide whether anything but documentation changed
+        id: diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            base="${{ github.event.pull_request.base.sha }}"
+          else
+            base="${{ github.event.before }}"
+          fi
+          head="${{ github.sha }}"
+
+          # A new branch, a force-push or a manual run has no usable base: treat
+          # it as a code change so nothing is silently skipped.
+          if [ -z "$base" ] || ! git cat-file -e "${base}^{commit}" 2>/dev/null; then
+            echo "No usable base commit; running every gate."
+            echo "code=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          changed="$(git diff --name-only "$base" "$head")"
+          echo "Changed files:"
+          echo "$changed"
+
+          # Anything that is not documentation or Markdown needs the suite.
+          if echo "$changed" | grep -qvE '^(docs/|\.github/(ISSUE_TEMPLATE|PULL_REQUEST_TEMPLATE)|.*\.md$)'; then
+            echo "code=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Documentation-only change: the browser suite is skipped."
+            echo "code=false" >> "$GITHUB_OUTPUT"
+          fi
+
   backend:
     name: Backend (tests, lint, migrations)
     runs-on: ubuntu-latest
@@ -58,9 +126,11 @@ jobs:
         working-directory: apps/api
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
@@ -74,7 +144,7 @@ jobs:
       - name: Lint
         run: python -m ruff check app tests tools
 
-      - name: Apply migrations to a fresh database
+      - name: Apply migrations to a fresh, empty database
         run: python -m alembic upgrade head
 
       - name: Migration consistency
@@ -82,7 +152,9 @@ jobs:
         # forgets its migration cannot merge.
         run: python -m alembic check
 
-      - name: Import check
+      - name: Import and configuration check
+        # Importing the application builds its settings object, so an invalid or
+        # unreachable configuration fails here rather than at first request.
         run: python -c "import app.main"
 
       - name: Tests
@@ -94,9 +166,11 @@ jobs:
     timeout-minutes: 10
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
@@ -129,22 +203,24 @@ jobs:
           PY
 
   frontend:
-    name: Frontend (types, i18n, build)
+    name: Frontend (types, i18n, build, locales)
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
 
     defaults:
       run:
         working-directory: apps/web
 
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: pnpm/action-setup@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          version: 9
+          persist-credentials: false
 
-      - uses: actions/setup-node@v4
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
@@ -169,54 +245,209 @@ jobs:
         env:
           NEXT_PUBLIC_API_URL: https://portal.example.invalid
 
+      - name: Locale routes and Arabic RTL
+        # Serves the build that was just produced and asks all five locales for
+        # their login page: 200, correct <html lang>, and dir=rtl for Arabic.
+        run: pnpm check:locales
+        env:
+          NEXT_PUBLIC_API_URL: https://portal.example.invalid
+
   images:
-    name: Docker images (both artifacts build)
+    name: Docker images and production composition
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 35
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
-      - uses: docker/setup-buildx-action@v3
+      - name: Node runtime must be the same in CI and in the web image
+        # The two halves of a runtime upgrade drift independently: CI can move
+        # to 24 while the image still builds on 20, or `engines` can be dropped,
+        # and every gate still passes. This makes the drift a failure.
+        shell: bash
+        run: |
+          set -euo pipefail
+          image_major="$(sed -n 's/^FROM node:\([0-9][0-9]*\).*/\1/p' infra/docker/Dockerfile.web | head -1)"
+          if [ "$image_major" != "$NODE_VERSION" ]; then
+            echo "::error::Dockerfile.web builds on node:${image_major:-unknown} but NODE_VERSION is $NODE_VERSION."
+            exit 1
+          fi
+          engines="$(python3 -c 'import json; print(json.load(open("apps/web/package.json")).get("engines", {}).get("node", ""))')"
+          case "$engines" in
+            *"$NODE_VERSION"*) ;;
+            *) echo "::error::apps/web/package.json engines.node is '$engines'; expected to permit $NODE_VERSION."; exit 1 ;;
+          esac
+          echo "node runtime aligned at major $NODE_VERSION (image and engines)"
+
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
       - name: Build the API image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: .
           file: infra/docker/Dockerfile.api
           push: false
+          # Loaded into the daemon so the checks below can inspect it.
+          load: true
           tags: sycumain-api:ci
 
       - name: Build the production web image
         # `--target production` resolves the standalone runner stage. If the
         # stage, the messages directory or the build itself is broken, this
         # fails here instead of during a deployment.
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: .
           file: infra/docker/Dockerfile.web
           target: production
           push: false
+          load: true
           build-args: |
             NEXT_PUBLIC_API_URL=https://portal.example.invalid
           tags: sycumain-web:ci
+
+      - name: Images must not contain environment files or private keys
+        shell: bash
+        run: |
+          set -euo pipefail
+          status=0
+          for image in sycumain-api:ci sycumain-web:ci; do
+            echo "Inspecting $image"
+            # Scope is the application tree (/app in both images), not the whole
+            # filesystem: the base image legitimately ships CA certificates such
+            # as /etc/ssl/cert.pem, so a system-wide *.pem scan reports noise and
+            # would never pass. Vendored node_modules fixtures are excluded for
+            # the same reason — the risk being checked is our own build context.
+            found="$(docker run --rm --entrypoint sh "$image" -c \
+              'find /app -maxdepth 8 \( -name ".env" -o -name "*.pem" -o -name "id_rsa*" -o -name "*.key" -o -name ".git" \) -print 2>/dev/null' \
+              | grep -v '/node_modules/' || true)"
+            if [ -n "$found" ]; then
+              echo "::error::$image contains build-context secrets: $found"
+              status=1
+            else
+              echo "  clean: no .env, .git or key material"
+            fi
+          done
+          exit "$status"
+
+      - name: The API image must not ship the test suite
+        shell: bash
+        run: |
+          set -euo pipefail
+          if docker run --rm --entrypoint sh sycumain-api:ci -c 'test -d /app/tests'; then
+            echo "::error::The API image contains /app/tests (see .dockerignore)."
+            exit 1
+          fi
+          echo "clean: no test suite in the runtime image"
+
+      - name: Production Compose model resolves
+        # Validated against the committed template, whose values are placeholders:
+        # no real credential is read and nothing is started.
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp .env.production.example .env.production
+          docker compose --env-file .env.production -f docker-compose.prod.yml config >/dev/null
+          echo "production composition is valid"
+          # The template must keep documenting every variable the file requires.
+          for required in SECRET_KEY APP_ORIGIN POSTGRES_APP_USER POSTGRES_APP_PASSWORD SITE_ADDRESS; do
+            grep -q "^[# ]*${required}=" .env.production.example \
+              || { echo "::error::.env.production.example does not document ${required}"; exit 1; }
+          done
+          echo "documented runtime variables present"
+
+  security:
+    name: Security (advisories)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: No real environment file is tracked
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Templates are allowed (any *.example/.sample/.template name, which
+          # includes .env.production.example); anything else in the .env family
+          # is a leak.
+          leaks="$(git ls-files | grep -E '(^|/)\.env($|\.)' \
+            | grep -vE '\.(example|sample|template)$' || true)"
+          if [ -n "$leaks" ]; then
+            echo "::error::Environment files are tracked in git:"
+            echo "$leaks"
+            exit 1
+          fi
+          echo "clean: only .env templates are tracked"
+
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: apps/api/pyproject.toml
+
+      - name: Backend dependency advisories (advisory)
+        # Advisory on purpose: pyproject.toml uses lower-bound ranges rather than
+        # a locked graph, so this reports the currently resolved set. A blocking
+        # gate belongs behind a lockfile — see the CI/CD document.
+        continue-on-error: true
+        working-directory: apps/api
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pip-audit
+          python -m pip install -e ".[dev]"
+          python -m pip_audit --local --skip-editable --progress-spinner off
+
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+          cache-dependency-path: apps/web/pnpm-lock.yaml
+
+      - name: Install frontend dependencies
+        working-directory: apps/web
+        run: pnpm install --frozen-lockfile
+
+      - name: Fail on critical frontend advisories
+        working-directory: apps/web
+        run: pnpm audit --prod --audit-level critical
+
+      - name: Frontend advisories, full report (advisory)
+        # High and moderate findings exist in Next.js's transitive tree and are
+        # only clearable by a coordinated framework upgrade; they are reported
+        # here and proposed by Dependabot rather than failing every pull request.
+        continue-on-error: true
+        working-directory: apps/web
+        run: pnpm audit --prod
 
   e2e:
     name: Browser E2E (isolated stack)
     # Independent of the other jobs: it neither waits for them nor slows them
     # down. It brings up its own database, api and web containers on
     # 5436/8002/3002 and discards them afterwards.
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 45
 
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: pnpm/action-setup@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          version: 9
+          persist-credentials: false
 
-      - uses: actions/setup-node@v4
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
@@ -237,7 +468,7 @@ jobs:
 
       - name: Upload Playwright diagnostics
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: playwright-diagnostics
           if-no-files-found: ignore

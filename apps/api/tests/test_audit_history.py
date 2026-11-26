@@ -24,7 +24,6 @@ from app.models.audit import AuditLog
 from app.models.housing import Bed, Building, Floor, Room
 from app.models.identity import Role, Student, StudentStatus, User
 
-
 # ---------------------------------------------------------------------------
 # Value serialisation
 # ---------------------------------------------------------------------------

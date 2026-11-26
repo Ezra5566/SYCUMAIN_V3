@@ -125,9 +125,8 @@ def field_changes(
         current = after.get(key, _MISSING)
         if previous is _MISSING and current is _MISSING:
             continue
-        if previous is not _MISSING and current is not _MISSING:
-            if previous == current:
-                continue
+        if previous is not _MISSING and current is not _MISSING and previous == current:
+            continue
         changes[key] = {
             "previous": None if previous is _MISSING else sanitize_value(previous),
             "new": None if current is _MISSING else sanitize_value(current),

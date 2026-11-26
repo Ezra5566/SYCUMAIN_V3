@@ -71,6 +71,10 @@ build: ## production build of the web app
 i18n: ## translation parity across all five locales
 	cd $(WEB) && node scripts/check-i18n.mjs
 
+.PHONY: locales
+locales: ## verify all five locale routes and Arabic RTL against a production build
+	cd $(WEB) && pnpm check:locales
+
 # --- Browser ----------------------------------------------------------------
 .PHONY: e2e
 e2e: ## browser suite against an isolated, disposable stack

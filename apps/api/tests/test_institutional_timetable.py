@@ -9,9 +9,9 @@ into another test or into the development database.
 from __future__ import annotations
 
 from datetime import date, time
+from typing import TYPE_CHECKING
 
 import pytest
-from fastapi.testclient import TestClient
 
 from app.database.session import SessionLocal
 from app.models.academic import (
@@ -28,6 +28,9 @@ from app.models.academic import (
 )
 from app.models.identity import Student
 from app.seed_academic import seed_academic
+
+if TYPE_CHECKING:
+    from fastapi.testclient import TestClient
 
 
 @pytest.fixture(scope="module", autouse=True)

@@ -94,6 +94,21 @@ any table. `docker-compose.prod.yml` now points the API at that role and keeps m
 on the owning account. A new one-shot `provision-roles` service applies it between
 `migrate` and `up`.
 
+**What the `REVOKE` does, and what it does not do.** The migration runs
+`REVOKE UPDATE, DELETE, TRUNCATE, REFERENCES ON audit_logs FROM PUBLIC`. That closes the
+default table privileges every role inherits; it does **not** remove privileges the owning
+role holds in its own right, and no `REVOKE` constrains a superuser. On the development
+database — where `portal` is both the owner and a superuser —
+`information_schema.role_table_grants` therefore still lists `UPDATE`, `DELETE` and
+`TRUNCATE` for `portal` after the migration. That is expected, not a defect: there the
+effective control is the Layer 1 trigger, which fires for the owner and for a superuser
+alike. The grant split does its work in production, where the API connects as a
+non-owning, non-superuser role and the `REVOKE` stops it before the trigger has to.
+
+Testing immutability on the owning superuser is therefore the *strongest* available check,
+not a weaker one. It is also the reason the Layer 1 verification below can be stated
+without relying on grants at all.
+
 ### B.3 Test evidence
 
 **VERIFIED — development database, as the actual application role `portal`:**

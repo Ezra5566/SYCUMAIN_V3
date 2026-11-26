@@ -58,6 +58,9 @@ and forwarded headers.
 ```bash
 cp .env.production.example .env.production      # fill in every REPLACE_ME
 docker compose --env-file .env.production -f docker-compose.prod.yml build
+make backup                                     # dump + documents + digests
+make restore-verify                             # prove the dump restores
+cd apps/api && python3 tools/schema_revision.py  # revision this code expects
 docker compose --env-file .env.production -f docker-compose.prod.yml \
   --profile tools run --rm migrate              # explicit schema step
 docker compose --env-file .env.production -f docker-compose.prod.yml up -d
@@ -67,6 +70,14 @@ Migrations **never** run when a container starts: `api` is started with
 `uvicorn` only, and `migrate` sits behind the `tools` profile. A failed
 migration therefore stops the release before any container is replaced, rather
 than half-applying a schema on boot.
+
+**A backup and a verified restore are prerequisites for the migration step, not
+optional hygiene.** A forward migration is the one action that can turn a later
+image rollback into a broken deployment, because it changes the schema under
+code that expects the older one. `release.yml`'s `migrate` job therefore
+requires the operator to tick `backup_verified` (which attests to `make backup`
+and `make restore-verify` succeeding for this release) and fails without it.
+When releasing by hand, run the same two commands before `migrate`.
 
 ### First administrator
 
@@ -179,13 +190,33 @@ These are external dependencies, not code defects:
 
 ## 8. Rolling back
 
+A rollback moves images and nothing else. It never runs `alembic`, never
+restores a database, and never rewrites data — so the schema must already be
+compatible with the version being restored.
+
+0. **Check the schema revision first.** `release-manifest.json` records
+   `schema_expected_head`, the revision the released code was built against,
+   and `apps/api/tools/schema_revision.py` prints the revision of the tree you
+   are deploying. Compare it with the database's actual revision:
+
+   ```bash
+   docker compose --env-file .env.production -f docker-compose.prod.yml \
+     --profile tools run --rm migrate python -m alembic current
+   ```
+
+   A rollback is valid only when the target version's `schema_expected_head`
+   equals that value. If the database is **ahead**, the older code will start
+   and then fail on the first query that touches a changed table — in that case
+   take option 2, not option 1.
 1. Redeploy the previous image tags (nothing in the release writes
    destructively to the schema by itself).
 2. If the release included a migration, prefer a **new forward revision**;
    `alembic downgrade` exists for every revision but is refused by several of
    them while institutional rows exist (`immigration_reminders`, examinations),
    by design.
-3. `scripts/restore.sh --live` is the last resort, not the first.
+3. `scripts/restore.sh --live` is the last resort, not the first. It requires
+   typing the database name and stops the API, because a live restore replaces
+   rows rather than reinterpreting them.
 
 Every migration in this repository documents its own downgrade position in the
 module docstring.

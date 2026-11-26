@@ -1,7 +1,25 @@
-# Native postinstall scripts required by the Next.js / Tailwind / ESLint toolchain.
+# pnpm workspace definition for the web app.
 #
-# pnpm blocks dependency build scripts by default. These three are legitimate
-# and needed for correct native resolution; everything else stays blocked.
+# Two settings are load-bearing here, and both were established by testing
+# rather than assumption:
+#
+# packages
+#   Mandatory whenever this file exists. Without it pnpm aborts with
+#   "ERROR packages field missing or empty" before installing anything — the
+#   exact failure of the first GitHub Actions run of CI ("Install", 1s). This
+#   app is a single package, so the workspace root is the package itself.
+#
+# allowBuilds
+#   pnpm blocks dependency build scripts by default. Since pnpm 12 an unapproved
+#   script is a hard install failure (ERR_PNPM_IGNORED_BUILDS), not a warning.
+#   These three are the native toolchain packages that must run postinstall:
+#   @parcel/watcher (Tailwind/PostCSS watching), @swc/core (Next.js compiler)
+#   and unrs-resolver (ESLint import resolution). Everything else stays blocked.
+#   `pnpm approve-builds` writes this map, so it is the canonical shape for the
+#   pnpm major pinned in CI and in the web image.
+packages:
+  - "."
+
 allowBuilds:
   '@parcel/watcher': true
   '@swc/core': true

@@ -1,0 +1,384 @@
+name: Release
+
+# Controlled delivery. Nothing here runs on a merge to main.
+#
+#   tag push  v*      build, publish immutable images, attach a release manifest
+#   workflow_dispatch  choose an environment, optionally run the migration step
+#
+# Publishing an image and releasing it are separate acts: the build job only
+# pushes artifacts to GHCR, and every step that touches a host sits behind
+#   * an `environment:` (so GitHub can require a reviewer), and
+#   * the repository variable DEPLOY_ENABLED == 'true'.
+#
+# Recovery rules — the schema, not the images, is what makes a rollback unsafe:
+#   * `release-manifest.json` records `schema_expected_head`, the revision the
+#     released code was built against.
+#   * `migrate` only runs when the operator ticks `backup_verified`, which
+#     attests that `make backup` and `make restore-verify` succeeded for this
+#     release. A migration is the one step that can invalidate a rollback.
+#   * `rollback_to` restores images only. It is valid only when
+#     `schema_expected_head` for the target version equals the database's
+#     current `alembic_version`; otherwise prefer a new forward revision.
+#   * `deploy` runs no `alembic` command and no database restore. Recovery is an
+#     operator decision, never a side effect of restarting containers.
+#
+# Until an operator creates the staging/production environments, sets the
+# secrets named in the CI/CD document, and flips DEPLOY_ENABLED, the deployment
+# jobs are *skipped* — visibly, never silently "successful".
+#
+# This workflow never deploys to Vercel, Render or another host: the supported
+# topology is the documented Docker Compose stack (docs/deployment-v3.md).
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to build and publish (e.g. 3.1.0)"
+        required: true
+        type: string
+      environment:
+        description: "Target environment (controls which environment's approvals and secrets apply)"
+        required: true
+        type: choice
+        options: [staging, production]
+      rollback_to:
+        description: "Roll back: deploy this existing image tag instead of building"
+        required: false
+        type: string
+      run_migrations:
+        description: "Run 'alembic upgrade head' before deployment (explicit, never automatic)"
+        required: false
+        type: boolean
+        default: false
+      backup_verified:
+        description: "I took a backup and verified it restores (required for migrations)"
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  # One release at a time per environment; never cancel a release in flight.
+  group: release-${{ github.event.inputs.environment || 'tag' }}
+  cancel-in-progress: false
+
+env:
+  PYTHON_VERSION: "3.11"
+  # GHCR requires a lower-case path; the repository is SYCUMAIN_V3.
+  IMAGE_REGISTRY: ghcr.io
+  IMAGE_NAMESPACE: ezra5566/sycumain_v3
+
+jobs:
+  build:
+    name: Build and publish images
+    if: ${{ github.event_name == 'push' || inputs.rollback_to == '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      version: ${{ steps.meta.outputs.version }}
+      api_image: ${{ steps.meta.outputs.api_image }}
+      web_image: ${{ steps.meta.outputs.web_image }}
+      schema_expected_head: ${{ steps.schema.outputs.head }}
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Resolve the version and immutable tags
+        id: meta
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "push" ]; then
+            version="${GITHUB_REF_NAME#v}"
+          else
+            version="${{ inputs.version }}"
+          fi
+          case "$version" in
+            [0-9]*.[0-9]*.[0-9]*) ;;
+            *) echo "::error::Version '$version' is not semver (MAJOR.MINOR.PATCH)."; exit 1 ;;
+          esac
+
+          sha="$(git rev-parse --short=12 HEAD)"
+          # Two tags per image: the human version, and the exact commit. A
+          # rollback names one of them, and neither can ever be moved.
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "api_image=$IMAGE_REGISTRY/$IMAGE_NAMESPACE-api" >> "$GITHUB_OUTPUT"
+          echo "web_image=$IMAGE_REGISTRY/$IMAGE_NAMESPACE-web" >> "$GITHUB_OUTPUT"
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          echo "Building $version (commit $sha)"
+
+      - name: Record the schema revision this version expects
+        id: schema
+        # Read from the migration graph, not from a database: the build has no
+        # database, and the point is to state what the code expects *before* a
+        # host is touched. The resolver is stdlib-only, hence plain python3.
+        shell: bash
+        run: |
+          set -euo pipefail
+          revision="$(python3 apps/api/tools/schema_revision.py --json)"
+          echo "$revision"
+          head="$(python3 apps/api/tools/schema_revision.py)"
+          echo "head=$head" >> "$GITHUB_OUTPUT"
+          echo "Expected schema revision: $head"
+
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Authenticate to GHCR
+        uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
+        with:
+          registry: ${{ env.IMAGE_REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish the API image
+        id: api
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          file: infra/docker/Dockerfile.api
+          push: true
+          tags: |
+            ${{ steps.meta.outputs.api_image }}:${{ steps.meta.outputs.version }}
+            ${{ steps.meta.outputs.api_image }}:${{ steps.meta.outputs.sha }}
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.version=${{ steps.meta.outputs.version }}
+
+      - name: Publish the web image
+        id: web
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          file: infra/docker/Dockerfile.web
+          target: production
+          push: true
+          # The public origin is baked into the client bundle, so it is supplied
+          # per environment at build time. The production value is required.
+          build-args: |
+            NEXT_PUBLIC_API_URL=${{ vars.APP_ORIGIN || 'https://portal.example.invalid' }}
+          tags: |
+            ${{ steps.meta.outputs.web_image }}:${{ steps.meta.outputs.version }}
+            ${{ steps.meta.outputs.web_image }}:${{ steps.meta.outputs.sha }}
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.version=${{ steps.meta.outputs.version }}
+
+      - name: Write the release manifest
+        # The artifact a rollback and an audit both read: exact immutable tags
+        # and digests, tied to a commit.
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > release-manifest.json <<JSON
+          {
+            "version": "${{ steps.meta.outputs.version }}",
+            "commit": "${{ github.sha }}",
+            "schema_expected_head": "${{ steps.schema.outputs.head }}",
+            "built_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "images": {
+              "api": {
+                "repository": "${{ steps.meta.outputs.api_image }}",
+                "tag": "${{ steps.meta.outputs.version }}",
+                "digest": "${{ steps.api.outputs.digest }}"
+              },
+              "web": {
+                "repository": "${{ steps.meta.outputs.web_image }}",
+                "tag": "${{ steps.meta.outputs.version }}",
+                "digest": "${{ steps.web.outputs.digest }}"
+              }
+            }
+          }
+          JSON
+          cat release-manifest.json
+
+      - name: Upload the release manifest
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-manifest
+          path: release-manifest.json
+          retention-days: 90
+          if-no-files-found: error
+
+  migrate:
+    name: Migrate (${{ inputs.environment }})
+    needs: build
+    # Explicit, environment-gated, and never triggered by a merge. The backup
+    # attestation is checked *inside* the job rather than in this condition: if
+    # it gated the job, the job would be skipped and `deploy` (which accepts a
+    # skipped migrate) would install code needing a migration onto an unmigrated
+    # database. A failure is the correct, blocking outcome.
+    if: >-
+      ${{ github.event_name == 'workflow_dispatch'
+          && inputs.run_migrations == true
+          && inputs.rollback_to == ''
+          && vars.DEPLOY_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: ${{ inputs.environment }}
+    permissions:
+      contents: read
+      packages: read
+
+    steps:
+      - name: Refuse to migrate without a verified backup
+        if: ${{ inputs.backup_verified != true }}
+        run: |
+          echo "::error::run_migrations is set, but backup_verified is not."
+          echo "A forward migration is the one step that can invalidate a rollback."
+          echo "Take a backup and prove it restores first:"
+          echo "  make backup && make restore-verify"
+          echo "then re-run with backup_verified ticked."
+          exit 1
+
+      - name: Explain the gate
+        run: |
+          echo "Target environment: ${{ inputs.environment }}"
+          echo "Version: ${{ needs.build.outputs.version }}"
+          echo "Expected schema revision: ${{ needs.build.outputs.schema_expected_head }}"
+          echo "This job requires the '${{ inputs.environment }}' environment's"
+          echo "approval and deployment secrets, and a verified backup."
+          echo "Nothing is applied implicitly: the schema is advanced by"
+          echo "'alembic upgrade head' only, and only here."
+
+      - name: Apply pending migrations before the new image is released
+        # Forward-only by policy: see docs/v3-ci-cd-setup-and-release-workflow.md.
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
+          IMAGE_TAG: ${{ needs.build.outputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          ssh -i ~/.ssh/deploy_key "$DEPLOY_USER@$DEPLOY_HOST" \
+            "cd '$DEPLOY_PATH' && IMAGE_TAG='$IMAGE_TAG' \
+             docker compose -f docker-compose.prod.yml --profile tools run --rm migrate"
+
+  deploy:
+    name: Deploy (${{ inputs.environment || 'staging' }})
+    needs: [build, migrate]
+    # Runs when the migration job succeeded, or was intentionally skipped
+    # (no migrations requested / rollback), but never on a plain tag push.
+    if: >-
+      ${{ always()
+          && github.event_name == 'workflow_dispatch'
+          && (needs.build.result == 'success'
+              || (inputs.rollback_to != '' && needs.build.result == 'skipped'))
+          && (needs.migrate.result == 'success' || needs.migrate.result == 'skipped')
+          && vars.DEPLOY_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: ${{ inputs.environment }}
+    permissions:
+      contents: read
+      packages: read
+
+    steps:
+      - name: Resolve the artifact to release
+        id: target
+        shell: bash
+        env:
+          INPUT_ROLLBACK: ${{ inputs.rollback_to }}
+          BUILT_VERSION: ${{ needs.build.outputs.version }}
+        run: |
+          set -euo pipefail
+          if [ -n "${INPUT_ROLLBACK:-}" ]; then
+            # A rollback names an already-published immutable tag.
+            echo "version=$INPUT_ROLLBACK" >> "$GITHUB_OUTPUT"
+            echo "Rolling back to $INPUT_ROLLBACK (no build, no migration)."
+            echo "Precondition: $INPUT_ROLLBACK's release-manifest.json records a"
+            echo "schema_expected_head equal to this database's alembic_version."
+            echo "A rollback restores images only; see docs/deployment-v3.md §8."
+          else
+            echo "version=$BUILT_VERSION" >> "$GITHUB_OUTPUT"
+            echo "Releasing $BUILT_VERSION."
+          fi
+
+      - name: Roll the stack and verify readiness
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
+          APP_ORIGIN: ${{ vars.APP_ORIGIN }}
+          IMAGE_TAG: ${{ steps.target.outputs.version }}
+          GHCR_USER: ${{ github.actor }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
+          ssh -i ~/.ssh/deploy_key "$DEPLOY_USER@$DEPLOY_HOST" \
+            "cd '$DEPLOY_PATH' \
+             && printf '%s' '$GHCR_TOKEN' | docker login ghcr.io -u '$GHCR_USER' --password-stdin \
+             && IMAGE_TAG='$IMAGE_TAG' docker compose -f docker-compose.prod.yml pull \
+             && IMAGE_TAG='$IMAGE_TAG' docker compose -f docker-compose.prod.yml up -d \
+             && curl -fsS --retry 10 --retry-delay 3 '$APP_ORIGIN/ready'"
+
+      - name: Record the deployment
+        run: |
+          {
+            echo "### Released ${{ steps.target.outputs.version }} to ${{ inputs.environment }}"
+            echo ""
+            echo "- commit: \`${{ github.sha }}\`"
+            echo "- api image: \`${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAMESPACE }}-api:${{ steps.target.outputs.version }}\`"
+            echo "- web image: \`${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAMESPACE }}-web:${{ steps.target.outputs.version }}\`"
+            echo "- rollback: re-run this workflow with \`rollback_to\` set to a previous version"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  release:
+    name: Attach the manifest to the GitHub Release
+    needs: build
+    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Download the manifest from this run
+        # `gh` is preinstalled on the runner, so this needs no extra action and
+        # therefore no additional third-party code to review.
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh run download "$GITHUB_RUN_ID" -n release-manifest -D .
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --title "$GITHUB_REF_NAME" \
+            --notes-file - \
+            release-manifest.json <<'NOTES'
+          Images for this tag are published to the GitHub Container Registry and
+          recorded in `release-manifest.json` (version, commit, digests).
+
+          **Deployment is a separate, approved action.** Run the Release workflow
+          with an environment and, when the release contains a migration, enable
+          `run_migrations`. To roll back, re-run it with `rollback_to` set to a
+          previous version.
+          NOTES

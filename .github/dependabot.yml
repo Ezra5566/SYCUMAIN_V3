@@ -1,0 +1,57 @@
+# Dependency maintenance.
+#
+# This is the reviewable half of dependency security: GitHub opens a pull
+# request per advisory instead of CI failing on a version nobody has bumped yet.
+# It is deliberately not a mirror of the advisory checks in ci.yml — those
+# report what is currently installed, this proposes the upgrade.
+#
+# Security alerts themselves must be enabled in the repository settings
+# (Settings → Code security). See docs/v3-ci-cd-setup-and-release-workflow.md.
+
+version: 2
+updates:
+  # Backend runtime and development dependencies. There is no Python lockfile,
+  # so the ranges in pyproject.toml are what is updated.
+  - package-ecosystem: pip
+    directory: /apps/api
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    labels: [dependencies, backend]
+    commit-message:
+      prefix: "deps(api)"
+
+  # Frontend. The lockfile is committed, so updates arrive with it.
+  - package-ecosystem: npm
+    directory: /apps/web
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    labels: [dependencies, frontend]
+    commit-message:
+      prefix: "deps(web)"
+    groups:
+      # Next.js and its toolchain are upgraded together: a lone React or Next
+      # bump is the usual cause of a build that passes review and fails later.
+      next:
+        patterns: ["next", "eslint-config-next", "react", "react-dom", "@types/react*"]
+
+  # Base images used by infra/docker/Dockerfile.api and Dockerfile.web.
+  - package-ecosystem: docker
+    directory: /infra/docker
+    schedule:
+      interval: weekly
+    labels: [dependencies, docker]
+    commit-message:
+      prefix: "deps(docker)"
+
+  # The workflow actions themselves, so the pinned commits are maintained.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    labels: [dependencies, ci]
+    commit-message:
+      prefix: "deps(ci)"

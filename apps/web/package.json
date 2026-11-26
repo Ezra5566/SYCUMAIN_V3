@@ -2,6 +2,9 @@
   "name": "sycumain-v2-web",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
     "dev": "next dev --port 3101",
     "dev:docker": "next dev --port 3000",
@@ -12,6 +15,7 @@
     "test:e2e": "playwright test",
     "screenshots": "VISUAL=1 playwright test visual.spec.ts",
     "i18n:check": "node scripts/check-i18n.mjs",
+    "check:locales": "node scripts/check-locale-routes.mjs",
     "types:generate": "openapi-typescript ./openapi.json -o ./src/types/generated/api.d.ts",
     "dev:clone": "next dev --port 3101"
   },
@@ -35,13 +39,6 @@
     "tailwind-merge": "^2.3.0",
     "tailwindcss-animate": "^1.0.7",
     "world-map-country-shapes": "2.0.0"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "@next/swc",
-      "sharp",
-      "esbuild"
-    ]
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",

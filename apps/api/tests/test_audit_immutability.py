@@ -52,7 +52,7 @@ def test_trigger_set_is_installed(db_session) -> None:
         .scalars()
         .all()
     )
-    assert EXPECTED_TRIGGERS <= installed
+    assert installed >= EXPECTED_TRIGGERS
 
 
 def test_legitimate_event_is_recorded_and_readable(db_session) -> None:
@@ -72,11 +72,10 @@ def test_legitimate_event_is_recorded_and_readable(db_session) -> None:
 def test_update_and_delete_are_rejected(db_session, statement: str) -> None:
     entry = _stage_entry(db_session)
 
-    with pytest.raises(DBAPIError) as excinfo:
-        # A savepoint keeps the failed statement from poisoning the fixture's
-        # outer transaction, so the rest of the test can still read the row.
-        with db_session.begin_nested():
-            db_session.execute(text(statement), {"id": entry.id})
+    # A savepoint keeps the failed statement from poisoning the fixture's outer
+    # transaction, so the rest of the test can still read the row.
+    with pytest.raises(DBAPIError) as excinfo, db_session.begin_nested():
+        db_session.execute(text(statement), {"id": entry.id})
 
     message = str(excinfo.value)
     assert "append-only" in message
@@ -93,9 +92,8 @@ def test_update_and_delete_are_rejected(db_session, statement: str) -> None:
 def test_truncate_is_rejected(db_session) -> None:
     _stage_entry(db_session)
 
-    with pytest.raises(DBAPIError) as excinfo:
-        with db_session.begin_nested():
-            db_session.execute(text("TRUNCATE audit_logs"))
+    with pytest.raises(DBAPIError) as excinfo, db_session.begin_nested():
+        db_session.execute(text("TRUNCATE audit_logs"))
 
     assert "append-only" in str(excinfo.value)
 
@@ -104,9 +102,8 @@ def test_existing_rows_survive_a_rejected_truncate(db_session) -> None:
     _stage_entry(db_session, "test.audit.survivor")
     before = db_session.query(AuditLog).count()
 
-    with pytest.raises(DBAPIError):
-        with db_session.begin_nested():
-            db_session.execute(text("TRUNCATE audit_logs"))
+    with pytest.raises(DBAPIError), db_session.begin_nested():
+        db_session.execute(text("TRUNCATE audit_logs"))
 
     assert db_session.query(AuditLog).count() == before
 
