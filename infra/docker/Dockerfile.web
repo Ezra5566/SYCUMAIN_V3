@@ -7,7 +7,7 @@
 # Node 24 is the current Maintenance LTS (end of life 2028-04-30). The CI
 # `images` job fails if this major and ci.yml's NODE_VERSION ever disagree.
 # ---------------------------------------------------------------------------
-FROM node:24-alpine AS base
+FROM node:26-alpine AS base
 WORKDIR /app
 RUN corepack enable
 
