@@ -190,6 +190,13 @@ test.describe("staff modules", () => {
     const failures = trackPageHealth(page);
     await page.goto(app("/app/academics"));
     await expect(page.getByRole("heading", { name: /^academics$/i })).toBeVisible();
+    // The page opens on whichever period is current, and by the time this spec
+    // runs the intake/period specs have created their own active periods — an
+    // empty one would leave the offering filter with no catalogue to show. Pin
+    // the seeded period the assertions below are about, as an operator would.
+    await page
+      .getByRole("combobox", { name: "Academic period" })
+      .selectOption({ label: "Fall 2026 (2026-FALL)" });
     // The catalogues are rendered as the options of the period, programme and
     // course filters, and an <option> is never "visible" to Playwright. Assert
     // the DOM, which is what "the module loaded seeded data" actually means here;

@@ -2,13 +2,21 @@
 
 **Date:** 2026-11-26
 **Branch:** `main`
+**Head:** `3602099` ("new changes pushed")
 **Scope:** complete and verify the GitHub CI pipeline, resolve the integrity report's
 C1–C4 findings, keep CD deferred.
-**Verdict:** **CI VERIFIED WITH LIMITATIONS** — see §11.
+**Verdict:** see §11.
 
-Nothing was staged, committed, pushed, deployed or reset in this task. The working
-tree changes described here are uncommitted; the executed GitHub run reported in §4
-is the one that already existed on `main` for `52914a6`.
+The CI work described here was committed and pushed by the repository owner as
+`3602099`, and GitHub Actions executed it:
+[run 45840882309](https://github.com/Ezra5566/SYCUMAIN_V3/actions/runs/45840882309).
+**Six of seven jobs passed**, including the backend suite, the migration pair and the
+production images — the three jobs the previous run failed. The only failure was a
+Playwright order-dependence bug in one smoke test, diagnosed from that run's uploaded
+diagnostics and fixed afterwards (§1.6); that single change is the only part of this
+report not yet executed on GitHub. No deployment was configured, no repository
+setting was changed, and this task itself staged, committed, pushed and deployed
+nothing.
 
 ---
 
@@ -16,11 +24,14 @@ is the one that already existed on `main` for `52914a6`.
 
 ### 1.1 The CI workflow actually ran, and exposed three defects
 
-The workflow had never been green. `52914a6` is the first commit that carried both
-the hardened workflow and the pnpm/OpenAPI/ruff fixes, and GitHub Actions ran it:
+`52914a6` is the first commit that carried both the hardened workflow and the
+pnpm/OpenAPI/ruff fixes, and GitHub Actions ran it:
 [run 45813694149](https://github.com/Ezra5566/SYCUMAIN_V3/actions/runs/45813694149).
 Five of seven jobs passed; two failed for reasons that had nothing to do with the
-application.
+application. After the fixes below were pushed as `3602099`, the same workflow ran
+again ([run 45840882309](https://github.com/Ezra5566/SYCUMAIN_V3/actions/runs/45840882309))
+and six of seven passed — the backend, Docker and security jobs that this section is
+about all went green.
 
 **Defect 1 — the `backend` job pointed the suite at port 5433.**
 `tests/conftest.py` refuses any URL containing `:5433`, because 5433 is the V1
@@ -155,6 +166,49 @@ Two Playwright assertions were wrong, not the application:
   attachment of the options, which is what "the catalogues loaded" means, with the
   visible-page coverage left to the heading assertion and `expectHealthy`.
 
+The second run showed that fix alone was not enough, and the attached diagnostics
+said exactly why. The academics page opens on `periods.find(status === "ACTIVE")`,
+and by the time this spec runs the intake and period specs have created their own
+active periods, so the filter was selected on `E2E correction intake 4208625-A` —
+an empty period, whose offering filter therefore contained **only** "All program
+offerings". The failure was `element(s) not found` for the *offering* option, not a
+visibility problem, and it only appeared when the whole suite ran in CI order;
+`e2e/smoke.spec.ts` on its own had no such periods and passed. The test now selects
+the seeded period explicitly, the way an operator would, before asserting the
+catalogue:
+
+```ts
+await page
+  .getByRole("combobox", { name: "Academic period" })
+  .selectOption({ label: "Fall 2026 (2026-FALL)" });
+```
+
+The application's "current period" behaviour is unchanged: only the test's
+assumption was wrong.
+
+### 1.7 The support-desk draft race (found by the same run)
+
+The other red test in run 2 — `stage7.spec.ts:88`, the support-ticket conversation —
+was recorded earlier as a retry-masked flake. Reproducing the full suite locally
+showed it is deterministic, and the failure screenshots showed why: the staff reply
+was already in the conversation while the reply box was empty and the internal-note
+box unchecked. `sendReply` cleared both *after* awaiting the POST:
+
+```ts
+await supportApi.addMessage(id, reply.trim(), internal);
+setReply("");
+setInternal(false);
+```
+
+Anything typed while the request is in flight is silently discarded — a real draft
+loss for a staff member writing a second reply, not just a test problem. It now
+clears only what was actually sent:
+
+```ts
+setReply((current) => (current.trim() === text ? "" : current));
+setInternal((current) => (current === asInternal ? false : current));
+```
+
 ---
 
 ## 2. Node 24 compatibility evidence
@@ -200,8 +254,9 @@ Executed the way CI now does it — the suite's database is **not** migrated:
 |---|---|---|
 | 1 | `test_academic.py` … `test_demo_credentials.py` (16) | ✅ 290 passed, 1 skipped (298 s) |
 | 2 | `test_dormitory_attendance.py` … `test_intake_and_timetable.py` (16) | ✅ 332 passed (318 s) |
-| 3 | `test_integrity_remediation.py` … (15) | SHARD3_RESULT |
-| 4 | `test_placements.py` … (15) | SHARD4_RESULT |
+| 3 | `test_integrity_remediation.py` … (15) | ✅ 280 passed (255 s) |
+| 4 | `test_placements.py` … (15) | ✅ 214 passed, 1 skipped (204 s) |
+| — | total | ✅ **1116 passed, 2 skipped** |
 
 The suite was sharded only because a single process takes ~20 minutes on this
 machine and the runner kept interrupting one long run; the environment (database,
@@ -226,45 +281,75 @@ the delete-refusing triggers described in §1.1.
 
 ## 4. GitHub Actions execution results
 
-This is real execution, not a YAML parse. Run
-[45813694149](https://github.com/Ezra5566/SYCUMAIN_V3/actions/runs/45813694149),
-`push` to `main`, head `52914a6`, concluded **failure** — 5 of 7 jobs green:
+This is real execution, not a YAML parse. The workflow ran twice on `main`.
+
+**Run 2 — [45840882309](https://github.com/Ezra5566/SYCUMAIN_V3/actions/runs/45840882309),
+head `3602099`, pushed after the fixes in §1.1–§1.2: 6 of 7 jobs green.**
 
 | Job | Result | Detail |
 |---|---|---|
-| Detect code changes | ✅ success | computed `code=true` for this push |
-| Backend (tests, lint, migrations) | ❌ failure | `Tests` step: `conftest.py` port-5433 refusal (§1.1). Lint, migrate, parity and import steps all passed |
+| Detect code changes | ✅ success | `code=true` |
+| Backend (tests, lint, migrations) | ✅ **success** | on port 5434, with the dedicated migration database: lint, migration from zero, `alembic check`, import, and the full suite |
 | API contract (OpenAPI current) | ✅ success | committed document matches the exporter |
-| Frontend (types, i18n, build, locales) | ✅ success | on Node 24, five locales, Arabic RTL route checks |
-| Docker images and production composition | ✅ success | both images, secret scan, Compose model |
+| Frontend (types, i18n, build, locales) | ✅ success | Node 24, five locales, Arabic RTL route checks |
+| Docker images and production composition | ✅ success | web image built on `node:24-alpine` with no `ERR_PNPM_IGNORED_BUILDS`, api image, secret scan, Compose model |
 | Security (advisories) | ✅ success | env-file check, pip-audit, `pnpm audit` critical gate |
+| Browser E2E (isolated stack) | ❌ failure | 1 failed test — a test-order defect, not the application (§1.6, §5) |
+
+**Run 1 — [45813694149](https://github.com/Ezra5566/SYCUMAIN_V3/actions/runs/45813694149),
+head `52914a6`: 5 of 7 jobs green.**
+
+| Job | Result | Detail |
+|---|---|---|
+| Backend (tests, lint, migrations) | ❌ failure | `Tests` step: `conftest.py` port-5433 refusal (§1.1). Lint, migrate, parity and import passed |
 | Browser E2E (isolated stack) | ❌ failure | 1 hard failure + 1 flaky test (§5) |
+| the other five jobs | ✅ success | as in run 2 |
 
-The previous run on `c2f5c5b`
+The earlier run on `c2f5c5b`
 ([45764076190](https://github.com/Ezra5566/SYCUMAIN_V3/actions/runs/45764076190))
-had failed 4 of 5 jobs; the api/frontend defects that caused it are gone.
+had failed 4 of 5 jobs; the api and frontend defects that caused it are gone.
 
-**The fixes in this task have not been executed on GitHub.** Running them requires a
-commit and a push, which needs your authorization. Until then the last executed
-result on `main` is the table above.
+So the two database/migration fixes and the Node 24 migration are confirmed by
+execution, not by inspection. What is **not** confirmed on GitHub is the last change
+in this report — the academics period selection and the support-desk draft race
+(§1.6) — because it postdates run 2 and pushing it is the owner's decision.
 
 ---
 
 ## 5. Browser E2E results
 
-Run 45813694149, job `Browser E2E (isolated stack)`: **1 failed**, one test flaky.
+**Run 1** (45813694149), job `Browser E2E (isolated stack)`: 1 failed, one test flaky.
 
 | Test | Outcome |
 |---|---|
 | `e2e/smoke.spec.ts:189` academics module loads majors, courses and timetable | ❌ failed both attempts — `expect(locator).toBeVisible()` on an `<option>` (§1.6) |
-| `e2e/stage7.spec.ts:88` support tickets — student files, staff answers | ⚠️ failed once (45 s timeout, Send button still disabled), **passed on retry #1 in 8.0 s** |
+| `e2e/stage7.spec.ts:88` support tickets — student files, staff answers | ⚠️ failed once (45 s timeout), **passed on retry #1 in 8.0 s** |
 | remaining 79 tests | ✅ passed |
 
-The academics assertion is fixed. The support-ticket test is a timing flake around
-the reply form's `disabled` state; it is not suppressed, its retry is unchanged, and
-it is recorded here rather than papered over.
+**Run 2** (45840882309), same job: 115 passed, **1 failed**, one retry used.
 
-Local re-run of `e2e/smoke.spec.ts` after the fix: E2E_LOCAL_RESULT.
+| Test | Outcome |
+|---|---|
+| `e2e/smoke.spec.ts:189` academics | ❌ failed both attempts — `element(s) not found` for the offering option: the page had opened on an empty intake created by an earlier spec (§1.6) |
+| `e2e/stage7.spec.ts:88` support tickets | ⚠️ failed once, passed on retry #1 |
+| remaining 115 tests | ✅ passed |
+
+The run's own uploaded diagnostics (`playwright-diagnostics`: an ARIA snapshot and two
+screenshots) identified both causes exactly; neither was guessed from the log. Both
+are fixed — one in the test, one in the reply form (§1.7). Nothing is suppressed: no
+retry was removed and no assertion was loosened.
+
+**Local full-suite re-run after both fixes**, `./scripts/e2e.sh` with no filter —
+the CI condition, one worker, retries disabled because `CI` is unset locally:
+
+```
+✓ 71  smoke.spec.ts:189  academics module loads majors, courses and timetable (2.5s)
+✓ 79  stage7.spec.ts:88  support tickets — student files a ticket and staff answers it (7.9s)
+116 passed (7.8m)
+```
+
+The earlier filtered run (`./scripts/e2e.sh e2e/smoke.spec.ts`) had passed 16/16, which
+is exactly why the order-dependence stayed invisible until the whole suite ran.
 
 ---
 
@@ -291,16 +376,19 @@ not reproducible. No known vulnerability was reported for the current environmen
 
 ## 7. Unresolved blockers
 
-1. **No push authorization.** The three CI fixes above are uncommitted and therefore
-   unverified on GitHub. That is the single reason this report cannot say CI
-   VERIFIED.
+1. **The last two fixes are not yet executed on GitHub.** The academics period
+   selection and the support-desk draft race (§1.6, §1.7) were made after run 2,
+   so the browser job is green locally but its red GitHub result stands until the
+   change is pushed. That, plus branch protection, is the reason this report says
+   CI VERIFIED WITH LIMITATIONS rather than CI VERIFIED.
 2. **Branch protection is not configured.** `main` is unprotected, so no check is
    required to merge. This is a repository setting and was deliberately not touched.
-3. **One flaky E2E test** (§5) remains, masked by Playwright's single retry.
-4. **`pip-audit` cannot be blocking** without a backend lockfile.
+3. **Six frontend advisories remain** (§6) — none critical, all transitive under
+   Next.js; CI blocks only on critical.
+4. **`pip-audit` cannot be blocking** without a backend lockfile, so it is advisory.
 5. **`alembic upgrade head --sql` (offline mode) is broken** at revision
    `9a1f2b3c4d5e`. Pre-existing, unrelated to CI, and not exercised by the pipeline.
-6. **`docs` and the working tree carry uncommitted changes**, listed in §10.
+6. **The working tree carries the changes in this report**, listed in §10.
 
 ---
 
@@ -342,9 +430,20 @@ Docker-Compose-shaped for it: `deploy` pulls immutable image tags and runs
 
 ## 10. Exact Git status
 
+Branch `main`, HEAD `3602099` ("new changes pushed"); `origin/main` is the same commit.
+
 ```
-GIT_STATUS_BLOCK
+$ git status --porcelain
+ M apps/web/e2e/smoke.spec.ts
+ M apps/web/src/app/[locale]/(protected)/app/support/[id]/page.tsx
+ M docs/v3-ci-cd-setup-and-release-workflow.md
+ M docs/v3-ci-completion-report.md
 ```
+
+Four modified files, nothing added, deleted, renamed or untracked, and nothing
+staged. `git rev-parse HEAD` = `36020991a35759101dabc2137daa78c3a475fee`. History was
+not rewritten, no branch was created or switched, and neither V1 nor the running
+development stacks were touched.
 
 ---
 
@@ -352,21 +451,21 @@ GIT_STATUS_BLOCK
 
 **CI VERIFIED WITH LIMITATIONS.**
 
-Core checks pass, with the evidence above: lint, migration-from-zero and
-model/migration parity, OpenAPI consistency, frontend types/lint/build, five-locale
-and Arabic RTL validation, both production images, and the security gates all pass
-locally, and five of seven passed **on GitHub Actions** for the commit that carried
-the hardened workflow. The full API suite and the browser suite pass locally under
-the corrected arrangement.
+Six of seven jobs passed **on GitHub Actions** for `3602099`: the backend suite, the
+migration from zero, model/migration parity, the OpenAPI contract, the frontend job
+on Node 24 with five locales and Arabic RTL, both production images, and the security
+gates. The seventh — browser E2E — failed on two defects that the run's own artifacts
+pinpointed; both are fixed, and the complete suite, unfiltered and with retries off,
+passes locally: **116 passed, 0 failed, 7.8 m**.
 
 The limitations, stated plainly:
 
-* the three CI fixes made in this task have **not** been executed on GitHub, because
-  no push was authorized;
-* one Playwright test is timing-sensitive and passes only on retry;
+* the two fixes that make the browser job green are **not yet executed on GitHub**,
+  because pushing them is the owner's decision;
 * six frontend advisories remain, none critical, all transitive under Next.js;
-* `main` has no branch protection, so none of these checks is enforced as a
-  merge requirement.
+* `pip-audit` stays advisory because the backend has no lockfile;
+* `main` has no branch protection, so none of these checks is enforced as a merge
+  requirement.
 
 This is a statement about CI, not about production readiness. Nothing here validates
 the deployment path, the institutional environment, or the release workflow, none of

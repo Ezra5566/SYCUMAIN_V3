@@ -78,12 +78,17 @@ export default function SupportTicketPage() {
   };
 
   const sendReply = async () => {
-    if (!reply.trim()) return;
+    const text = reply.trim();
+    if (!text) return;
+    const asInternal = internal;
     await run(async () => {
-      await supportApi.addMessage(id, reply.trim(), internal);
-      setReply("");
-      setInternal(false);
-    }, internal ? t("internalNoteAdded") : t("messageSent"));
+      await supportApi.addMessage(id, text, asInternal);
+      // The draft is cleared after the request settles, so anything typed while
+      // it was in flight would be thrown away. Clear only what was actually
+      // sent, and leave a newer draft (and its internal-note flag) untouched.
+      setReply((current) => (current.trim() === text ? "" : current));
+      setInternal((current) => (current === asInternal ? false : current));
+    }, asInternal ? t("internalNoteAdded") : t("messageSent"));
   };
 
   const closed = data ? data.status === "CLOSED" || data.status === "RESOLVED" : false;

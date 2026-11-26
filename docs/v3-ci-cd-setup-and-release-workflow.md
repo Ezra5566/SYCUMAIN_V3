@@ -1,9 +1,12 @@
 # SYCUMAIN V3 — CI/CD setup and release workflow
 
-**Status:** CI has executed on GitHub Actions (run
-[45813694149](https://github.com/Ezra5566/SYCUMAIN_V3/actions/runs/45813694149) on
-`52914a6`); CD is disabled and nothing has been deployed. Run-by-run evidence lives
-in `docs/v3-ci-completion-report.md`.
+**Status:** CI has executed on GitHub Actions — run
+[45840882309](https://github.com/Ezra5566/SYCUMAIN_V3/actions/runs/45840882309) on
+`3602099` passed **6 of 7 jobs**, the backend suite and both images among them; the
+browser job's two failures were diagnosed from that run's artifacts and fixed (both
+tests green in a full local suite run), pending a push to re-execute. CD is disabled
+and nothing has been deployed. Run-by-run evidence lives in
+`docs/v3-ci-completion-report.md`.
 **Date:** 2026-11-26
 **Scope:** `.github/workflows/`, `.github/dependabot.yml`, the pnpm workspace file,
 the OpenAPI contract, lint fixes, and this document.
@@ -345,13 +348,16 @@ cd apps/web && pnpm audit --prod
 ## 7. Verified locally vs executed on GitHub
 
 GitHub column refers to run
+[45840882309](https://github.com/Ezra5566/SYCUMAIN_V3/actions/runs/45840882309) on
+`3602099` (the earlier run
 [45813694149](https://github.com/Ezra5566/SYCUMAIN_V3/actions/runs/45813694149) on
-`52914a6`; the local column refers to this task, on Node 24 for the frontend.
+`52914a6` is superseded); the local column refers to this task, on Node 24 for the
+frontend.
 
 | Check | Locally | On GitHub Actions |
 |---|---|---|
 | `ruff check app tests tools` | ✅ clean | ✅ `Lint` step passed |
-| `pytest` full suite | ✅ 1115 passed, 1 skipped (sharded; §3.2 of the completion report) | ❌ `Tests` — the port-5433 refusal, now fixed |
+| `pytest` full suite | ✅ 1116 passed, 2 skipped (sharded; §3.2 of the completion report) | ✅ `Tests` passed on 5434 against the suite's own database |
 | `alembic upgrade head` on an empty database | ✅ 32 revisions, 64 tables, 19 triggers | ✅ `Apply migrations` step passed |
 | `alembic check` on that database | ✅ no new upgrade operations | ✅ `Migration consistency` passed |
 | `python -c "import app.main"` | ✅ | ✅ passed |
@@ -365,13 +371,18 @@ GitHub column refers to run
 | `docker compose … config` (prod) | ✅ | ✅ passed |
 | Image secret inspection / no `/app/tests` | ✅ clean, absent | ✅ passed |
 | `pnpm audit --prod` | ✅ 0 critical, 6 advisories | ✅ critical gate passed |
-| `./scripts/e2e.sh e2e/smoke.spec.ts` | ✅ 16/16 after the locator fix | ❌ 1 failed (same locator), now fixed |
+| `./scripts/e2e.sh` (whole suite) | ✅ 116 passed, 0 failed (7.8 m) | ❌ 1 failed: a test-order defect, fixed in §1.6–1.7 of the completion report |
 | `release.yml` | ⚠️ YAML parses; still never dispatched | — |
 | Action SHAs resolve | ✅ pinned to exact commits | ✅ all jobs started |
 
-The workflow **has** executed. Its two failing jobs were workflow defects — the
-suite's database port and a Playwright locator — not application failures; both are
-fixed here and have not yet been re-executed on GitHub because that needs a push.
+The workflow **has** executed, twice. The first run's two failing jobs were workflow
+defects — the suite's database port and the migration/test database split — and the
+second run confirmed both fixes: 6 of 7 jobs green. The remaining red job (the
+browser suite) was two test defects plus one UI race, not application failures: an
+`<option>` locator, an assumption that the academics page opens on the seeded
+period, and a reply draft discarded when it was typed while a send was in flight.
+All three are fixed and the whole suite passes locally in CI order; they postdate
+run 2 and are re-executed whenever the change is pushed.
 
 ---
 
@@ -407,12 +418,14 @@ fixed here and have not yet been re-executed on GitHub because that needs a push
    ruleset in §5 is applied.
 9. **The `changes` job compares commit ranges**, so a docs-only PR still runs the
    five quick jobs; only the browser suite is skipped.
-10. **One E2E test is timing-sensitive.** `stage7.spec.ts` "support tickets" failed
-    on its first attempt on the executed run and **passed on retry #1 in 8.0 s**:
-    the reply form's Send button was still disabled when the click landed. It is a
-    retry-masked flake, not a functional failure, and it is not suppressed. The
-    deterministic failure in the same run — an academics assertion that waited for
-    visibility on an `<option>` — is fixed.
+10. **Both E2E failures are fixed but not yet re-executed on GitHub.** The
+    `stage7.spec.ts` "support tickets" test was not a flake: the reply form cleared
+    the draft after the POST resolved, so text typed while the send was in flight
+    was discarded — the Send button was disabled because the box had been emptied.
+    `setReply`/`setInternal` now clear only what was actually sent. The academics
+    test depended on the page opening on the seeded period and now selects
+    `2026-FALL` explicitly. The whole suite passes locally (116 passed, 7.8 m); the
+    red GitHub result stands until the change is pushed.
 11. **`tools/export_openapi.py` and the committed artifact disagree on formatting.**
     The tool writes `indent=2`; the committed `apps/web/openapi.json` is a single
     compact line. CI compares parsed JSON so both pass, and this change kept the
@@ -459,6 +472,9 @@ Changed while completing CI (`52914a6` plus this task):
 - `apps/web/messages/*.json` — the three `academic.import.*` audit actions now have
   translations in all five locales
 - `apps/web/e2e/smoke.spec.ts` — the academics assertion targets `<option>` nodes
-  by attachment instead of visibility
+  by attachment instead of visibility, and selects the seeded `2026-FALL` period
+  before asserting the catalogue instead of trusting the page's default period
+- `apps/web/src/app/[locale]/(protected)/app/support/[id]/page.tsx` — sending a
+  reply no longer discards a draft typed while the request was in flight
 - `docs/deployment-v3.md`, `docs/v3-phase-10-stabilization-and-release-hardening-report.md`
   — see §1.3 and §1.4 of `docs/v3-ci-completion-report.md`
