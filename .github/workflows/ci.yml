@@ -104,7 +104,11 @@ jobs:
           POSTGRES_USER: portal
           POSTGRES_PASSWORD: portal
         ports:
-          - 5433:5432
+          # 5434 is the port every developer's isolated V3 database uses, and
+          # it is the only port `tests/conftest.py` accepts. 5433 belongs to
+          # the V1 reference portal, so the suite refuses it outright; mapping
+          # the service there made every CI test run die on import.
+          - 5434:5432
         options: >-
           --health-cmd "pg_isready -U portal -d school_portal_test_v2"
           --health-interval 5s
@@ -113,10 +117,11 @@ jobs:
 
     env:
       ENVIRONMENT: testing
-      DATABASE_URL: postgresql://portal:portal@localhost:5433/school_portal_test_v2
+      DATABASE_URL: postgresql://portal:portal@localhost:5434/school_portal_test_v2
       # The suite refuses a URL that is not localhost/school_portal_test*, so a
-      # mistake here cannot reach a real database.
-      SYCUMAIN_TEST_DATABASE_URL: postgresql://portal:portal@localhost:5433/school_portal_test_v2
+      # mistake here cannot reach a real database. It also refuses port 5433
+      # (the V1 reference portal), so this must stay on 5434.
+      SYCUMAIN_TEST_DATABASE_URL: postgresql://portal:portal@localhost:5434/school_portal_test_v2
       STORAGE_BACKEND: local
       STORAGE_LOCAL_ROOT: /tmp/ci-storage
       LOG_FORMAT: json
@@ -144,12 +149,36 @@ jobs:
       - name: Lint
         run: python -m ruff check app tests tools
 
+      - name: Create a dedicated database for the migration check
+        # The migration check and the suite do not share a database, and that is
+        # deliberate. The suite builds its schema from the models
+        # (`Base.metadata.create_all`) and deletes rows between tests; several
+        # migrations install triggers that refuse exactly those deletes by
+        # design (`audit_logs`, `academic_admission_changes`, `academic_placements`,
+        # `academic_period_date_corrections`). Migrating the suite's database
+        # therefore makes the suite fail against its own fixtures, which is what
+        # the second executed run of this workflow hit after the port fix.
+        run: |
+          python - <<'PY'
+          import psycopg
+
+          with psycopg.connect(
+              "postgresql://portal:portal@localhost:5434/postgres", autocommit=True
+          ) as connection:
+              connection.execute("CREATE DATABASE school_portal_migration_check")
+          print("created school_portal_migration_check (empty, never used by pytest)")
+          PY
+
       - name: Apply migrations to a fresh, empty database
+        env:
+          DATABASE_URL: postgresql://portal:portal@localhost:5434/school_portal_migration_check
         run: python -m alembic upgrade head
 
       - name: Migration consistency
         # Fails when a model change has no matching revision, so a diff that
         # forgets its migration cannot merge.
+        env:
+          DATABASE_URL: postgresql://portal:portal@localhost:5434/school_portal_migration_check
         run: python -m alembic check
 
       - name: Import and configuration check

@@ -1868,6 +1868,11 @@
           "created": "Inscription créée",
           "dropped": "Inscription abandonnée"
         },
+        "import": {
+          "previewed": "Aperçu de l'importation d'emploi du temps",
+          "applied": "Importation d'emploi du temps appliquée",
+          "rolled_back": "Importation d'emploi du temps annulée"
+        },
         "grade": {
           "updated": "Note mise à jour"
         },

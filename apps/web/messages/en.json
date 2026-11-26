@@ -1868,6 +1868,11 @@
           "created": "Enrollment created",
           "dropped": "Enrollment dropped"
         },
+        "import": {
+          "previewed": "Academic timetable import previewed",
+          "applied": "Academic timetable import applied",
+          "rolled_back": "Academic timetable import rolled back"
+        },
         "grade": {
           "updated": "Grade updated"
         },

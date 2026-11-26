@@ -1868,6 +1868,11 @@
           "created": "新增选课",
           "dropped": "退课"
         },
+        "import": {
+          "previewed": "已预览课程表导入",
+          "applied": "已应用课程表导入",
+          "rolled_back": "已回滚课程表导入"
+        },
         "grade": {
           "updated": "更新成绩"
         },

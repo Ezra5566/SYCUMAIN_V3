@@ -1,7 +1,9 @@
 # SYCUMAIN V3 — CI/CD setup and release workflow
 
-**Status:** workflows written and verified locally; **not committed, not pushed, not
-deployed.** GitHub Actions has not executed them yet.
+**Status:** CI has executed on GitHub Actions (run
+[45813694149](https://github.com/Ezra5566/SYCUMAIN_V3/actions/runs/45813694149) on
+`52914a6`); CD is disabled and nothing has been deployed. Run-by-run evidence lives
+in `docs/v3-ci-completion-report.md`.
 **Date:** 2026-11-26
 **Scope:** `.github/workflows/`, `.github/dependabot.yml`, the pnpm workspace file,
 the OpenAPI contract, lint fixes, and this document.
@@ -102,11 +104,29 @@ alone yield `code=false`.
 ### `backend`
 What it proves: the code lints, the schema builds from nothing, model and
 migration agree, the app imports with a valid configuration, and the suite passes.
-Steps: `ruff check app tests tools` → `alembic upgrade head` (fresh, empty database)
-→ `alembic check` → `python -c "import app.main"` → `pytest -q`.
-Database: service container `school_portal_test_v2` on `localhost:5433`, synthetic
+Steps: `ruff check app tests tools` → create `school_portal_migration_check` →
+`alembic upgrade head` on it → `alembic check` on it → `python -c "import app.main"`
+→ `pytest -q` against `school_portal_test_v2`.
+
+**The migration check and the suite use two different databases**, and that is
+load-bearing. `pytest` builds its schema from the models
+(`Base.metadata.create_all`) and its fixtures delete rows between tests. Several
+migrations install triggers that refuse exactly those deletes by design
+(`audit_logs`, `academic_admission_changes`, `academic_admission_status_history`,
+`academic_placements`, `academic_period_date_corrections`). Migrating the suite's
+own database therefore makes the suite fail against its own fixtures — 20 failures,
+starting with `deletes are not allowed on academic_admission_changes` and cascading
+into stale-data assertions. Both checks are kept and neither is weakened: the
+migrations are proven on an empty database that nothing else touches, and the suite
+runs on the schema it was written for.
+Database: service container `school_portal_test_v2` on `localhost:5434`, synthetic
 `portal:portal`. `conftest.py` independently refuses any URL that is not
 `localhost/school_portal_test*`, so CI cannot reach V1 or an institutional database.
+It also refuses port 5433 outright — that is the V1 reference portal, and the
+rejection exists so a stray variable cannot point the clones' suite at it. The
+service must therefore be published on **5434**, which is what every developer's
+isolated V3 database uses. Publishing it on 5433 made the whole `Tests` step die on
+`conftest.py` import, which is what the first executed run of this workflow hit.
 
 ### `contract`
 Exports the live OpenAPI document and compares it to `apps/web/openapi.json` as
@@ -184,7 +204,7 @@ workflow artifact and attached to the GitHub Release.
 | Environment | Images | Database | Approval |
 |---|---|---|---|
 | development | built locally by `docker-compose.yml` | dev stack on 5435 | none |
-| CI / test | built per run, never pushed | disposable containers (5433, 5436) | none |
+| CI / test | built per run, never pushed | disposable containers (5434, 5436) | none |
 | staging | GHCR, version tag | its own Compose stack | `staging` environment reviewers |
 | production | GHCR, version tag | its own Compose stack | `production` environment reviewers |
 
@@ -324,28 +344,34 @@ cd apps/web && pnpm audit --prod
 
 ## 7. Verified locally vs executed on GitHub
 
+GitHub column refers to run
+[45813694149](https://github.com/Ezra5566/SYCUMAIN_V3/actions/runs/45813694149) on
+`52914a6`; the local column refers to this task, on Node 24 for the frontend.
+
 | Check | Locally | On GitHub Actions |
 |---|---|---|
-| `ruff check app tests tools` | ✅ clean | not yet |
-| `pytest` affected suites (38 + 53 passed, 1 skipped) | ✅ | not yet |
-| `alembic upgrade head` / `alembic check` | ✅ dev DB already at head, `alembic check` clean | not yet |
-| OpenAPI contract | ✅ identical after regeneration | not yet |
-| `pnpm install --frozen-lockfile` | ✅ in `apps/web` and inside the Docker build | not yet |
-| `pnpm typecheck` , `pnpm lint`, `pnpm i18n:check` | ✅ (one pre-existing font warning) | not yet |
-| `pnpm build` | ✅ | not yet |
-| `pnpm check:locales` | ✅ 5/5, Arabic `dir=rtl` | not yet |
-| `docker build` web, `--target production` | ✅ | ✅ (before this change) |
-| `docker build` api | ✅ | ✅ (before this change) |
-| `docker compose … config` (prod) | ✅ | not yet |
-| `pnpm audit --prod --audit-level critical` | ✅ 0 critical | not yet |
-| Image secret inspection (both images) | ✅ executed: clean | not yet |
-| API image contains no `/app/tests` | ✅ executed: absent | not yet |
-| `./scripts/e2e.sh` | not run in this task | failed previously at `Install` |
-| `release.yml` | ⚠️ YAML parses, no run performed | not yet |
-| Action SHAs resolve | ✅ resolved from upstream tags today | — |
+| `ruff check app tests tools` | ✅ clean | ✅ `Lint` step passed |
+| `pytest` full suite | ✅ 1115 passed, 1 skipped (sharded; §3.2 of the completion report) | ❌ `Tests` — the port-5433 refusal, now fixed |
+| `alembic upgrade head` on an empty database | ✅ 32 revisions, 64 tables, 19 triggers | ✅ `Apply migrations` step passed |
+| `alembic check` on that database | ✅ no new upgrade operations | ✅ `Migration consistency` passed |
+| `python -c "import app.main"` | ✅ | ✅ passed |
+| OpenAPI contract | ✅ unchanged | ✅ passed |
+| `pnpm install --frozen-lockfile` | ✅ in `apps/web` and in the image | ✅ `Install` passed |
+| `pnpm typecheck`, `pnpm lint`, `pnpm i18n:check` | ✅ 2 670 keys × 5 locales | ✅ passed |
+| `pnpm build` | ✅ Node 24, image and host | ✅ passed |
+| `pnpm check:locales` | ✅ 5/5, Arabic `dir=rtl` | ✅ passed |
+| `docker build` web `--target production` | ✅ `node -v` = v24.22.3, 0 `ERR_PNPM_IGNORED_BUILDS` | ✅ passed |
+| `docker build` api | ✅ | ✅ passed |
+| `docker compose … config` (prod) | ✅ | ✅ passed |
+| Image secret inspection / no `/app/tests` | ✅ clean, absent | ✅ passed |
+| `pnpm audit --prod` | ✅ 0 critical, 6 advisories | ✅ critical gate passed |
+| `./scripts/e2e.sh e2e/smoke.spec.ts` | ✅ 16/16 after the locator fix | ❌ 1 failed (same locator), now fixed |
+| `release.yml` | ⚠️ YAML parses; still never dispatched | — |
+| Action SHAs resolve | ✅ pinned to exact commits | ✅ all jobs started |
 
-**No workflow in this change has been executed by GitHub Actions.** The first real
-run will be the first push that includes it.
+The workflow **has** executed. Its two failing jobs were workflow defects — the
+suite's database port and a Playwright locator — not application failures; both are
+fixed here and have not yet been re-executed on GitHub because that needs a push.
 
 ---
 
@@ -361,12 +387,14 @@ run will be the first push that includes it.
 3. **No deployment target exists.** `release.yml` is complete but inert until
    `DEPLOY_ENABLED`, the environments, and the SSH secrets are configured. It has
    never executed.
-4. **`ubuntu-26.04` runners** force Node-20 actions onto Node 24 and warn. All
-   actions are pinned to current majors that target Node 24, which removes the
-   warning; `NODE_VERSION` stays 20 because the web image is `node:20-alpine`.
-5. **Node 20 is end-of-life upstream.** The image base and CI matrix should both
-   move to Node 22 as a separate, deliberate change (it also affects
-   `Dockerfile.web`).
+4. **Node has no automatic drift protection outside CI.** `ci.yml` pins
+   `NODE_VERSION: "24"`, `Dockerfile.web` builds on `node:24-alpine`, and
+   `apps/web/package.json` declares `engines.node >= 24`; the `images` job compares
+   all three and fails if they diverge. A developer's own Node is unmanaged beyond
+   `apps/web/.nvmrc`.
+5. **Node 24 is the Maintenance LTS this project targets** (end of life
+   2028-04-30). Moving to a new major is now a three-line change — the workflow
+   variable, the image base and `engines` — which the drift guard enforces.
 6. **Approval gates are a repository setting, not a workflow property.** Without
    required reviewers on the `production` environment, `deploy` runs as soon as
    `DEPLOY_ENABLED=true`. This document is the only thing pointing that out.
@@ -379,9 +407,12 @@ run will be the first push that includes it.
    ruleset in §5 is applied.
 9. **The `changes` job compares commit ranges**, so a docs-only PR still runs the
    five quick jobs; only the browser suite is skipped.
-10. **The E2E suite was not run in this task.** It failed previously at `Install`;
-    the install defect is fixed and verified separately, but the full suite has not
-    been re-run end to end.
+10. **One E2E test is timing-sensitive.** `stage7.spec.ts` "support tickets" failed
+    on its first attempt on the executed run and **passed on retry #1 in 8.0 s**:
+    the reply form's Send button was still disabled when the click landed. It is a
+    retry-masked flake, not a functional failure, and it is not suppressed. The
+    deterministic failure in the same run — an academics assertion that waited for
+    visibility on an `<option>` — is fixed.
 11. **`tools/export_openapi.py` and the committed artifact disagree on formatting.**
     The tool writes `indent=2`; the committed `apps/web/openapi.json` is a single
     compact line. CI compares parsed JSON so both pass, and this change kept the
@@ -413,4 +444,21 @@ Added:
 - `.github/workflows/release.yml`
 - `.github/dependabot.yml`
 - `apps/web/scripts/check-locale-routes.mjs`
+- `apps/web/.nvmrc` (`24`)
+- `apps/api/tools/schema_revision.py` — stdlib-only Alembic head resolver
 - `docs/v3-ci-cd-setup-and-release-workflow.md` (this file)
+- `docs/v3-ci-completion-report.md`
+
+Changed while completing CI (`52914a6` plus this task):
+
+- `.github/workflows/ci.yml` — `NODE_VERSION: "24"`, Node drift guard, Postgres on
+  5434, a dedicated `school_portal_migration_check` database for the migration gate
+- `infra/docker/Dockerfile.web` — `node:24-alpine`; the builder stage now copies
+  `pnpm-lock.yaml` and `pnpm-workspace.yaml`
+- `apps/web/package.json` — `engines.node >= 24`
+- `apps/web/messages/*.json` — the three `academic.import.*` audit actions now have
+  translations in all five locales
+- `apps/web/e2e/smoke.spec.ts` — the academics assertion targets `<option>` nodes
+  by attachment instead of visibility
+- `docs/deployment-v3.md`, `docs/v3-phase-10-stabilization-and-release-hardening-report.md`
+  — see §1.3 and §1.4 of `docs/v3-ci-completion-report.md`

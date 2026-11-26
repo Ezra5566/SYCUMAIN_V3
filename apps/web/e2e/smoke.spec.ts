@@ -190,8 +190,17 @@ test.describe("staff modules", () => {
     const failures = trackPageHealth(page);
     await page.goto(app("/app/academics"));
     await expect(page.getByRole("heading", { name: /^academics$/i })).toBeVisible();
-    await expect(page.getByText(/Computer Science/).first()).toBeVisible();
-    await expect(page.getByText(/Introduction to Programming/).first()).toBeVisible();
+    // The catalogues are rendered as the options of the period, programme and
+    // course filters, and an <option> is never "visible" to Playwright. Assert
+    // the DOM, which is what "the module loaded seeded data" actually means here;
+    // visibility of the surrounding page is covered by the heading above and by
+    // `expectHealthy`.
+    await expect(
+      page.getByRole("option", { name: /Computer Science/ }).first(),
+    ).toBeAttached();
+    await expect(
+      page.getByRole("option", { name: /Introduction to Programming/ }).first(),
+    ).toBeAttached();
     await expect(page.getByRole("heading", { name: /^timetable$/i })).toBeVisible();
     expect(failures).toEqual([]);
   });

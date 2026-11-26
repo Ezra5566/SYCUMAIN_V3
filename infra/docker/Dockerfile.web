@@ -32,7 +32,11 @@ ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ENV NEXT_TELEMETRY_DISABLED=1
 
 COPY --from=deps /app/node_modules ./node_modules
-COPY apps/web/package.json ./
+# The workspace file carries `allowBuilds`. pnpm verifies dependencies before
+# running a script, and without it that check reports the native toolchain
+# packages as ignored builds (ERR_PNPM_IGNORED_BUILDS) and warns that
+# node_modules may be out of sync with the lockfile.
+COPY apps/web/package.json apps/web/pnpm-lock.yaml apps/web/pnpm-workspace.yaml ./
 COPY apps/web/next.config.ts apps/web/tsconfig.json ./apps/web/tailwind.config.ts ./apps/web/postcss.config.js ./apps/web/.eslintrc.json ./
 COPY apps/web/src ./src
 COPY apps/web/public ./public
