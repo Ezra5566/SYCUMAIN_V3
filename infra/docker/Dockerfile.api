@@ -1,0 +1,26 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    libpq-dev \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
+COPY apps/api/pyproject.toml .
+RUN pip install --no-cache-dir -e "." 2>/dev/null || pip install --no-cache-dir \
+    fastapi uvicorn sqlalchemy alembic "psycopg[binary]" pydantic pydantic-settings python-multipart
+
+# Copy application and the reference catalog it reads at runtime.
+# `app/services/academic_import.py` and `app/services/source_intakes.py` load
+# docs/scu-timetable-reference.json and docs/scu-timetable-domain-map.json from
+# /app/docs, so those files are a runtime dependency, not documentation.
+COPY apps/api/ .
+COPY docs/ ./docs/
+
+EXPOSE 8001
+
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8001"]

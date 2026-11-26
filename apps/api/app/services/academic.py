@@ -66,6 +66,10 @@ from app.schemas.academic import (
     EnrollmentCreate,
     EnrollmentResponse,
     GradeCreate,
+    InstitutionalTimetableIssue,
+    InstitutionalTimetableReadiness,
+    InstitutionalTimetableResponse,
+    InstitutionalTimetableSection,
     GradeResponse,
     GradeUpdate,
     MajorCreate,
@@ -1172,6 +1176,77 @@ def _sync_enrolled_count(db: DBSession, cs: ClassSection) -> int:
     return count
 
 
+class EnrollmentAuthorizationError(ValueError):
+    """A late enrolment was attempted without an authorized decision.
+
+    ``status_code`` distinguishes "you may not do this" (403) from "the request
+    is missing the required reason" (400). The route maps it directly, so the
+    rule is enforced in one place regardless of which client calls the API.
+    """
+
+    def __init__(self, code: str, message: str, *, status_code: int = 403) -> None:
+        super().__init__(message)
+        self.code = code
+        self.status_code = status_code
+
+
+def _role_names(user: User | None) -> set[str]:
+    if user is None:
+        return set()
+    return {
+        getattr(role, "name", "").upper()
+        for role in (getattr(user, "roles", None) or [])
+    }
+
+
+def _late_enrollment_authorization(
+    db: DBSession, cs: ClassSection, data: EnrollmentCreate, actor: User | None
+) -> tuple[str, str | None, User, datetime] | None:
+    """Decide whether this enrolment is late, and require a decision if so.
+
+    An intake is late when its period starts before the current active period,
+    or when it is already completed. Joining such a class is an institutional
+    exception: only Admin or Management may approve it, the reason is mandatory
+    and the approver is stored on the enrolment itself so the record remains
+    auditable after the request is gone.
+    """
+    period = (
+        db.query(AcademicPeriod)
+        .filter(AcademicPeriod.id == cs.academic_period_id)
+        .first()
+    )
+    active = resolve_period(db)
+    if period is None or active is None or period.id == active.id:
+        return None
+    is_earlier_intake = period.start_date < active.start_date or (
+        period.status == AcademicPeriodStatus.COMPLETED
+    )
+    if not is_earlier_intake:
+        return None
+
+    if not ({"ADMIN", "MANAGEMENT"} & _role_names(actor)):
+        raise EnrollmentAuthorizationError(
+            "EARLIER_INTAKE_NOT_AUTHORIZED",
+            "Enrollment in an earlier intake requires admin or management "
+            "authorization",
+        )
+    reason = (data.authorization_reason or "").strip()
+    if len(reason) < 10:
+        raise EnrollmentAuthorizationError(
+            "EARLIER_INTAKE_REASON_REQUIRED",
+            "A recorded reason of at least 10 characters is required for a late "
+            "enrollment",
+            status_code=400,
+        )
+    if actor is None:
+        raise EnrollmentAuthorizationError(
+            "EARLIER_INTAKE_NOT_AUTHORIZED",
+            "Enrollment in an earlier intake requires admin or management "
+            "authorization",
+        )
+    return reason, (data.authorization_reference or None), actor, datetime.now(UTC)
+
+
 def _enrollment_response(
     enrollment: Enrollment, student: Student | None
 ) -> EnrollmentResponse:
@@ -1184,13 +1259,21 @@ def _enrollment_response(
         status=enrollment.status,
         enrolled_at=enrollment.enrolled_at,
         dropped_at=enrollment.dropped_at,
+        authorization_reason=enrollment.authorization_reason,
+        authorization_reference=enrollment.authorization_reference,
+        authorized_by_id=enrollment.authorized_by_id,
+        authorized_at=enrollment.authorized_at,
         created_at=enrollment.created_at,
         updated_at=enrollment.updated_at,
     )
 
 
 def enroll_student(
-    db: DBSession, class_section_id: uuid.UUID, data: EnrollmentCreate
+    db: DBSession,
+    class_section_id: uuid.UUID,
+    data: EnrollmentCreate,
+    *,
+    actor: User | None = None,
 ) -> EnrollmentResponse:
     # The section row is the capacity mutex. Without FOR UPDATE two requests
     # can both read the same count, both pass the check, and one increment is
@@ -1204,6 +1287,10 @@ def enroll_student(
     student = db.query(Student).filter(Student.id == data.student_id).first()
     if not student:
         raise ValueError("Student not found")
+
+    # The historical-intake rule is checked before any write, so a rejected
+    # attempt leaves no enrolment row and no changed counter behind.
+    authorization = _late_enrollment_authorization(db, cs, data, actor)
 
     existing = (
         db.query(Enrollment)
@@ -1224,6 +1311,12 @@ def enroll_student(
         # Re-enrollment keeps the original row, preserving its history.
         existing.status = EnrollmentStatus.ENROLLED
         existing.dropped_at = None
+        if authorization:
+            reason, reference, approver, approved_at = authorization
+            existing.authorization_reason = reason
+            existing.authorization_reference = reference
+            existing.authorized_by_id = approver.id
+            existing.authorized_at = approved_at
         _sync_enrolled_count(db, cs)
         db.commit()
         db.refresh(existing)
@@ -1237,6 +1330,12 @@ def enroll_student(
         class_section_id=class_section_id,
         status=EnrollmentStatus.ENROLLED,
     )
+    if authorization:
+        reason, reference, approver, approved_at = authorization
+        enrollment.authorization_reason = reason
+        enrollment.authorization_reference = reference
+        enrollment.authorized_by_id = approver.id
+        enrollment.authorized_at = approved_at
     db.add(enrollment)
     _sync_enrolled_count(db, cs)
     db.commit()
@@ -1285,9 +1384,24 @@ def list_enrollments(
         .order_by(Enrollment.enrolled_at)
         .all()
     )
+    if not enrollments:
+        return []
+
+    # One query for the whole roster. This used to look up each student
+    # individually, which cost one round trip per enrolment: a 1,450-student
+    # cohort spread over five sections turned one roster request into ~290
+    # `SELECT ... FROM students WHERE id = ...` statements. The rows returned
+    # here are identical, and the missing-student case still renders `None`
+    # for name and number rather than failing.
+    students = {
+        student.id: student
+        for student in db.query(Student)
+        .filter(Student.id.in_({e.student_id for e in enrollments}))
+        .all()
+    }
     result = []
     for e in enrollments:
-        student = db.query(Student).filter(Student.id == e.student_id).first()
+        student = students.get(e.student_id)
         result.append(
             EnrollmentResponse(
                 id=e.id,
@@ -1658,6 +1772,164 @@ def list_timetable_entries(
         TimetableEntry.day_of_week, TimetableEntry.start_time
     ).all()
     return [_build_timetable_response(db, e) for e in entries]
+
+
+def institutional_timetable(
+    db: DBSession,
+    *,
+    period_id: uuid.UUID | None,
+    program_offering_id: uuid.UUID,
+    include_diagnostics: bool = False,
+) -> InstitutionalTimetableResponse:
+    """The shared weekly schedule of one program offering.
+
+    This is the institutional view, not a student's view. It is filtered by the
+    selected period and offering only: a viewer who is not enrolled in any of
+    the displayed courses still sees every session of that offering. Enrollment
+    is never consulted, which is the whole point of the distinction.
+
+    ``include_diagnostics`` gates the internal issue list (sections without
+    sessions, rooms or teachers). A student receives the publication-facing
+    status and course counts, but not the administrative breakdown.
+    """
+    period = resolve_period(db, period_id)
+    if period is None:
+        raise AcademicRuleError(
+            "ACADEMIC_PERIOD_NOT_FOUND", "Academic period not found", not_found=True
+        )
+    offering = (
+        db.query(ProgramOffering)
+        .filter(
+            ProgramOffering.id == program_offering_id,
+            ProgramOffering.academic_period_id == period.id,
+        )
+        .first()
+    )
+    if offering is None:
+        raise AcademicRuleError(
+            "PROGRAM_OFFERING_NOT_FOUND",
+            "Program offering not found in this academic period",
+            not_found=True,
+        )
+
+    offerings = (
+        db.query(ProgramOffering)
+        .filter(ProgramOffering.academic_period_id == period.id)
+        .order_by(ProgramOffering.name)
+        .all()
+    )
+    sections = (
+        db.query(ClassSection)
+        .join(
+            ClassSectionProgramOffering,
+            ClassSectionProgramOffering.class_section_id == ClassSection.id,
+        )
+        .filter(
+            ClassSectionProgramOffering.program_offering_id == offering.id,
+            ClassSection.academic_period_id == period.id,
+        )
+        .order_by(ClassSection.source_label, ClassSection.section_code)
+        .all()
+    )
+    entries = list_timetable_entries(
+        db, period_id=period.id, program_offering_id=offering.id
+    )
+
+    sessions_by_section: dict[uuid.UUID, int] = {}
+    for entry in entries:
+        sessions_by_section[entry.class_section_id] = (
+            sessions_by_section.get(entry.class_section_id, 0) + 1
+        )
+
+    section_rows: list[InstitutionalTimetableSection] = []
+    for section in sections:
+        teachers = []
+        for assignment in section.teacher_assignments:
+            if not assignment.is_active:
+                continue
+            staff = db.query(Staff).filter(Staff.id == assignment.staff_id).first()
+            if staff:
+                teachers.append(f"{staff.first_name} {staff.last_name}")
+        section_rows.append(
+            InstitutionalTimetableSection(
+                id=section.id,
+                course_code=section.course.code if section.course else None,
+                course_name=section.course.name if section.course else None,
+                section_code=section.section_code,
+                source_label=section.source_label,
+                teachers=teachers,
+                session_count=sessions_by_section.get(section.id, 0),
+            )
+        )
+
+    course_ids = {section.course_id for section in sections}
+    scheduled_course_ids = {
+        section.course_id
+        for section in sections
+        if sessions_by_section.get(section.id, 0) > 0
+    }
+    sections_scheduled = sum(
+        1 for section in sections if sessions_by_section.get(section.id, 0) > 0
+    )
+    sections_without_teacher = sum(1 for row in section_rows if not row.teachers)
+    entries_without_room = sum(1 for entry in entries if entry.classroom_id is None)
+
+    if not sections:
+        status = "INCOMPLETE"
+        message_code = "TIMETABLE_NO_SECTIONS"
+    elif sections_scheduled == len(sections):
+        status = "COMPLETE"
+        message_code = None
+    elif sections_scheduled:
+        status = "INCOMPLETE"
+        message_code = "TIMETABLE_PARTIALLY_SCHEDULED"
+    else:
+        status = "INCOMPLETE"
+        message_code = "TIMETABLE_NOT_SCHEDULED"
+
+    issues: list[InstitutionalTimetableIssue] = []
+    if include_diagnostics:
+        if len(sections) - sections_scheduled:
+            issues.append(
+                InstitutionalTimetableIssue(
+                    code="SECTIONS_WITHOUT_SESSIONS",
+                    count=len(sections) - sections_scheduled,
+                )
+            )
+        if sections_without_teacher:
+            issues.append(
+                InstitutionalTimetableIssue(
+                    code="SECTIONS_WITHOUT_TEACHER", count=sections_without_teacher
+                )
+            )
+        if entries_without_room:
+            issues.append(
+                InstitutionalTimetableIssue(
+                    code="SESSIONS_WITHOUT_ROOM", count=entries_without_room
+                )
+            )
+        if period.source_key is None:
+            issues.append(
+                InstitutionalTimetableIssue(code="PERIOD_NOT_MAPPED_TO_SOURCE", count=1)
+            )
+
+    return InstitutionalTimetableResponse(
+        period=AcademicPeriodResponse.model_validate(period),
+        program_offering=ProgramOfferingSummary.model_validate(offering),
+        offerings=[ProgramOfferingSummary.model_validate(o) for o in offerings],
+        sections=section_rows,
+        entries=entries,
+        readiness=InstitutionalTimetableReadiness(
+            status=status,
+            message_code=message_code,
+            courses_total=len(course_ids),
+            courses_scheduled=len(scheduled_course_ids),
+            sessions=len(entries),
+            sections_total=len(sections),
+            sections_scheduled=sections_scheduled,
+            issues=issues,
+        ),
+    )
 
 
 def get_student_timetable(

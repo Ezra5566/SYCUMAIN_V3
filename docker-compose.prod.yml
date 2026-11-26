@@ -1,0 +1,292 @@
+# Production-shaped deployment for SYCUMAIN V3.
+#
+#   cp .env.production.example .env.production     # then fill in real values
+#   docker compose --env-file .env.production -f docker-compose.prod.yml build
+#   docker compose --env-file .env.production -f docker-compose.prod.yml \
+#     --profile tools run --rm migrate              # explicit, one-off migration
+#   docker compose --env-file .env.production -f docker-compose.prod.yml up -d
+#
+# Topology: the browser talks to ONE origin. Caddy terminates TLS and routes
+# `/api/*`, `/health`, `/ready` and the docs to the API; everything else goes to
+# the Next.js server. The session cookie is therefore same-origin, and nothing
+# except Caddy is published.
+#
+# This file is standalone rather than an override of docker-compose.yml: the
+# development stack publishes the database and the API and bind-mounts source,
+# and merging the two would let a development change silently weaken production.
+#
+# Migrations are a separate explicit step (`migrate`, profile "tools"). Starting
+# a container never advances a production schema on its own.
+
+name: ${COMPOSE_PROJECT_NAME:-sycumain-v3-prod}
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB is required}
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks: [internal]
+
+  # Malware scanning. Uploads are refused when this is not healthy, because the
+  # API treats "no scanner" as "not safe" (503 SCANNER_UNAVAILABLE) rather than
+  # accepting an uninspected file. Without a scanner service in this file the
+  # production stack could only ever fail closed, which is why uploads had no
+  # working configuration here.
+  #
+  # The signature database and the freshclam work directory live on a named
+  # volume, so a container restart does not re-download ~200 MB of signatures
+  # and — more importantly — does not silently serve an empty database in the
+  # window before the first download completes. The health check therefore
+  # waits for clamd to answer PING, which it only does once signatures are
+  # loaded.
+  clamav:
+    image: ${CLAMAV_IMAGE:-clamav/clamav:stable}
+    restart: unless-stopped
+    # The published images are amd64-only; an arm64 host runs them emulated.
+    # Set CLAMAV_PLATFORM in .env.production to silence the warning on amd64.
+    platform: ${CLAMAV_PLATFORM:-linux/amd64}
+    environment:
+      CLAMAV_NO_MILTERD: "true"
+      # Persist the database; freshclam only downloads what has changed.
+      CLAMAV_NO_FRESHCLAM: "false"
+    volumes:
+      - clamav_db:/var/lib/clamav
+      - clamav_run:/run/clamav
+    healthcheck:
+      # `clamdcheck.sh` ships with the image and performs a real PING on the
+      # daemon socket, so a container that is running but has no signatures
+      # loaded is not reported healthy.
+      test: ["CMD", "clamdcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      # First start downloads signatures; give it the room to finish.
+      start_period: 300s
+    networks: [internal]
+
+  # One-shot schema migration. Not started by `up`; run it explicitly and
+  # before rolling the API. Its exit status is the deployment gate.
+  migrate:
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.api
+    profiles: ["tools"]
+    restart: "no"
+    command: ["python", "-m", "alembic", "upgrade", "head"]
+    environment:
+      ENVIRONMENT: production
+      # Every production-sensitive value is stated explicitly rather than
+      # inherited, so the job cannot pick up a development default.
+      DEBUG: "false"
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      # `alembic/env.py` refuses to run in production unless the target database
+      # is named explicitly, so the schema cannot be advanced on an inferred or
+      # misconfigured connection.
+      MIGRATION_CONFIRM: ${POSTGRES_DB:?POSTGRES_DB is required}
+      SECRET_KEY: ${SECRET_KEY:?SECRET_KEY is required}
+      CORS_ORIGINS: '["${APP_ORIGIN:?APP_ORIGIN is required}"]'
+      SEED_DEMO_DATA: "false"
+      PASSWORD_RESET_DELIVERY: ${PASSWORD_RESET_DELIVERY:-disabled}
+      MALWARE_SCANNER: ${MALWARE_SCANNER:-clamav}
+      SESSION_COOKIE_SECURE: "true"
+      ACTIVATION_RETURN_LINK: "false"
+      ACTIVATION_LINK_BASE: ${APP_ORIGIN:?APP_ORIGIN is required}
+      STORAGE_BACKEND: ${STORAGE_BACKEND:-local}
+      STORAGE_LOCAL_ROOT: ${STORAGE_LOCAL_ROOT:-/app/var/storage}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [internal]
+
+  api:
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.api
+    restart: unless-stopped
+    environment:
+      ENVIRONMENT: production
+      DEBUG: "false"
+      SECRET_KEY: ${SECRET_KEY:?SECRET_KEY is required}
+      # Credentials come from the environment. The published portal:portal pair
+      # is refused by the application's own production validator.
+      # The API runs as the ordinary application role, not the owning superuser:
+      # a superuser could rewrite audit history and drop the triggers that
+      # protect it. `provision-roles` creates this role; the credentials must be
+      # set, so a deployment cannot silently fall back to the owner.
+      DATABASE_URL: postgresql://${POSTGRES_APP_USER:?POSTGRES_APP_USER is required}:${POSTGRES_APP_PASSWORD:?POSTGRES_APP_PASSWORD is required}@postgres:5432/${POSTGRES_DB}
+      CORS_ORIGINS: '["${APP_ORIGIN:?APP_ORIGIN is required}"]'
+      SESSION_COOKIE_SECURE: "true"
+      SESSION_EXPIRE_MINUTES: ${SESSION_EXPIRE_MINUTES:-10080}
+      # Development affordances. The API refuses to start in production with
+      # demo seeding, the `dev` reset channel or a permissive scanner.
+      SEED_DEMO_DATA: "false"
+      PASSWORD_RESET_DELIVERY: ${PASSWORD_RESET_DELIVERY:-disabled}
+      ACTIVATION_RETURN_LINK: "false"
+      ACTIVATION_LINK_BASE: ${APP_ORIGIN:?APP_ORIGIN is required}
+      # Scanning is on by default: with the `clamav` service in this file an
+      # unset variable means "scan", not "accept everything". The image below
+      # refuses `dev-clean` and `eicar-test` outright.
+      MALWARE_SCANNER: ${MALWARE_SCANNER:-clamav}
+      # The scanner is an external daemon, so its address must be forwarded too:
+      # without these the API looks for `clamav` inside its own container and
+      # every upload fails closed with SCANNER_UNAVAILABLE (503).
+      CLAMAV_HOST: ${CLAMAV_HOST:-clamav}
+      CLAMAV_PORT: ${CLAMAV_PORT:-3310}
+      CLAMAV_TIMEOUT_SECONDS: ${CLAMAV_TIMEOUT_SECONDS:-10}
+      # Documents live on a named volume, never in the container's writable
+      # layer, so replacing the container cannot lose an upload.
+      STORAGE_BACKEND: ${STORAGE_BACKEND:-local}
+      STORAGE_LOCAL_ROOT: ${STORAGE_LOCAL_ROOT:-/app/var/storage}
+      STORAGE_S3_BUCKET: ${STORAGE_S3_BUCKET:-}
+      STORAGE_S3_REGION: ${STORAGE_S3_REGION:-}
+      STORAGE_S3_ENDPOINT_URL: ${STORAGE_S3_ENDPOINT_URL:-}
+      STORAGE_S3_ACCESS_KEY_ID: ${STORAGE_S3_ACCESS_KEY_ID:-}
+      STORAGE_S3_SECRET_ACCESS_KEY: ${STORAGE_S3_SECRET_ACCESS_KEY:-}
+      LOG_FORMAT: json
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      SLOW_REQUEST_MS: ${SLOW_REQUEST_MS:-1500}
+      SQL_ECHO: "false"
+      RATE_LIMIT_ENABLED: "true"
+      MAX_UPLOAD_SIZE_MB: ${MAX_UPLOAD_SIZE_MB:-10}
+      MAX_IMPORT_ROWS: ${MAX_IMPORT_ROWS:-500}
+      MAX_IMPORT_SIZE_MB: ${MAX_IMPORT_SIZE_MB:-5}
+      MAX_EXPORT_ROWS: ${MAX_EXPORT_ROWS:-10000}
+      BOOTSTRAP_ADMIN_EMAIL: ${BOOTSTRAP_ADMIN_EMAIL:-}
+    volumes:
+      - documents:/app/var/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+      # Uploads are refused until the scanner answers, so the API should not be
+      # declared ready before it can actually accept a document.
+      clamav:
+        condition: service_healthy
+    command:
+      - uvicorn
+      - app.main:app
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8001"
+      # Trust only Caddy's forwarded headers, so the cookie sees HTTPS and the
+      # logs/rate limiter see the real client address instead of the proxy's.
+      - --proxy-headers
+      - --forwarded-allow-ips=${PROD_NETWORK_SUBNET:-172.31.240.0/24}
+    healthcheck:
+      # /ready checks the database and the storage backend, so a container that
+      # cannot serve student records is not reported healthy.
+      test:
+        - CMD-SHELL
+        - >-
+          python -c "import urllib.request,sys;
+          sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8001/ready', timeout=3).status == 200 else 1)"
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks: [internal]
+
+  web:
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.web
+      target: production
+      args:
+        # Inlined into the client bundle at build time, so it must be the public
+        # origin: the browser reaches the API through Caddy, not directly.
+        NEXT_PUBLIC_API_URL: ${APP_ORIGIN:?APP_ORIGIN is required}
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      # Server-side rendering and server actions call the API over the internal
+      # network, which never leaves the host.
+      API_INTERNAL_URL: http://api:8001
+      NEXT_PUBLIC_API_URL: ${APP_ORIGIN:?APP_ORIGIN is required}
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3000/en/login').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks: [internal]
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "${HTTP_PORT:-80}:80"
+      - "${HTTPS_PORT:-443}:${HTTPS_PORT:-443}"
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:?SITE_ADDRESS is required}
+      ACME_EMAIL: ${ACME_EMAIL:-}
+    volumes:
+      # Caddyfile: automatic ACME certificates for a public name.
+      # Caddyfile.local: `tls internal` for a ring-fenced verification host.
+      - ./infra/caddy/${CADDYFILE:-Caddyfile}:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      api:
+        condition: service_healthy
+      web:
+        condition: service_healthy
+    networks: [internal]
+
+  # One-shot role provisioning. Creates the non-superuser application role and
+  # applies its grants (audit_logs: SELECT/INSERT only). Run after `migrate` and
+  # before rolling the API:
+  #
+  #   docker compose --env-file .env.production -f docker-compose.prod.yml \
+  #     --profile tools run --rm provision-roles
+  provision-roles:
+    image: postgres:16-alpine
+    profiles: ["tools"]
+    restart: "no"
+    entrypoint: ["bash", "/scripts/provision-db-roles.sh"]
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB is required}
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_APP_USER: ${POSTGRES_APP_USER:?POSTGRES_APP_USER is required}
+      POSTGRES_APP_PASSWORD: ${POSTGRES_APP_PASSWORD:?POSTGRES_APP_PASSWORD is required}
+      PGPASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+    volumes:
+      - ./scripts:/scripts:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [internal]
+
+volumes:
+  pgdata:
+  documents:
+  clamav_db:
+  clamav_run:
+  caddy_data:
+  caddy_config:
+
+networks:
+  # A dedicated subnet so `--forwarded-allow-ips` can name an explicit range
+  # instead of trusting every peer.
+  internal:
+    ipam:
+      config:
+        - subnet: ${PROD_NETWORK_SUBNET:-172.31.240.0/24}

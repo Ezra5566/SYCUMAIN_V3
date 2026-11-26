@@ -58,7 +58,12 @@ class Settings(BaseSettings):
 
     # Session configuration
     SESSION_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
-    SESSION_COOKIE_NAME: str = "session_token"
+    # Namespaced on purpose. Cookies are scoped by host and *ignore the port*,
+    # so two portals served from the same host (the V1 reference on :8000 and
+    # this one on :8001 during a migration demo) would otherwise share one
+    # cookie slot and silently overwrite each other's session. That produced a
+    # "logged in but every request fails until I sign out and in" client state.
+    SESSION_COOKIE_NAME: str = "sycumain_session"
     # `None` means "secure exactly when running in production". Explicitly
     # setting it to false in production is refused by the validator below.
     SESSION_COOKIE_SECURE: bool | None = None
@@ -106,8 +111,24 @@ class Settings(BaseSettings):
     # Whether the demo dataset (test accounts, sample buildings, the academic
     # catalogue and announcements) is created on startup. Unset means "yes in
     # every environment except production", so a production database can never
-    # be seeded with the documented `password123` demo accounts.
+    # be seeded with demonstration accounts.
     SEED_DEMO_DATA: bool | None = None
+
+    # --- Demonstration accounts --------------------------------------------
+    # Password set on the four synthetic accounts the demonstration seed
+    # creates (`admin@`, `management@`, `teacher@` and `student@school.portal`),
+    # and on the synthetic cohort users beside them. It is consumed only by
+    # demonstration seeding, and the production validator below refuses that
+    # (`SEED_DEMO_DATA` must be false), so a production installation never
+    # creates these accounts and never reads this value.
+    #
+    # The login page's development-only account chips fill
+    # `NEXT_PUBLIC_DEMO_PASSWORD`, which the development compose file takes from
+    # this same `DEMO_PASSWORD` variable. `tests/test_demo_credentials.py` fails
+    # if those two defaults drift apart: the drift is exactly what made a chip
+    # submit a password the seeder had not produced, so the form simply
+    # reappeared and read as "login is broken".
+    DEMO_PASSWORD: str = "Sycumain2026!"
 
     # --- Admission writes --------------------------------------------------
     # Phase 1 admission episode creation and transitions. Off by default so a
@@ -204,6 +225,53 @@ class Settings(BaseSettings):
     PASSWORD_RESET_DELIVERY: str = "disabled"
     PASSWORD_RESET_EXPIRE_MINUTES: int = 30
 
+    # --- Administrative (admin-assisted) password recovery -----------------
+    # An administrator issues a temporary password at the counter. It is
+    # single-use in effect: the account is blocked from every screen except
+    # changing the password until it is replaced. It is also time-limited, so a
+    # slip of paper left in a drawer stops working. This is the V1-style
+    # process with a V3 control; self-service email recovery is a separate,
+    # optional channel above.
+    TEMPORARY_PASSWORD_EXPIRE_HOURS: int = 72
+
+    # --- SMTP delivery -----------------------------------------------------
+    # No provider is selected here on purpose: an institution supplies its own
+    # relay. ``EMAIL_ENABLED`` must be true *and* a host set before anything is
+    # sent, so a forgotten configuration cannot mail students from a laptop.
+    EMAIL_ENABLED: bool = False
+    SMTP_HOST: str = ""
+    SMTP_PORT: int = 587
+    SMTP_USERNAME: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_STARTTLS: bool = True
+    SMTP_USE_SSL: bool = False
+    SMTP_TIMEOUT_SECONDS: float = 10.0
+    EMAIL_FROM: str = "no-reply@localhost"
+    EMAIL_FROM_NAME: str = "Student Portal"
+    # Bounded retry: a transient refusal is attempted again, a persistent one
+    # is recorded as FAILED rather than retried forever.
+    EMAIL_MAX_ATTEMPTS: int = 3
+    EMAIL_RETRY_BACKOFF_SECONDS: float = 2.0
+    # Operational notifications queued in `email_outbox`. Off by default:
+    # turning it on is an institutional decision about who receives mail.
+    EMAIL_NOTIFICATIONS_ENABLED: bool = False
+    EMAIL_NOTIFICATION_TYPES: str = (
+        "IMMIGRATION_EXPIRY_EXPIRED,"
+        "IMMIGRATION_EXPIRY_URGENT,"
+        "IMMIGRATION_EXPIRY_EXPIRING_SOON,"
+        "SUPPORT_TICKET_CREATED,"
+        "SUPPORT_TICKET_ASSIGNED"
+    )
+
+    @property
+    def email_notification_types(self) -> frozenset[str]:
+        """Notification types that are also emailed when the channel is on."""
+        return frozenset(
+            value.strip().upper()
+            for value in self.EMAIL_NOTIFICATION_TYPES.split(",")
+            if value.strip()
+        )
+
     # --- Account activation ------------------------------------------------
     # A migrated account has no password until the student completes a
     # single-use activation link. Seven days covers a registration week without
@@ -220,6 +288,17 @@ class Settings(BaseSettings):
     # Localization
     SUPPORTED_LOCALES: list[str] = ["en", "zh", "fr", "ar", "ru"]
     DEFAULT_LOCALE: str = "en"
+
+    @property
+    def trusted_origins(self) -> tuple[str, ...]:
+        """Origins allowed to make state-changing requests.
+
+        Deliberately the same list as ``CORS_ORIGINS``: one origin is configured
+        once, and the CORS policy and the cross-site request guard cannot drift
+        apart. A wildcard would make the guard meaningless, so the production
+        validator refuses one.
+        """
+        return tuple(origin.strip() for origin in self.CORS_ORIGINS if origin.strip())
 
     @property
     def session_cookie_secure(self) -> bool:
@@ -268,8 +347,22 @@ class Settings(BaseSettings):
         if self.SEED_DEMO_DATA:
             problems.append("SEED_DEMO_DATA must be false in production")
 
-        if self.PASSWORD_RESET_DELIVERY.strip().lower() == "dev":
+        reset_delivery = self.PASSWORD_RESET_DELIVERY.strip().lower()
+        if reset_delivery == "dev":
             problems.append("PASSWORD_RESET_DELIVERY must not be 'dev' in production")
+        elif reset_delivery not in {"disabled", "smtp"}:
+            problems.append(
+                "PASSWORD_RESET_DELIVERY must be 'disabled' or 'smtp' in production"
+            )
+        if reset_delivery == "smtp" or self.EMAIL_NOTIFICATIONS_ENABLED:
+            if not self.EMAIL_ENABLED:
+                problems.append(
+                    "EMAIL_ENABLED must be true when email delivery is configured"
+                )
+            if not self.SMTP_HOST.strip():
+                problems.append("SMTP_HOST is required when email delivery is configured")
+            if "@" not in self.EMAIL_FROM:
+                problems.append("EMAIL_FROM must be a valid address")
 
         if self.ACTIVATION_RETURN_LINK:
             problems.append(
@@ -295,6 +388,16 @@ class Settings(BaseSettings):
             problems.append("CORS_ORIGINS must list the deployed web origin")
         elif any(not origin.startswith("https://") for origin in self.CORS_ORIGINS):
             problems.append("CORS_ORIGINS must contain only https:// origins")
+        # The same list authorises state-changing requests (see
+        # app/core/origin.py). A wildcard or the literal "null" origin would
+        # turn that guard off while looking configured.
+        elif any(
+            origin.strip() in {"*", "null"} or "*" in origin
+            for origin in self.CORS_ORIGINS
+        ):
+            problems.append(
+                "CORS_ORIGINS must list explicit origins; wildcards are not allowed"
+            )
 
         backend = self.STORAGE_BACKEND.strip().lower()
         if backend == "local":

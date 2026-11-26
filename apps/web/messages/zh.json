@@ -170,7 +170,9 @@
     "commencement": "考勤起算",
     "attendance": "考勤",
     "calendar": "校历",
-    "examinations": "考试"
+    "examinations": "考试",
+    "timetable": "全校课表",
+    "myTimetable": "我的课表"
   },
   "auth": {
     "signIn": "登录",
@@ -1382,7 +1384,22 @@
     "scheduledSessions": "{count, plural, =0 {无课程} other {# 节课}}",
     "time": "时间",
     "weekDays": "星期",
-    "noSessionsOnDay": "当天没有安排课程。"
+    "noSessionsOnDay": "当天没有安排课程。",
+    "openInstitutionalTimetable": "全校课表",
+    "openImport": "导入目录",
+    "periodNotLinkedHint": "该学期尚未关联源目录的招生批次。可手动配置或导入目录。",
+    "sourceNotLinked": "未导入",
+    "reconciliationWarnings": "有 {count} 项课表问题需要处理",
+    "reconciliationCodes": {
+      "SECTION_WITHOUT_TEACHER": "未分配教师的教学班",
+      "SECTION_WITHOUT_TIMETABLE": "未排课的教学班",
+      "SECTION_WITHOUT_SESSIONS": "没有课程节次的教学班",
+      "SESSION_WITHOUT_ROOM": "未分配教室的课程节次",
+      "PERIOD_WITHOUT_TIMETABLE": "没有课表的学期",
+      "DUPLICATE_ROOM_SLOT": "教室时间冲突",
+      "DUPLICATE_TEACHER_SLOT": "教师时间冲突",
+      "DUPLICATE_SECTION_SLOT": "教学班时间冲突"
+    }
   },
   "announcements": {
     "title": "通知公告",
@@ -1722,7 +1739,8 @@
         "password_reset_requested": "已申请重置密码",
         "password_reset_completed": "已完成重置密码",
         "sessions_revoked": "已注销其他会话",
-        "rate_limited": "尝试次数过多"
+        "rate_limited": "尝试次数过多",
+        "password_reset_delivery_failed": "密码重置邮件发送失败"
       },
       "student": {
         "created": "新增学生",
@@ -1748,7 +1766,8 @@
         "sessions_revoked": "已撤销会话",
         "activation_issued": "已签发激活链接",
         "activation_completed": "账户持有人已完成激活",
-        "activation_revoked": "已撤回激活链接"
+        "activation_revoked": "已撤回激活链接",
+        "activation_delivery_failed": "激活邮件发送失败"
       },
       "immigration": {
         "change_request": {
@@ -1758,6 +1777,9 @@
         },
         "import": {
           "applied": "已应用移民导入"
+        },
+        "profile": {
+          "updated": "已更新移民资料"
         },
         "overview_exported": "已导出移民总览",
         "reminders": {
@@ -2292,7 +2314,19 @@
       "EXISTING_STUDENT_MATCHED": "已匹配现有学生记录，未做任何更改。",
       "ACCOUNT_NOT_ACTIVATED": "该账户尚未激活。请使用注册时收到的激活链接。",
       "FUTURE_INTAKE_CANNOT_BE_ACTIVE": "未来开始的批次必须为计划状态，不能处于活动状态。",
-      "INTAKE_CODE_REQUIRED": "需要批次代码。"
+      "INTAKE_CODE_REQUIRED": "需要批次代码。",
+      "TEMPORARY_PASSWORD_EXPIRED": "该临时密码已过期。请联系国际办公室获取新的临时密码。",
+      "EMAIL_DELIVERY_FAILED": "邮件发送失败。请当面交付凭证，或稍后重试。",
+      "CSRF_ORIGIN_REJECTED": "该请求来自不受信任的来源。请刷新页面后重试。",
+      "IMPORT_BATCH_NOT_FOUND": "该导入批次已不存在。",
+      "IMPORT_CONFLICT": "无法应用导入。请查看试运行报告后重试。",
+      "IMPORT_PERIOD_NOT_FOUND": "所选的学期已不存在。",
+      "IMPORT_SOURCE_INVALID": "无法读取源目录。",
+      "IMPORT_SOURCE_UNAVAILABLE": "源目录文件不可用。",
+      "PERIOD_NOT_MAPPED_TO_SOURCE": "该学期尚未关联源目录。",
+      "SECTIONS_WITHOUT_SESSIONS": "部分教学班尚无排课。",
+      "SECTIONS_WITHOUT_TEACHER": "部分教学班尚未分配教师。",
+      "SESSIONS_WITHOUT_ROOM": "部分课程节次尚未分配教室。"
     }
   },
   "theme": {
@@ -2948,5 +2982,94 @@
     "instructionsTitle": "考试须知",
     "sectionsTitle": "参加班级",
     "editAction": "编辑"
+  },
+  "institutionalTimetable": {
+    "title": "全校课表",
+    "subtitle": "浏览某个培养方案开设的每周课表。这是共享视图，不限于你本人的选课。",
+    "periodLabel": "学期",
+    "offeringLabel": "培养方案开设",
+    "sharedHint": "这是全校共享课表，显示所选开设的全部教学班。",
+    "period": "学期",
+    "sessions": "课程节次",
+    "courses": "课程",
+    "coursesScheduled": "门课程已排课",
+    "sectionsCount": "已排课 {scheduled}/{total} 个教学班",
+    "scheduledOf": "{total} 个教学班中有 {scheduled} 个已排课",
+    "weeklyTitle": "每周课表",
+    "sectionListTitle": "本开设的教学班",
+    "sessionCount": "节次：{count}",
+    "scheduled": "已排课",
+    "notScheduled": "未排课",
+    "unnamedSection": "未命名教学班",
+    "noPeriods": "暂无学期",
+    "noPeriodsHint": "尚未配置学期。",
+    "noOfferings": "暂无培养方案开设",
+    "noOfferingsHint": "该学期尚无培养方案开设，管理员可导入或创建。",
+    "noSessions": "暂无排课",
+    "noSessionsHint": "该开设尚无课表记录，可能尚未发布。",
+    "issuesTitle": "完整性检查",
+    "readiness": {
+      "generic": "该课表不完整。",
+      "TIMETABLE_NO_SECTIONS": "该开设尚无教学班，暂无可显示的课表。",
+      "TIMETABLE_PARTIALLY_SCHEDULED": "该课表不完整：部分教学班尚未排课。",
+      "TIMETABLE_NOT_SCHEDULED": "该课表尚未排课。"
+    },
+    "issues": {
+      "SECTIONS_WITHOUT_SESSIONS": "没有课程节次的教学班",
+      "SECTIONS_WITHOUT_TEACHER": "未分配教师的教学班",
+      "SESSIONS_WITHOUT_ROOM": "未分配教室的课程节次",
+      "PERIOD_NOT_MAPPED_TO_SOURCE": "学期未关联源目录"
+    },
+    "periodStatus": {
+      "PLANNED": "计划中",
+      "ACTIVE": "进行中",
+      "COMPLETED": "已完成",
+      "CANCELLED": "已取消"
+    }
+  },
+  "academicImport": {
+    "title": "源课表目录导入",
+    "subtitle": "预览已验收的课表目录，将招生批次映射到实际学期后再导入。确认之前不会写入任何数据。",
+    "academicsBreadcrumb": "教务",
+    "dryRunTitle": "试运行",
+    "dryRunHint": "暂存会读取目录并报告将要创建的内容，不会写入教务数据。",
+    "runDryRun": "运行试运行",
+    "working": "处理中…",
+    "noPreviewYet": "运行试运行以查看目录内容。",
+    "alreadyAppliedNotice": "该源文件已导入，正在显示已应用的批次。",
+    "appliedNotice": "导入已应用，教务表已包含目录记录。",
+    "rolledBackNotice": "导入已回滚，仅删除该批次的记录。",
+    "forbiddenTitle": "不可用",
+    "forbiddenHint": "导入教务数据需要学期管理权限。",
+    "entities": {
+      "periods": "学期",
+      "offerings": "开设",
+      "courses": "课程",
+      "rooms": "教室",
+      "sections": "教学班",
+      "sessions": "课程节次"
+    },
+    "heldTitle": "{count} 条记录被保留",
+    "heldHint": "被保留的记录未导入：源冲突或映射尚未解决。处理后请重新试运行。",
+    "mappingTitle": "将源招生批次映射到学期",
+    "mappingHint": "源批次只会导入到你所选的学期。留空表示跳过该批次。",
+    "targetPeriod": "目标学期",
+    "leaveUnmapped": "不导入",
+    "confirmLabel": "我已查看试运行报告，确认应用这些记录。",
+    "apply": "应用导入",
+    "mappedCount": "已映射 {mapped}/{total} 个批次",
+    "batchesTitle": "导入历史",
+    "noBatches": "暂无导入",
+    "noBatchesHint": "预览目录后会创建第一个批次。",
+    "batchCounts": "{sections} 个教学班 · {sessions} 节课",
+    "rollback": "回滚",
+    "status": {
+      "READY": "就绪",
+      "DRY_RUN": "试运行",
+      "APPLIED": "已应用",
+      "FAILED": "失败",
+      "ROLLED_BACK": "已回滚",
+      "ALREADY_APPLIED": "已应用"
+    }
   }
 }

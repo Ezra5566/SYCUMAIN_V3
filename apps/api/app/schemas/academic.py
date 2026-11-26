@@ -366,7 +366,19 @@ class TeacherAssignmentResponse(BaseModel):
 
 
 class EnrollmentCreate(BaseModel):
+    """Enrol one student in one section.
+
+    ``authorization_reason`` is mandatory when the section belongs to an intake
+    earlier than the current active period: joining a historical class is a
+    late enrolment and needs a recorded Admin/Management decision, not just a
+    click. The API rejects the request without it.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
     student_id: uuid.UUID
+    authorization_reason: str | None = Field(default=None, max_length=500)
+    authorization_reference: str | None = Field(default=None, max_length=200)
 
 
 class EnrollmentUpdate(BaseModel):
@@ -382,6 +394,10 @@ class EnrollmentResponse(BaseModel):
     status: EnrollmentStatus
     enrolled_at: datetime
     dropped_at: datetime | None = None
+    authorization_reason: str | None = None
+    authorization_reference: str | None = None
+    authorized_by_id: uuid.UUID | None = None
+    authorized_at: datetime | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -780,3 +796,103 @@ class IntakePlanRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     intakes: list[IntakePlanItem] = Field(..., min_length=1, max_length=20)
+
+
+# --- Shared institutional timetable ---------------------------------------
+#
+# This is deliberately not the student overview. It answers "what is scheduled
+# for this offering in this period", independent of who is enrolled.
+
+
+class InstitutionalTimetableIssue(BaseModel):
+    code: str
+    count: int
+
+
+class InstitutionalTimetableReadiness(BaseModel):
+    """Publication-facing completeness, separate from internal diagnostics.
+
+    Students see ``status`` and the two course counts. ``issues`` is populated
+    only for callers who may manage the timetable, so internal section-level
+    diagnostics never reach a student response.
+    """
+
+    status: str
+    message_code: str | None = None
+    courses_total: int
+    courses_scheduled: int
+    sessions: int
+    sections_total: int
+    sections_scheduled: int
+    issues: list[InstitutionalTimetableIssue] = Field(default_factory=list)
+
+
+class InstitutionalTimetableSection(BaseModel):
+    """One section as it appears in the shared schedule."""
+
+    id: uuid.UUID
+    course_code: str | None = None
+    course_name: str | None = None
+    section_code: str | None = None
+    source_label: str | None = None
+    teachers: list[str] = Field(default_factory=list)
+    session_count: int = 0
+
+
+class InstitutionalTimetableResponse(BaseModel):
+    period: AcademicPeriodResponse
+    program_offering: ProgramOfferingSummary
+    offerings: list[ProgramOfferingSummary] = Field(default_factory=list)
+    sections: list[InstitutionalTimetableSection] = Field(default_factory=list)
+    entries: list[TimetableEntryResponse] = Field(default_factory=list)
+    readiness: InstitutionalTimetableReadiness
+
+
+# --- Source-catalogue import workflow -------------------------------------
+
+
+class AcademicImportRowReport(BaseModel):
+    entity_type: str
+    action: str
+    source_key: str
+    error_code: str | None = None
+    target_id: uuid.UUID | None = None
+
+
+class AcademicImportPeriodOption(BaseModel):
+    """One source semester and the operational period it is mapped to."""
+
+    source_id: str
+    source_key: str
+    mapped_period_id: uuid.UUID | None = None
+    mapped_period_code: str | None = None
+
+
+class AcademicImportBatchReport(BaseModel):
+    batch_id: uuid.UUID
+    status: str
+    dry_run: bool
+    source_name: str
+    source_sha256: str
+    created_at: datetime
+    finished_at: datetime | None = None
+    counts: dict[str, int] = Field(default_factory=dict)
+    periods: list[AcademicImportPeriodOption] = Field(default_factory=list)
+    by_entity: dict[str, int] = Field(default_factory=dict)
+    by_action: dict[str, int] = Field(default_factory=dict)
+    held: list[AcademicImportRowReport] = Field(default_factory=list)
+    already_applied: bool = False
+
+
+class AcademicImportApplyRequest(BaseModel):
+    """Explicit confirmation plus the period mapping for one apply.
+
+    The importer never invents dates. Only a period the caller names is mapped;
+    an unmapped source semester stays held in the batch.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    confirm: bool = False
+    period_map: dict[str, uuid.UUID] = Field(default_factory=dict)
+    parent_program_map: dict[str, uuid.UUID] = Field(default_factory=dict)

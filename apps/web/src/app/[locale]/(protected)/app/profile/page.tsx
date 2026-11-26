@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import { AppShell } from "@/components/layout/app-shell";
@@ -26,6 +27,7 @@ export default function MyProfilePage() {
   const t = useTranslations("studentProfile");
   const tCommon = useTranslations("common");
   const router = useRouter();
+  const searchParams = useSearchParams();
   const localizeError = useErrorMessage();
 
   const { data, loading, error, refetch } = useApi<StudentDetail>(
@@ -35,10 +37,14 @@ export default function MyProfilePage() {
   );
 
   useEffect(() => {
-    if (data?.id) {
-      router.replace(`/app/students/${data.id}`);
-    }
-  }, [data?.id, router]);
+    if (!data?.id) return;
+    // Preserve an explicitly requested tab, so navigation can deep-link a
+    // student straight to their own timetable instead of the overview.
+    const tab = searchParams.get("tab");
+    router.replace(
+      tab ? `/app/students/${data.id}?tab=${encodeURIComponent(tab)}` : `/app/students/${data.id}`,
+    );
+  }, [data?.id, router, searchParams]);
 
   const noRecord = error?.status === 404;
   const localized = localizeError(error);

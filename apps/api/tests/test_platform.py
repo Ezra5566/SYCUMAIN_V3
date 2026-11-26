@@ -907,23 +907,46 @@ class TestAudit:
         # The attempted address must not be recorded for failed logins.
         assert "wrong-password" not in str(entries)
 
-    def test_student_update_is_audited_without_values(self, client):
+    def test_student_update_is_audited_with_before_and_after(self, client):
         db = SessionLocal()
         try:
             student = _student_record(db, "student@school.portal")
             student_id = str(student.id)
+            previous_phone = student.phone
         finally:
             db.close()
 
+        new_phone = "+1 555 0199"
         assert _login(client, "management@school.portal")
-        client.patch(f"{API}/students/{student_id}", json={"phone": "+1 555 0100"})
+        assert (
+            client.patch(f"{API}/students/{student_id}", json={"phone": new_phone}).status_code
+            == 200
+        )
 
         entries = client.get(
             f"{API}/audit?action=student.updated&entity_id={student_id}"
         ).json()
         assert entries["total"] >= 1
-        # Field names are recorded; the new value is not.
-        assert "+1 555 0100" not in str(entries)
+
+        # Phase 10: an editable profile field is audited with the actual
+        # transition, not only its name. Accountability needs what the value
+        # became, otherwise "phone changed" cannot be reviewed.
+        entry = next(
+            item
+            for item in entries["items"]
+            if item["context"]["changes"].get("phone", {}).get("new") == new_phone
+        )
+        assert entry["context"]["fields"] == ["phone"]
+        assert entry["context"]["changes"]["phone"] == {
+            "previous": previous_phone,
+            "new": new_phone,
+        }
+
+        # Recorded values are still passed through the sensitive-key filter:
+        # no credential ever reaches the log, whatever the field is called.
+        serialized = str(entries).lower()
+        assert "hashed_password" not in serialized
+        assert "session_token" not in serialized
 
     def test_ticket_and_document_actions_are_audited(self, client):
         assert _login(client, "admin@school.portal")
@@ -1266,6 +1289,29 @@ class TestAuditVocabularyContract:
     def test_every_recorded_action_has_a_translation(self):
         missing = sorted(self._recorded_actions() - self._catalog_actions())
         assert missing == [], f"audited actions without a message: {missing}"
+
+    def test_every_translated_action_exists_in_every_locale(self):
+        """A key added to one catalog must exist in all five."""
+        base = Path(__file__).resolve().parent.parent.parent / "web" / "messages"
+        locales = sorted(p.stem for p in base.glob("*.json"))
+        assert len(locales) == 5, locales
+
+        def flatten(node: dict, prefix: str = "") -> set[str]:
+            found: set[str] = set()
+            for key, value in node.items():
+                path = f"{prefix}.{key}" if prefix else key
+                if isinstance(value, dict):
+                    found |= flatten(value, path)
+                else:
+                    found.add(path)
+            return found
+
+        reference = flatten(
+            json.loads((base / "en.json").read_text(encoding="utf-8"))["audit"]["actions"]
+        )
+        for locale in locales:
+            data = json.loads((base / f"{locale}.json").read_text(encoding="utf-8"))
+            assert flatten(data["audit"]["actions"]) == reference, locale
 
 
 class TestAcademicAudit:

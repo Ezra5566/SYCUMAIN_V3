@@ -38,7 +38,10 @@ async function login(page: Page, user: { email: string; password: string }) {
 }
 
 async function signOut(page: Page) {
-  await page.getByRole("button", { name: "Sign out", exact: true }).click();
+  // Sign-out lives in the account menu in the V3 shell: open the avatar trigger
+  // first, then choose the menu item. This is also the keyboard path.
+  await page.locator("header .scu-me").click();
+  await page.getByRole("menuitem", { name: /sign out/i }).click();
   await page.waitForURL(new RegExp(`/en/login`), { timeout: 25_000 });
 }
 
@@ -55,7 +58,9 @@ async function openSeededStudent(page: Page) {
 
   const row = page.getByRole("row").filter({ hasText: "STU-001" }).first();
   await expect(row).toBeVisible({ timeout: 25_000 });
-  await row.getByRole("link", { name: "View" }).click();
+  // The V3 student table links the student's name; the V1 "View" action no
+  // longer exists, and the row's only link is the record itself.
+  await row.getByRole("link").first().click();
   await page.waitForURL(/\/app\/students\/[0-9a-f-]+$/, { timeout: 25_000 });
   return page.url();
 }
@@ -104,8 +109,10 @@ test("student renewal remains unverified until management approval", async ({
     visa_type: string | null;
   };
 
-  // Import is deliberately non-verifying. Applying an already-known value
-  // returns the seeded profile to UNVERIFIED without inventing new data.
+  // Import is deliberately non-verifying. The seeded record leaves the visa
+  // type blank, so this fills a blank and — correctly — drops the record to
+  // UNVERIFIED. A batch that changed nothing would be a no-op instead; the
+  // backend suite pins both halves of that rule.
   const imported = await page.request.post(
     `${API_BASE}/api/v1/immigration/import/apply`,
     {
@@ -122,6 +129,7 @@ test("student renewal remains unverified until management approval", async ({
     },
   );
   expect(imported.ok()).toBeTruthy();
+  expect(((await imported.json()) as { applied: number }).applied).toBe(1);
 
   await signOut(page);
   await login(page, USERS.student);
@@ -301,7 +309,9 @@ test("admin onboards a student into a mapped intake offering", async ({ page }) 
   await page.getByRole("searchbox", { name: "Search" }).fill(number);
   const row = page.getByRole("row").filter({ hasText: number }).first();
   await expect(row).toBeVisible({ timeout: 25_000 });
-  await row.getByRole("link", { name: "View" }).click();
+  // The V3 student table links the student's name; the V1 "View" action no
+  // longer exists, and the row's only link is the record itself.
+  await row.getByRole("link").first().click();
   await page.waitForURL(/\/app\/students\/[0-9a-f-]+$/, { timeout: 25_000 });
   await page.getByRole("tab", { name: "Academic" }).click();
   await expect(page.getByText(offeringName).first()).toBeVisible({

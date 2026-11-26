@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { ShieldCheck } from "lucide-react";
+import { ShieldAlert, ShieldCheck } from "lucide-react";
 import { Link, useRouter } from "@/i18n/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { useErrorMessage } from "@/lib/use-error-message";
@@ -20,6 +20,21 @@ const DEMO_ACCOUNTS = [
   "student@school.portal",
 ];
 
+/**
+ * Password for the demo accounts above.
+ *
+ * The API's `DEMO_PASSWORD` is the source: development compose passes it here as
+ * `NEXT_PUBLIC_DEMO_PASSWORD`, so the chip fills whatever the seed actually
+ * created. The fallback covers `next dev` started without that variable, and
+ * `tests/test_demo_credentials.py` fails if it drifts from the API default.
+ *
+ * These chips used to fill the catalogue default `password123`, which stopped
+ * matching the moment the demo accounts were rotated — clicking one submitted
+ * rejected credentials and the form simply reappeared, which reads as "login is
+ * broken". A production build compiles this away (see the gate below).
+ */
+const DEMO_PASSWORD = process.env.NEXT_PUBLIC_DEMO_PASSWORD ?? "Sycumain2026!";
+
 export default function LoginPage() {
   const t = useTranslations("auth");
   const tCommon = useTranslations("common");
@@ -28,7 +43,7 @@ export default function LoginPage() {
   const [error, setError] = useState<NormalizedError | null>(null);
   const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { login, isAuthenticated, isLoading } = useAuth();
+  const { login, isAuthenticated, isLoading, sessionExpired } = useAuth();
   const localizeError = useErrorMessage();
   const router = useRouter();
 
@@ -67,6 +82,10 @@ export default function LoginPage() {
   };
 
   const localized = localizeError(error);
+  // A rejected credential pair invalidates both fields, so assistive
+  // technology is told which inputs the error belongs to. Other failures
+  // (lockout, rate limit, network) are not field errors.
+  const invalidCredentials = error?.kind === "unauthorized";
 
   return (
     <div className="relative grid min-h-screen lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
@@ -161,6 +180,19 @@ export default function LoginPage() {
               </p>
             </div>
 
+            {/* Why the previous session ended, stated plainly. Without it a
+                revocation (password change, role change, deactivation) or an
+                overwritten cookie looks like a random logout. */}
+            {sessionExpired && (
+              <div
+                role="status"
+                className="mb-6 flex items-start gap-2.5 rounded-lg border border-warning/25 bg-warning-soft/45 p-3.5 text-sm"
+              >
+                <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-warning" aria-hidden="true" />
+                <p className="leading-relaxed text-foreground/90">{t("sessionExpired")}</p>
+              </div>
+            )}
+
             {/* method="post" matters before hydration: with the default GET, a
                 submit that lands before React attaches onSubmit puts the email
                 and password in the URL, browser history and access logs. A
@@ -180,8 +212,14 @@ export default function LoginPage() {
                   autoComplete="email"
                   disabled={isSubmitting}
                   aria-required="true"
-                  aria-invalid={Boolean(fieldErrors.email)}
-                  aria-describedby={fieldErrors.email ? "email-error" : undefined}
+                  aria-invalid={Boolean(fieldErrors.email) || invalidCredentials}
+                  aria-describedby={
+                    fieldErrors.email
+                      ? "email-error"
+                      : invalidCredentials
+                        ? "login-error"
+                        : undefined
+                  }
                   className="h-11"
                 />
                 {fieldErrors.email && (
@@ -205,8 +243,14 @@ export default function LoginPage() {
                   autoComplete="current-password"
                   disabled={isSubmitting}
                   aria-required="true"
-                  aria-invalid={Boolean(fieldErrors.password)}
-                  aria-describedby={fieldErrors.password ? "password-error" : undefined}
+                  aria-invalid={Boolean(fieldErrors.password) || invalidCredentials}
+                  aria-describedby={
+                    fieldErrors.password
+                      ? "password-error"
+                      : invalidCredentials
+                        ? "login-error"
+                        : undefined
+                  }
                   className="h-11"
                 />
                 {fieldErrors.password && (
@@ -218,6 +262,7 @@ export default function LoginPage() {
 
               {error && (
                 <div
+                  id="login-error"
                   role="alert"
                   className="space-y-1 rounded-lg border border-destructive/20 bg-destructive/[0.06] p-3.5 text-sm"
                 >
@@ -262,7 +307,7 @@ export default function LoginPage() {
                       type="button"
                       onClick={() => {
                         setEmail(account);
-                        setPassword("password123");
+                        setPassword(DEMO_PASSWORD);
                       }}
                       className="truncate rounded-md bg-card px-2 py-1.5 text-start font-mono text-[10px] text-muted-foreground shadow-sm transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >

@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useFormatter, useTranslations } from "next-intl";
+import { Link, useRouter } from "@/i18n/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { AppShell } from "@/components/layout/app-shell";
 import {
@@ -13,6 +14,7 @@ import {
   listTimetable,
   listProgramOfferings,
   listSourceIntakes,
+  getTimetableReconciliation,
 } from "@/lib/academic-api";
 import {
   ClassSectionDialog,
@@ -79,23 +81,33 @@ interface AcademicBundle {
   programs: Program[];
   courses: Course[];
   periods: AcademicPeriod[];
+  /**
+   * Catalogue records are context for the selected period, not its selector.
+   * A period exists on its own; a source intake may be mapped to it (imported)
+   * or not. Operational periods are the source of truth.
+   */
   intakes: SourceIntake[];
+  selectedPeriod: AcademicPeriod | null;
+  selectedPeriodId: string | null;
   selectedIntake: SourceIntake | null;
-  selectedIntakeId: string | null;
   classes: ClassSection[];
   classrooms: Classroom[];
   timetable: TimetableEntry[];
   programOfferings: ProgramOffering[];
-  selectedPeriodId: string | null;
   failed: string[];
 }
 
 /**
  * Loads academic sections independently so a single failing endpoint degrades
  * one card instead of blanking the whole dashboard.
+ *
+ * The selector is the list of real academic periods. The catalogue is loaded
+ * only to explain whether the selected period has been imported yet: selecting
+ * an unconfigured catalogue intake and silently showing an empty timetable was
+ * the original defect, so the catalogue no longer drives the view.
  */
 async function loadAcademicBundle(
-  requestedIntakeId?: string,
+  requestedPeriodId?: string,
   requestedProgramOfferingId?: string,
   requestedCourseId?: string,
 ): Promise<AcademicBundle> {
@@ -104,15 +116,18 @@ async function loadAcademicBundle(
     listPeriods(1, 50),
   ]);
   const intakes = catalog.items;
-  const selectedIntake =
-    intakes.find((intake) => intake.source_id === requestedIntakeId) ??
-    intakes.find((intake) => intake.active) ??
-    intakes[0] ??
+  const periods = periodPage.items;
+  const selectedPeriod =
+    periods.find((period) => period.id === requestedPeriodId) ??
+    periods.find((period) => period.status === "ACTIVE") ??
+    periods[0] ??
     null;
+  const selectedPeriodId = selectedPeriod?.id ?? null;
+  const selectedIntake =
+    (selectedPeriodId
+      ? intakes.find((intake) => intake.period?.id === selectedPeriodId)
+      : undefined) ?? null;
 
-  // An unconfigured intake must not fall back to the active period. Its source
-  // offerings are loaded from the catalog; period-scoped records stay empty.
-  const selectedPeriodId = selectedIntake?.period?.id ?? null;
   const scopedOfferingId = selectedPeriodId ? requestedProgramOfferingId : undefined;
   const scopedCourseId = selectedPeriodId ? requestedCourseId : undefined;
 
@@ -169,17 +184,17 @@ async function loadAcademicBundle(
   return {
     programs: programs.status === "fulfilled" ? programs.value.items : [],
     courses: courses.status === "fulfilled" ? courses.value.items : [],
-    periods: periodPage.items,
+    periods,
     intakes,
+    selectedPeriod,
+    selectedPeriodId,
     selectedIntake,
-    selectedIntakeId: selectedIntake?.source_id ?? null,
     classes: classes.status === "fulfilled" ? classes.value.items : [],
     classrooms:
       classrooms.status === "fulfilled" ? classrooms.value.items : [],
     timetable: timetable.status === "fulfilled" ? timetable.value.items : [],
     programOfferings:
       programOfferings.status === "fulfilled" ? programOfferings.value.items : [],
-    selectedPeriodId,
     failed,
   };
 }
@@ -189,25 +204,45 @@ export default function AcademicsPage() {
   const tInstitutional = useTranslations("institutional");
   const tCommon = useTranslations("common");
   const { hasPermission, hasRole } = useAuth();
+  const router = useRouter();
   const localizeError = useErrorMessage();
   const statusLabel = useStatusLabel();
   const format = useFormatter();
-  const [selectedIntakeId, setSelectedIntakeId] = useState("");
+  const [selectedPeriodId, setSelectedPeriodId] = useState("");
   const [programOfferingId, setProgramOfferingId] = useState("");
   const [courseId, setCourseId] = useState("");
 
   const { data, loading, error, refetch } = useApi(
     () =>
       loadAcademicBundle(
-        selectedIntakeId || undefined,
+        selectedPeriodId || undefined,
         programOfferingId || undefined,
         courseId || undefined,
       ),
-    [selectedIntakeId, programOfferingId, courseId],
+    [selectedPeriodId, programOfferingId, courseId],
     "academic dashboard",
   );
 
   const localized = localizeError(error);
+
+  // Completeness is a property of the intended operational period, so it is
+  // read from the same period the tables below are showing.
+  const reconciliation = useApi(
+    () =>
+      data?.selectedPeriodId
+        ? getTimetableReconciliation(data.selectedPeriodId)
+        : Promise.resolve(null),
+    [data?.selectedPeriodId],
+    "timetable reconciliation",
+  );
+
+  // Students have their own schedule surfaces and must never render this
+  // administrative console. The redirect runs before any early return so hook
+  // order stays stable; the API also enforces every permission independently.
+  const isStudent = hasRole("STUDENT");
+  useEffect(() => {
+    if (isStudent) router.replace("/app/timetable");
+  }, [isStudent, router]);
 
   // One flag per entity rather than a single "can edit academics". The
   // permissions are granted separately, so a clerk who may schedule the
@@ -362,43 +397,16 @@ export default function AcademicsPage() {
     );
   }
 
-  const selectedIntake =
-    data?.intakes.find(
-      (intake) => intake.source_id === (selectedIntakeId || data?.selectedIntakeId),
-    ) ??
-    data?.selectedIntake ??
-    null;
-  const selectedPeriod = selectedIntake?.period ?? null;
+  const selectedPeriod = data?.selectedPeriod ?? null;
+  const selectedIntake = data?.selectedIntake ?? null;
   const isConfigured = Boolean(selectedPeriod);
   const todayIndex = (new Date().getDay() + 6) % 7;
 
-  const renderSubjects = (subjects: SourceIntakeSubject[]) => (
-    <ul className="mt-2 space-y-1.5">
-      {subjects.map((subject) => (
-        <li
-          key={`${subject.section_key}-${subject.name}`}
-          className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground"
-        >
-          <span className="min-w-0 truncate">{subject.name}</span>
-          {subject.delivery === "shared" && (
-            <StatusBadge tone="info" icon={null} className="px-1.5 py-0.5 text-[10px]">
-              {subject.shared_with.length > 0
-                ? t("sharedWith", { count: subject.shared_with.length })
-                : t("sharedTeaching")}
-            </StatusBadge>
-          )}
-          {subject.held && (
-            <StatusBadge tone="warning" className="px-1.5 py-0.5 text-[10px]">
-              {t("heldConflict")}
-            </StatusBadge>
-          )}
-        </li>
-      ))}
-    </ul>
-  );
   const timetableSlots = Array.from(
     new Set((data?.timetable ?? []).map((entry) => entry.start_time.slice(0, 5))),
   ).sort();
+
+  if (isStudent) return null;
 
   return (
     <AppShell>
@@ -410,11 +418,29 @@ export default function AcademicsPage() {
           { label: t("title") },
         ]}
         actions={
-          selectedIntake && (
-            <StatusBadge tone={selectedIntake.active ? "success" : "warning"}>
-              {selectedIntake.name}
-            </StatusBadge>
-          )
+          <div className="flex flex-wrap items-center gap-3">
+            {selectedPeriod && (
+              <StatusBadge
+                tone={selectedPeriod.status === "ACTIVE" ? "success" : "neutral"}
+              >
+                {selectedPeriod.code}
+              </StatusBadge>
+            )}
+            <Link
+              href="/app/timetable"
+              className="text-xs font-medium text-primary underline-offset-4 hover:underline"
+            >
+              {t("openInstitutionalTimetable")}
+            </Link>
+            {canManage.periods && (
+              <Link
+                href="/app/academics/import"
+                className="text-xs font-medium text-primary underline-offset-4 hover:underline"
+              >
+                {t("openImport")}
+              </Link>
+            )}
+          </div>
         }
       />
 
@@ -437,19 +463,19 @@ export default function AcademicsPage() {
 
           <div className="mb-5 flex flex-col gap-3 rounded-xl border border-border/80 bg-muted/20 p-3 sm:flex-row sm:items-end">
             <label className="flex-1 space-y-1.5 text-xs font-medium">
-              <span className="block text-muted-foreground">{t("intakeFilter")}</span>
+              <span className="block text-muted-foreground">{t("periodFilter")}</span>
               <select
                 className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
-                value={selectedIntakeId || data?.selectedIntakeId || ""}
+                value={selectedPeriodId || data?.selectedPeriodId || ""}
                 onChange={(event) => {
-                  setSelectedIntakeId(event.target.value);
+                  setSelectedPeriodId(event.target.value);
                   setProgramOfferingId("");
                   setCourseId("");
                 }}
               >
-                {(data?.intakes ?? []).map((intake) => (
-                  <option key={intake.source_id} value={intake.source_id}>
-                    {intake.name}
+                {(data?.periods ?? []).map((period) => (
+                  <option key={period.id} value={period.id}>
+                    {period.name} ({period.code})
                   </option>
                 ))}
               </select>
@@ -495,62 +521,62 @@ export default function AcademicsPage() {
             )}
           </div>
 
-          {selectedIntake && (
+          {selectedPeriod && (
             <div className="mb-5 rounded-xl border border-border/80 bg-muted/20 p-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold">{selectedIntake.name}</p>
+                  <p className="truncate text-sm font-semibold">{selectedPeriod.name}</p>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    {t("intakeSummary")}
+                    {selectedPeriod.code} ·{" "}
+                    {dateRange(selectedPeriod.start_date, selectedPeriod.end_date)}
                   </p>
                 </div>
-                <StatusBadge tone={selectedIntake.active ? "success" : "neutral"}>
-                  {selectedIntake.active ? t("active") : t("notActive")}
+                <StatusBadge
+                  tone={selectedPeriod.status === "ACTIVE" ? "success" : "neutral"}
+                >
+                  {statusLabel(selectedPeriod.status, "academics.periodStatus")}
                 </StatusBadge>
               </div>
               <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
                 <div className="rounded-lg border border-border/70 bg-background/60 px-3 py-2">
+                  <p className="text-[11px] text-muted-foreground">{t("programOfferings")}</p>
+                  <p className="mt-1 text-lg font-semibold tabular-nums">
+                    {data?.programOfferings.length ?? 0}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-border/70 bg-background/60 px-3 py-2">
+                  <p className="text-[11px] text-muted-foreground">{t("classes")}</p>
+                  <p className="mt-1 text-lg font-semibold tabular-nums">
+                    {data?.classes.length ?? 0}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-border/70 bg-background/60 px-3 py-2">
+                  <p className="text-[11px] text-muted-foreground">{t("timetable")}</p>
+                  <p className="mt-1 text-lg font-semibold tabular-nums">
+                    {data?.timetable.length ?? 0}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-border/70 bg-background/60 px-3 py-2">
                   <p className="text-[11px] text-muted-foreground">{t("sourceIntake")}</p>
                   <StatusBadge
                     className="mt-1.5"
-                    tone={selectedIntake.source_identified ? "success" : "danger"}
+                    tone={
+                      selectedIntake
+                        ? selectedIntake.period_configured
+                          ? "success"
+                          : "warning"
+                        : "neutral"
+                    }
                   >
-                    {selectedIntake.source_identified ? t("identified") : t("notAvailable")}
-                  </StatusBadge>
-                </div>
-                <div className="rounded-lg border border-border/70 bg-background/60 px-3 py-2">
-                  <p className="text-[11px] text-muted-foreground">{t("academicPeriod")}</p>
-                  <StatusBadge
-                    className="mt-1.5"
-                    tone={selectedIntake.period_configured ? "success" : "warning"}
-                  >
-                    {selectedIntake.period_configured
-                      ? t("configured")
-                      : t("notConfigured")}
-                  </StatusBadge>
-                </div>
-                <div className="rounded-lg border border-border/70 bg-background/60 px-3 py-2">
-                  <p className="text-[11px] text-muted-foreground">{t("timetableData")}</p>
-                  <StatusBadge
-                    className="mt-1.5"
-                    tone={selectedIntake.timetable_imported ? "success" : "neutral"}
-                  >
-                    {selectedIntake.timetable_imported
-                      ? t("imported")
-                      : t("notImported")}
-                  </StatusBadge>
-                </div>
-                <div className="rounded-lg border border-border/70 bg-background/60 px-3 py-2">
-                  <p className="text-[11px] text-muted-foreground">{t("readiness")}</p>
-                  <StatusBadge
-                    className="mt-1.5"
-                    tone={selectedIntake.ready ? "success" : "warning"}
-                  >
-                    {selectedIntake.ready ? t("ready") : t("notReady")}
+                    {selectedIntake
+                      ? selectedIntake.period_configured
+                        ? t("configured")
+                        : t("notConfigured")
+                      : t("sourceNotLinked")}
                   </StatusBadge>
                 </div>
               </div>
-              {isConfigured &&
+              {selectedIntake &&
                 selectedIntake.verified_source_session_count !== null &&
                 selectedIntake.verified_source_session_count !== undefined && (
                   <p className="mt-3 text-xs text-muted-foreground">
@@ -560,14 +586,14 @@ export default function AcademicsPage() {
                     })}
                   </p>
                 )}
-              {selectedIntake.held_section_count > 0 && (
+              {selectedIntake && selectedIntake.held_section_count > 0 && (
                 <p className="mt-2 text-xs font-medium text-warning">
                   {t("heldConflictHint")}
                 </p>
               )}
-              {!isConfigured && (
+              {!selectedIntake && (
                 <p className="mt-3 text-xs text-muted-foreground">
-                  {t("sourceOnlyHint")}
+                  {t("periodNotLinkedHint")}
                 </p>
               )}
             </div>
@@ -576,13 +602,7 @@ export default function AcademicsPage() {
           <StatGrid>
             <StatCard
               label={t("programOfferings")}
-              value={
-                loading
-                  ? "—"
-                  : isConfigured
-                    ? (data?.programOfferings.length ?? 0)
-                    : (selectedIntake?.offering_count ?? 0)
-              }
+              value={loading ? "—" : (data?.programOfferings.length ?? 0)}
             />
             <StatCard label={t("programs")} value={loading ? "—" : (data?.programs.length ?? 0)} />
             <StatCard label={t("courses")} value={loading ? "—" : (data?.courses.length ?? 0)} />
@@ -602,7 +622,7 @@ export default function AcademicsPage() {
                 <div>
                   <CardTitle className="text-base">{t("programOfferings")}</CardTitle>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    {selectedIntake?.name ?? t("academicPeriod")}
+                    {selectedPeriod?.name ?? t("academicPeriod")}
                   </p>
                 </div>
                 {isConfigured && canManage.offerings && (
@@ -614,50 +634,7 @@ export default function AcademicsPage() {
                 )}
               </CardHeader>
               <CardContent className="pt-0">
-                {!isConfigured ? (
-                  selectedIntake && selectedIntake.offerings.length > 0 ? (
-                    <>
-                      <p className="mb-3 text-xs text-muted-foreground">
-                        {t("sourceOnlyOfferingsHint")}
-                      </p>
-                      <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
-                        {selectedIntake.offerings.map((offering) => (
-                          <li
-                            key={offering.source_id}
-                            className="min-w-0 rounded-lg border border-border/80 bg-muted/15 p-3"
-                          >
-                            <div className="flex min-w-0 items-start justify-between gap-2">
-                              <div className="min-w-0">
-                                <p className="truncate text-sm font-medium">{offering.name}</p>
-                                <p className="mt-0.5 font-mono text-xs text-muted-foreground">
-                                  {offering.source_id}
-                                </p>
-                              </div>
-                              <StatusBadge tone="warning">{t("sourceOnly")}</StatusBadge>
-                            </div>
-                            <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground">
-                              <span>{t("subjectsCount", { count: offering.subject_count })}</span>
-                              <span aria-hidden="true">·</span>
-                              <span>
-                                {t("sharedSectionsCount", {
-                                  count: offering.shared_section_count,
-                                })}
-                              </span>
-                              {offering.held && (
-                                <StatusBadge tone="warning" className="px-1.5 py-0.5 text-[10px]">
-                                  {t("heldConflict")}
-                                </StatusBadge>
-                              )}
-                            </div>
-                            {renderSubjects(offering.subjects)}
-                          </li>
-                        ))}
-                      </ul>
-                    </>
-                  ) : (
-                    <EmptyState title={t("noProgramOfferings")} />
-                  )
-                ) : (data?.programOfferings.length ?? 0) === 0 ? (
+                {(data?.programOfferings.length ?? 0) === 0 ? (
                   <EmptyState title={t("noProgramOfferings")} />
                 ) : (
                   <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
@@ -719,7 +696,28 @@ export default function AcademicsPage() {
                                   {t("heldConflictHint")}
                                 </p>
                               )}
-                              {renderSubjects(source.subjects)}
+                              {source.subjects.length > 0 && (
+                                <ul className="mt-2 space-y-1 text-[11px] text-muted-foreground">
+                                  {source.subjects.map((subject) => (
+                                    <li
+                                      key={`${subject.section_key}-${subject.name}`}
+                                      className="flex items-center gap-1.5"
+                                    >
+                                      <span className="min-w-0 truncate">
+                                        {subject.name}
+                                      </span>
+                                      {subject.held && (
+                                        <StatusBadge
+                                          tone="warning"
+                                          className="px-1.5 py-0.5 text-[10px]"
+                                        >
+                                          {t("heldConflict")}
+                                        </StatusBadge>
+                                      )}
+                                    </li>
+                                  ))}
+                                </ul>
+                              )}
                             </>
                           )}
                         </li>
@@ -923,6 +921,33 @@ export default function AcademicsPage() {
                 )}
               </CardHeader>
               <CardContent>
+                {reconciliation.data && reconciliation.data.status !== "OK" && (
+                  <div
+                    role="status"
+                    className="mb-3 rounded-md border border-warning/30 bg-warning-soft px-3 py-2 text-sm text-warning"
+                  >
+                    <p className="font-medium">
+                      {t("reconciliationWarnings", {
+                        count: reconciliation.data.totals.findings,
+                      })}
+                    </p>
+                    <ul className="mt-1 space-y-0.5 text-xs">
+                      {reconciliation.data.findings.map((finding) => (
+                        <li
+                          key={finding.code}
+                          className="flex items-center justify-between gap-2"
+                        >
+                          <span>
+                            {t.has(`reconciliationCodes.${finding.code}`)
+                              ? t(`reconciliationCodes.${finding.code}`)
+                              : finding.code}
+                          </span>
+                          <span className="tabular-nums">{finding.count}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
                 {!isConfigured ? (
                   <p className="text-sm text-muted-foreground">
                     {t("sourceOnlyTimetableHint")}

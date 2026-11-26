@@ -296,6 +296,7 @@ def update_student_immigration(
     db: Annotated[DBSession, Depends(get_db)],
     student_id: uuid.UUID,
     data: ImmigrationProfileUpdate,
+    request: Request,
 ):
     """Update immigration profile (management/admin only, direct update)."""
     student = _get_student_or_404(db, student_id)
@@ -315,6 +316,9 @@ def update_student_immigration(
         actor_id=current_user.id,
         reason=change_reason,
         data_source="ADMIN" if "ADMIN" in role_names else "MANAGEMENT",
+        # Staged on the same transaction, so the audit entry commits with the
+        # correction rather than in a second transaction afterwards.
+        request=request,
     )
     return profile_to_response(profile)
 

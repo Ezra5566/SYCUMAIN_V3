@@ -14,11 +14,13 @@ never persisted in plaintext and never returned by a read endpoint.
 import secrets
 import string
 import uuid
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session as DBSession
 
 from app.auth.service import UNUSABLE_PASSWORD_HASH, hash_password, verify_password
+from app.config.settings import get_settings
 from app.models.identity import Role, Staff, Student, User
 from app.models.session import UserSession
 
@@ -43,6 +45,31 @@ def generate_temporary_password() -> str:
     return "".join(
         secrets.choice(_PASSWORD_ALPHABET) for _ in range(_TEMP_PASSWORD_LENGTH)
     )
+
+
+def temporary_password_deadline(
+    *, now: datetime | None = None
+) -> datetime:
+    """When a temporary password issued now must stop working."""
+    moment = now or datetime.now(UTC)
+    return moment + timedelta(hours=get_settings().TEMPORARY_PASSWORD_EXPIRE_HOURS)
+
+
+def temporary_password_expired(
+    user: User, *, now: datetime | None = None
+) -> bool:
+    """Whether the outstanding temporary password has passed its deadline.
+
+    A row from before this control existed has no deadline. It is still
+    trapped behind ``must_change_password``, so it is not a bypass; refusing it
+    on age alone would lock out accounts the institution never timed.
+    """
+    if not user.must_change_password:
+        return False
+    deadline = user.temporary_password_expires_at
+    if deadline is None:
+        return False
+    return (now or datetime.now(UTC)) >= deadline
 
 
 def _unique_username(db: DBSession, email: str) -> str:
@@ -176,6 +203,9 @@ def create_account(
         is_active=is_active,
         is_superuser=False,
         must_change_password=must_change_password,
+        temporary_password_expires_at=(
+            temporary_password_deadline() if must_change_password else None
+        ),
         activation_required=activation_required,
     )
     user.roles.extend(role_rows)
@@ -344,6 +374,12 @@ def reset_account_password(
     password = new_password or generate_temporary_password()
     user.hashed_password = hash_password(password)
     user.must_change_password = must_change_password
+    # A reset credential is temporary in time as well as in effect. The
+    # deadline is cleared when the owner replaces it, and an expired one is
+    # refused at sign-in with a message that tells them to call the office.
+    user.temporary_password_expires_at = (
+        temporary_password_deadline() if must_change_password else None
+    )
 
     revoked = db.query(UserSession).filter(UserSession.user_id == user.id).delete()
     db.flush()
@@ -367,6 +403,7 @@ def change_own_password(
 
     user.hashed_password = hash_password(new_password)
     user.must_change_password = False
+    user.temporary_password_expires_at = None
     db.flush()
     return 0
 

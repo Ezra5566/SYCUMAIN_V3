@@ -600,3 +600,59 @@ class TestImmigrationProvenance:
         assert imported.passport_number == "IMPORT-ONLY"
         assert imported.verification_status == "UNVERIFIED"
         assert imported.data_source == "IMPORT"
+
+    def test_a_matching_reimport_is_a_noop_and_never_demotes_official_data(
+        self, client, db_session
+    ):
+        """Re-importing what the institution already holds changes nothing.
+
+        An import fills blanks. It must not "re-apply" a value that is already
+        identical, and it must not demote a verified record as a side effect:
+        a batch that matches the official data is reported as applied=0 and
+        leaves the verification, the source and the history untouched.
+        """
+        student = db_session.query(Student).filter(Student.student_id == "STU-001").first()
+        assert student is not None
+        profile = (
+            db_session.query(ImmigrationProfile)
+            .filter(ImmigrationProfile.student_id == student.id)
+            .first()
+        )
+        if profile is None:
+            profile = ImmigrationProfile(student_id=student.id)
+            db_session.add(profile)
+        profile.passport_number = "OFFICIAL-NOOP"
+        profile.visa_type = "X1"
+        profile.verification_status = "VERIFIED"
+        profile.data_source = "STAFF"
+        profile.source_reference = "staff-file-2026"
+        db_session.commit()
+
+        _login(client, "admin@school.portal")
+        payload = {
+            "source_reference": "reimport-batch",
+            "records": [
+                {
+                    "student_id": str(student.id),
+                    "values": {"passport_number": "OFFICIAL-NOOP", "visa_type": "X1"},
+                }
+            ],
+        }
+        applied = client.post(
+            f"{API}/immigration/import/apply",
+            json={**payload, "confirm": True},
+        )
+        assert applied.status_code == 200, applied.text
+        assert applied.json()["applied"] == 0
+        assert applied.json()["skipped"] == 1
+
+        db_session.expire_all()
+        reread = (
+            db_session.query(ImmigrationProfile)
+            .filter(ImmigrationProfile.student_id == student.id)
+            .first()
+        )
+        assert reread is not None
+        assert reread.verification_status == "VERIFIED"
+        assert reread.data_source == "STAFF"
+        assert reread.source_reference == "staff-file-2026"

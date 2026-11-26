@@ -1,6 +1,6 @@
 import { expect, test, type APIResponse, type Page } from "@playwright/test";
 
-import { API_BASE, USERS, app } from "./accounts";
+import { API_BASE, USERS, app, signOutViaAccountMenu } from "./accounts";
 
 /**
  * Phase 7 administrative corrections.
@@ -19,7 +19,7 @@ async function login(page: Page, user: { email: string; password: string }) {
 }
 
 async function signOut(page: Page) {
-  await page.getByRole("button", { name: "Sign out", exact: true }).click();
+  await signOutViaAccountMenu(page);
   await page.waitForURL(/\/en\/login/, { timeout: 25_000 });
 }
 

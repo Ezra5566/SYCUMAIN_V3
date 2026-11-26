@@ -263,13 +263,18 @@ export default function StudentsPage() {
           {
             key: "select",
             header: (
-              <input
-                type="checkbox"
-                checked={allOnPageSelected}
-                onChange={toggleAll}
-                aria-label={t("selectAllOnPage")}
-                className="h-4 w-4 rounded border-input align-middle"
-              />
+              <span className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={allOnPageSelected}
+                  onChange={toggleAll}
+                  aria-label={t("selectAllOnPage")}
+                  className="h-4 w-4 rounded border-input align-middle"
+                />
+                {/* The column header must have text as well as the control:
+                    a `th` containing only a checkbox names nothing. */}
+                <span className="sr-only">{t("selectAllOnPage")}</span>
+              </span>
             ),
             className: "w-10",
             cell: (student: StudentBrief) => (
@@ -517,6 +522,7 @@ export default function StudentsPage() {
             columns={columns}
             rows={students}
             rowKey={(student) => student.id}
+            label={t("directory")}
             loading={loading}
             error={error ? localized.message : null}
             onRetry={refetch}

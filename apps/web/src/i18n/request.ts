@@ -2,9 +2,23 @@ import { hasLocale } from "next-intl";
 import { getRequestConfig } from "next-intl/server";
 import { defaultLocale, routing } from "./routing";
 
-/**
- * Server-side message loading.
- *
+// Static message imports - webpack can tree-shake these
+import enMessages from "../../messages/en.json";
+import zhMessages from "../../messages/zh.json";
+import frMessages from "../../messages/fr.json";
+import arMessages from "../../messages/ar.json";
+import ruMessages from "../../messages/ru.json";
+
+/** Map of locale to its messages */
+const messagesMap: Record<string, any> = {
+  en: enMessages,
+  zh: zhMessages,
+  fr: frMessages,
+  ar: arMessages,
+  ru: ruMessages,
+};
+
+/** Server-side message loading.
  * Messages are imported statically so the bundler can tree-shake and so there
  * is no filesystem read at request time. A missing locale falls back to the
  * default locale rather than throwing, so a stale cookie or hand-edited URL
@@ -16,7 +30,7 @@ export default getRequestConfig(async ({ requestLocale }) => {
 
   return {
     locale,
-    messages: (await import(`../../messages/${locale}.json`)).default,
+    messages: messagesMap[locale] || enMessages,
     // Document expiry windows and other date-sensitive screens must not shift
     // with the server's timezone.
     timeZone: "Asia/Shanghai",

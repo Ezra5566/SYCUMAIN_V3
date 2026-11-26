@@ -39,6 +39,7 @@ from app.services.academic_import import (
     rollback_batch,
 )
 from app.services.account import AccountError, create_account
+from app.services.mailer import email_configured, flush_outbox
 
 
 def bootstrap_admin(args: argparse.Namespace) -> int:
@@ -306,6 +307,34 @@ def academic_import(args: argparse.Namespace) -> int:
         db.close()
 
 
+def send_emails(args: argparse.Namespace) -> int:
+    """Send queued notification email, with bounded retries.
+
+    Designed for cron or a platform scheduler: every run is safe, and a second
+    run cannot send a message that already went out.
+    """
+    if not email_configured():
+        print(
+            "Email delivery is not configured (EMAIL_ENABLED/SMTP_HOST). "
+            "Nothing was sent; queued messages are kept.",
+            file=sys.stderr,
+        )
+        return 2
+
+    db = SessionLocal()
+    try:
+        result = flush_outbox(db, limit=args.limit)
+    finally:
+        db.close()
+
+    print("Email delivery:")
+    for key in ("due", "sent", "retrying", "failed"):
+        print(f"  {key}: {result[key]}")
+    # A permanent failure is an operator problem (credentials, relay policy),
+    # so the command exits non-zero and a scheduler can alert on it.
+    return 1 if result["failed"] else 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="app.cli", description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -328,6 +357,12 @@ def build_parser() -> argparse.ArgumentParser:
         "retention-report", help="show records inside configured retention periods"
     )
     report.set_defaults(func=retention_report)
+
+    mail = sub.add_parser(
+        "send-emails", help="send queued notification email with bounded retries"
+    )
+    mail.add_argument("--limit", type=int, default=100, help="maximum messages per run")
+    mail.set_defaults(func=send_emails)
 
     purge = sub.add_parser("purge-expired", help="delete expired operational rows")
     purge.add_argument("--confirm", action="store_true", help="required to delete")

@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 
-import { ADMIN, API_BASE, TEACHER } from "./accounts";
+import { ADMIN, API_BASE, TEACHER, signOutViaAccountMenu } from "./accounts";
 
 /**
  * Operational lifecycle browser tests (Stage 8B).
@@ -63,8 +63,8 @@ async function login(page: Page, user: { email: string; password: string }) {
 }
 
 async function signOut(page: Page) {
-  // `exact` matters: settings also renders a "Sign out other devices" button.
-  await page.getByRole("button", { name: "Sign out", exact: true }).click();
+  // V3 moved sign-out into the account menu, so the real flow is two steps.
+  await signOutViaAccountMenu(page);
   await page.waitForURL(new RegExp(`/${LOCALE}/login`), { timeout: 25_000 });
 }
 

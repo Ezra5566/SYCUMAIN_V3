@@ -32,6 +32,8 @@ interface DataTableProps<T> {
   emptyMessage?: string;
   /** Render a mobile-friendly stacked list instead of a scrolling table. */
   mobileCard?: (row: T) => React.ReactNode;
+  /** Accessible name for the table, read by screen readers. */
+  label?: string;
   className?: string;
 }
 
@@ -52,6 +54,7 @@ export function DataTable<T>({
   emptyTitle,
   emptyMessage,
   mobileCard,
+  label,
   className,
 }: DataTableProps<T>) {
   const shell = cn(
@@ -98,7 +101,7 @@ export function DataTable<T>({
 
       {/* Desktop / tablet: dense table */}
       <div className={cn(mobileCard && "hidden sm:block")}>
-        <Table className="motion-table">
+        <Table className="motion-table" aria-label={label}>
           <TableHeader>
             <TableRow className="border-border/80 bg-muted/45 hover:bg-muted/45">
               {columns.map((column) => (

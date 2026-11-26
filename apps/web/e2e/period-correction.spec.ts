@@ -1,6 +1,6 @@
 import { expect, test, type APIResponse, type Page } from "@playwright/test";
 
-import { API_BASE, USERS, app } from "./accounts";
+import { API_BASE, USERS, app, signOutViaAccountMenu } from "./accounts";
 
 /**
  * Phase 5 intake-date correction.
@@ -149,7 +149,7 @@ test.describe.serial("intake date correction", () => {
       page.getByRole("button", { name: "Correct dates" }),
     ).toHaveCount(0);
 
-    await page.getByRole("button", { name: "Sign out", exact: true }).click();
+    await signOutViaAccountMenu(page);
     await page.waitForURL(/\/en\/login/, { timeout: 25_000 });
     await login(page, USERS.student);
     await page.goto(app("/app/academics"));

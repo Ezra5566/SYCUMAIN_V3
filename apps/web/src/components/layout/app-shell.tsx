@@ -262,14 +262,44 @@ export function AppShell({ children, className }: AppShellProps) {
             <ThemeSwitcher className="scu-icon" />
 
             {user && (
-              <DropdownMenu.Root>
+              <DropdownMenu.Root
+                onOpenChange={(open) => {
+                  if (open) return;
+                  // Radix unmounts the menu content after its close animation;
+                  // on some re-renders the focus it restores is lost. Put focus
+                  // back on the trigger, but only if it fell to the page body
+                  // (never steal it from wherever the user moved next).
+                  window.setTimeout(() => {
+                    const active = document.activeElement;
+                    if (!active || active === document.body) {
+                      document.getElementById("account-menu-trigger")?.focus();
+                    }
+                  }, 250);
+                }}
+              >
                 <DropdownMenu.Trigger asChild>
-                  <button type="button" className="scu-me" aria-label={user.full_name}>
+                  <button
+                    id="account-menu-trigger"
+                    type="button"
+                    className="scu-me"
+                    aria-label={user.full_name}
+                  >
                     {initials || <UserRound className="h-4 w-4" />}
                   </button>
                 </DropdownMenu.Trigger>
                 <DropdownMenu.Portal>
-                  <DropdownMenu.Content align="end" sideOffset={10} className="scu-pop">
+                  <DropdownMenu.Content
+                    align="end"
+                    sideOffset={10}
+                    className="scu-pop"
+                    // Restore focus to the exact trigger element. Without this,
+                    // a re-render can leave focus on the page container after
+                    // Escape, stranding keyboard users at the top of the shell.
+                    onCloseAutoFocus={(event) => {
+                      event.preventDefault();
+                      document.getElementById("account-menu-trigger")?.focus();
+                    }}
+                  >
                     <div className="scu-pop__head">
                       <strong>{user.full_name}</strong>
                       <span dir="ltr">{user.email}</span>

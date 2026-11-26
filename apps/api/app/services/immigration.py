@@ -10,6 +10,7 @@ from sqlalchemy import and_, case, false, func, or_
 from sqlalchemy.orm import Session as DBSession
 from sqlalchemy.orm import aliased
 
+from app.audit import record_audit
 from app.config.settings import get_settings
 from app.models.academic import AcademicPeriod
 from app.models.admission import AcademicAdmission, AcademicPlacement
@@ -198,6 +199,7 @@ def update_immigration_profile(
     actor_id: uuid.UUID | None = None,
     reason: str | None = None,
     data_source: str = "MANAGEMENT",
+    request: object | None = None,
 ) -> ImmigrationProfile:
     """Update profile fields while preserving the previous official values."""
     # Lock the profile so version numbers cannot collide and a concurrent
@@ -222,7 +224,7 @@ def update_immigration_profile(
     profile.verification_status = "VERIFIED"
     profile.verified_at = datetime.now(UTC)
     profile.verified_by_id = actor_id
-    _record_version(
+    version = _record_version(
         db,
         profile,
         previous,
@@ -230,6 +232,31 @@ def update_immigration_profile(
         actor_id=actor_id,
         reason=reason or "Direct correction by staff",
     )
+
+    # A passport or permit correction is a security-relevant administrative act,
+    # so it belongs in the audit trail as well as in the profile's own version
+    # history. The event is staged on *this* transaction and committed with the
+    # change, so a failed write cannot leave an audit entry claiming a
+    # correction that did not happen. Only changed field *names* are recorded:
+    # the values live in ``immigration_profile_versions``, and identifiers such
+    # as ``passport_number`` are on the audit redaction list on purpose.
+    if version is not None:
+        record_audit(
+            db,
+            action="immigration.profile.updated",
+            actor_id=actor_id,
+            entity_type="immigration_profile",
+            entity_id=profile.id,
+            context={
+                "student_id": str(profile.student_id),
+                "version_number": version.version_number,
+                "fields": json.loads(version.changed_fields or "[]"),
+                "reason": reason,
+                "data_source": data_source,
+            },
+            request=request,
+        )
+
     db.commit()
     db.refresh(profile)
     return profile

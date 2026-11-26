@@ -12,10 +12,11 @@ import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import JSON, DateTime, ForeignKey, Index, String
+from sqlalchemy import JSON, DateTime, ForeignKey, Index, String, event
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.database import audit_immutability
 from app.database.session import Base
 
 if TYPE_CHECKING:
@@ -61,6 +62,27 @@ class AuditLog(Base):
     )
 
     actor: Mapped[User | None] = relationship("User", foreign_keys=[actor_id])
+
+
+# Append-only is enforced by the database, not by convention. The trigger is
+# installed when the table is created so that `Base.metadata.create_all` (the
+# pytest fixture, and any fresh database built from metadata) carries exactly
+# the same guarantee as a migrated production schema. The migration
+# `d1e4a7b9c2f5` applies the identical SQL to databases whose table already
+# exists. See `app/database/audit_immutability.py` for what is installed and
+# for the documented limitation (a superuser can still disable the trigger).
+event.listen(
+    AuditLog.__table__,
+    "after_create",
+    lambda _target, connection, **_kw: audit_immutability.install(connection),
+)
+# `drop_all` is used by the test fixture; removing the triggers first keeps the
+# function from outliving the table it protects.
+event.listen(
+    AuditLog.__table__,
+    "before_drop",
+    lambda _target, connection, **_kw: audit_immutability.uninstall(connection),
+)
 
 
 __all__ = ["AuditLog"]

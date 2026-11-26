@@ -1,6 +1,6 @@
 import { expect, test, type APIResponse, type Page } from "@playwright/test";
 
-import { API_BASE, USERS, app } from "./accounts";
+import { API_BASE, USERS, app, signOutViaAccountMenu } from "./accounts";
 
 /**
  * Phase 3 placement panel.
@@ -197,7 +197,7 @@ test.describe.serial("academic placement", () => {
     )) as { items: { admission_intake_name: string }[] };
     expect(admissions.items[0].admission_intake_name).toBe(admissionIntake);
 
-    await page.getByRole("button", { name: "Sign out", exact: true }).click();
+    await signOutViaAccountMenu(page);
     await page.waitForURL(/\/en\/login/, { timeout: 25_000 });
     await login(page, USERS.teacher);
     await page.goto(app(`/app/students/${studentId}`));
@@ -272,7 +272,7 @@ test.describe.serial("academic placement", () => {
       ).toBeVisible();
     }
 
-    await page.getByRole("button", { name: "Sign out", exact: true }).click();
+    await signOutViaAccountMenu(page);
     await page.waitForURL(/\/en\/login/, { timeout: 25_000 });
     await login(page, USERS.admin, "/ar");
     await page.goto("/ar/app/audit");

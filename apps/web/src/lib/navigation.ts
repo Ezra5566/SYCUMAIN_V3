@@ -74,11 +74,30 @@ export const NAV_SECTIONS: NavSection[] = [
         permission: "student.view",
         visibleForRoles: ["STUDENT"],
       },
+      {
+        // The personalised timetable is enrollment-aware and lives on the
+        // student's own record. The profile route forwards the tab, so a
+        // student reaches it without knowing their identifier.
+        labelKey: "myTimetable",
+        href: "/app/profile?tab=timetable",
+        icon: CalendarDays,
+        permission: "academic.view",
+        visibleForRoles: ["STUDENT"],
+      },
     ],
   },
   {
     titleKey: "students",
     items: [
+      {
+        // The shared institutional schedule is open to every authenticated
+        // role. It is not the administrative Academics console and it is not
+        // a personal timetable: it shows a whole offering's week.
+        labelKey: "timetable",
+        href: "/app/timetable",
+        icon: CalendarDays,
+        permission: "academic.view",
+      },
       {
         labelKey: "students",
         href: "/app/students",

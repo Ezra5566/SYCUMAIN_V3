@@ -340,17 +340,27 @@ class ClassSection(Base):
     teacher_assignments: Mapped[list[TeacherAssignment]] = relationship(
         back_populates="class_section", lazy="selectin"
     )
+    # These four collections are deliberately *not* eager-loaded. They were
+    # `lazy="selectin"`, which meant any query that loaded a ClassSection —
+    # the class list, both timetables, the enrolment roster — also fetched
+    # every enrolment, timetable slot, assessment and attendance record for
+    # those sections, and built an ORM object for each row. Attendance alone
+    # grew to ~8k rows in the load test, so a single class-list request
+    # materialised over five thousand objects to render six sections. Nothing
+    # in the application reads these attributes (`enrolled_count` is a stored
+    # column, not a count of `enrollments`), so the eager strategy was pure
+    # cost. Loading stays available on demand.
     enrollments: Mapped[list[Enrollment]] = relationship(
-        back_populates="class_section", lazy="selectin"
+        back_populates="class_section", lazy="select"
     )
     timetable_entries: Mapped[list[TimetableEntry]] = relationship(
-        back_populates="class_section", lazy="selectin"
+        back_populates="class_section", lazy="select"
     )
     attendance_records: Mapped[list[AttendanceRecord]] = relationship(
-        back_populates="class_section", lazy="selectin"
+        back_populates="class_section", lazy="select"
     )
     assessments: Mapped[list[Assessment]] = relationship(
-        back_populates="class_section", lazy="selectin"
+        back_populates="class_section", lazy="select"
     )
 
 
@@ -418,6 +428,17 @@ class Enrollment(Base):
         DateTime(timezone=True), default=datetime.utcnow, nullable=False
     )
     dropped_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    # A late enrolment (a section in an intake earlier than the current active
+    # period) is only valid with an Admin/Management decision on record. The
+    # three fields below are the record, not a UI note: they are written by the
+    # service that also refuses the enrolment when they are absent.
+    authorization_reason: Mapped[str | None] = mapped_column(Text)
+    authorization_reference: Mapped[str | None] = mapped_column(String(200))
+    authorized_by_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id"), index=True
+    )
+    authorized_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=datetime.utcnow, nullable=False

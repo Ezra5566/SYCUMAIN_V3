@@ -1,0 +1,123 @@
+name: sycumain-v2
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: school-portal-v2-db
+    environment:
+      POSTGRES_DB: school_portal_v2
+      POSTGRES_USER: portal
+      POSTGRES_PASSWORD: portal
+    ports:
+      - "5435:5432"
+    volumes:
+      - postgres_v2_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U portal -d school_portal_v2"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.api
+    container_name: school-portal-v2-api
+    # Self-healing: Next/webpack compilation under Docker's memory limit can be
+    # OOM-killed on a busy host. A presentation must recover without a manual
+    # `docker compose up`.
+    restart: unless-stopped
+    ports:
+      - "8001:8001"
+    environment:
+      DATABASE_URL: postgresql://portal:portal@postgres:5432/school_portal_v2
+      ENVIRONMENT: development
+      DEBUG: "true"
+      CORS_ORIGINS: '["http://localhost:3101","http://127.0.0.1:3101"]'
+      SECRET_KEY: dev-secret-key-must-change-for-production
+      SESSION_COOKIE_SECURE: false
+      PASSWORD_RESET_DELIVERY: dev
+      MALWARE_SCANNER: dev-clean
+      STORAGE_BACKEND: local
+      STORAGE_LOCAL_ROOT: var/storage
+      LOG_LEVEL: info
+      LOG_FORMAT: text
+      SLOW_REQUEST_MS: 1500
+      SQL_ECHO: false
+      MAX_IMPORT_ROWS: 500
+      MAX_IMPORT_SIZE_MB: 5
+      MAX_EXPORT_ROWS: 10000
+      ADMISSIONS_WRITE_ENABLED: "true"
+      ADMISSION_MIGRATION_CONSOLE_ENABLED: "true"
+      ADMISSION_CHANGE_REQUESTS_ENABLED: "true"
+      ADMISSION_DATE_CORRECTION_ENABLED: "true"
+      ADMISSION_CORRECTIONS_ENABLED: "true"
+      ADMISSION_COHORT_SOURCE: "POINTER"
+      ACTIVATION_LINK_BASE: http://localhost:3101
+      ACTIVATION_RETURN_LINK: "true"
+      SEED_DEMO_DATA: "true"
+      # The four demonstration accounts get this password on a fresh volume. The
+      # web service below passes the same variable to the login page's chips, so
+      # a recreated database and a one-click sign-in cannot disagree.
+      DEMO_PASSWORD: ${DEMO_PASSWORD:-Sycumain2026!}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./apps/api:/app
+      - ./docs:/app/docs:ro
+    command:
+      - sh
+      - -c
+      - |
+        python -m alembic upgrade head
+        exec uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8001/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  # Web service - uses custom Dockerfile.web for full dependency installation
+  web:
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.web
+      # Dockerfile.web defaults to the production stage now that a real one
+      # exists; the development stack must ask for the dev stage explicitly.
+      target: dev
+    container_name: school-portal-v2-web
+    restart: unless-stopped
+    ports:
+      - "3101:3000"
+    environment:
+      # Deliberately unset: the browser derives the API host from the page's own
+      # host, so the portal works whether it is opened as localhost:3101 or
+      # 127.0.0.1:3101 (pinning localhost broke sign-in from 127.0.0.1, because
+      # the session cookie then belonged to a different site).
+      NEXT_PUBLIC_API_URL: ""
+      NEXT_PUBLIC_API_PORT: "8001"
+      API_INTERNAL_URL: http://api:8001
+      NODE_ENV: development
+      # Filled from the API's DEMO_PASSWORD so the development account chips
+      # always submit the credential the seed actually created.
+      NEXT_PUBLIC_DEMO_PASSWORD: ${DEMO_PASSWORD:-Sycumain2026!}
+      CHOKIDAR_USEPOLLING: "true"
+      WATCHPACK_POLLING: "true"
+    volumes:
+      - ./apps/web:/app
+      - web_node_modules:/app/node_modules
+      - web_next:/app/.next
+    working_dir: /app
+    depends_on:
+      api:
+        condition: service_healthy
+    command: npm run dev:docker -- --hostname 0.0.0.0
+
+volumes:
+  postgres_v2_data:
+  web_node_modules:
+  web_next:

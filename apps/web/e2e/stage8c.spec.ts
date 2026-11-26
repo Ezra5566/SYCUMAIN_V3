@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 
-import { ADMIN, API_BASE } from "./accounts";
+import { ADMIN, API_BASE, signOutViaAccountMenu } from "./accounts";
 
 /**
  * Student lifecycle and password-recovery browser tests (Stage 8C).
@@ -64,7 +64,7 @@ async function signOut(page: Page) {
   // is cancelled by the ensuing navigation and surfaces as `net::ERR_FAILED`,
   // which is neither an application error nor the usual `net::ERR_ABORTED`.
   await page.waitForLoadState("networkidle");
-  await page.getByRole("button", { name: "Sign out", exact: true }).click();
+  await signOutViaAccountMenu(page);
   await page.waitForURL(new RegExp(`/${LOCALE}/login`), { timeout: 25_000 });
 }
 

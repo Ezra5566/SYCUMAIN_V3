@@ -170,7 +170,9 @@
     "commencement": "Début de présence",
     "attendance": "Présences",
     "calendar": "Calendrier",
-    "examinations": "Examens"
+    "examinations": "Examens",
+    "timetable": "Emploi du temps institutionnel",
+    "myTimetable": "Mon emploi du temps"
   },
   "auth": {
     "signIn": "Se connecter",
@@ -1382,7 +1384,22 @@
     "scheduledSessions": "{count, plural, =0 {Aucune séance} one {# séance} other {# séances}}",
     "time": "Heure",
     "weekDays": "Jours de la semaine",
-    "noSessionsOnDay": "Aucun cours n'est prévu ce jour."
+    "noSessionsOnDay": "Aucun cours n'est prévu ce jour.",
+    "openInstitutionalTimetable": "Emploi du temps institutionnel",
+    "openImport": "Importer le catalogue",
+    "periodNotLinkedHint": "Cette période n'est liée à aucune promotion du catalogue source. Vous pouvez la configurer manuellement ou importer le catalogue.",
+    "sourceNotLinked": "Non importée",
+    "reconciliationWarnings": "{count} anomalies d'emploi du temps à traiter",
+    "reconciliationCodes": {
+      "SECTION_WITHOUT_TEACHER": "Sections sans enseignant",
+      "SECTION_WITHOUT_TIMETABLE": "Sections sans emploi du temps",
+      "SECTION_WITHOUT_SESSIONS": "Sections sans séances",
+      "SESSION_WITHOUT_ROOM": "Séances sans salle",
+      "PERIOD_WITHOUT_TIMETABLE": "Période sans emploi du temps",
+      "DUPLICATE_ROOM_SLOT": "Salle réservée deux fois",
+      "DUPLICATE_TEACHER_SLOT": "Enseignant réservé deux fois",
+      "DUPLICATE_SECTION_SLOT": "Section réservée deux fois"
+    }
   },
   "announcements": {
     "title": "Annonces",
@@ -1722,7 +1739,8 @@
         "password_reset_requested": "Réinitialisation du mot de passe demandée",
         "password_reset_completed": "Réinitialisation du mot de passe effectuée",
         "sessions_revoked": "Autres sessions déconnectées",
-        "rate_limited": "Trop de tentatives"
+        "rate_limited": "Trop de tentatives",
+        "password_reset_delivery_failed": "Échec de l'envoi de l'e-mail de réinitialisation"
       },
       "student": {
         "created": "Étudiant créé",
@@ -1748,7 +1766,8 @@
         "sessions_revoked": "Sessions révoquées",
         "activation_issued": "Lien d'activation émis",
         "activation_completed": "Compte activé par le titulaire",
-        "activation_revoked": "Lien d'activation retiré"
+        "activation_revoked": "Lien d'activation retiré",
+        "activation_delivery_failed": "Échec de l'envoi de l'e-mail d'activation"
       },
       "immigration": {
         "change_request": {
@@ -1758,6 +1777,9 @@
         },
         "import": {
           "applied": "Import d’immigration appliqué"
+        },
+        "profile": {
+          "updated": "Profil d’immigration mis à jour"
         },
         "overview_exported": "Vue d’ensemble de l’immigration exportée",
         "reminders": {
@@ -2292,7 +2314,19 @@
       "EXISTING_STUDENT_MATCHED": "Un dossier étudiant existant a été rapproché. Aucune modification n'a été apportée.",
       "ACCOUNT_NOT_ACTIVATED": "Ce compte n'a pas encore été activé. Utilisez le lien d'activation remis lors de l'inscription.",
       "FUTURE_INTAKE_CANNOT_BE_ACTIVE": "Une promotion qui commence dans le futur doit être planifiée, pas active.",
-      "INTAKE_CODE_REQUIRED": "Un code de promotion est requis."
+      "INTAKE_CODE_REQUIRED": "Un code de promotion est requis.",
+      "TEMPORARY_PASSWORD_EXPIRED": "Ce mot de passe temporaire a expiré. Contactez le bureau international pour en obtenir un nouveau.",
+      "EMAIL_DELIVERY_FAILED": "L'e-mail n'a pas pu être envoyé. Remettez l'identifiant en main propre ou réessayez plus tard.",
+      "CSRF_ORIGIN_REJECTED": "Cette requête provient d'une origine non fiable. Rechargez la page et réessayez.",
+      "IMPORT_BATCH_NOT_FOUND": "Ce lot d'import n'existe plus.",
+      "IMPORT_CONFLICT": "L'import n'a pas pu être appliqué. Consultez le rapport de simulation et réessayez.",
+      "IMPORT_PERIOD_NOT_FOUND": "La période académique sélectionnée n'existe plus.",
+      "IMPORT_SOURCE_INVALID": "Le catalogue source n'a pas pu être lu.",
+      "IMPORT_SOURCE_UNAVAILABLE": "Le fichier du catalogue source n'est pas disponible.",
+      "PERIOD_NOT_MAPPED_TO_SOURCE": "La période académique n'est pas liée au catalogue source.",
+      "SECTIONS_WITHOUT_SESSIONS": "Certaines sections n'ont pas de séances planifiées.",
+      "SECTIONS_WITHOUT_TEACHER": "Certaines sections n'ont pas d'enseignant.",
+      "SESSIONS_WITHOUT_ROOM": "Certaines séances n'ont pas de salle."
     }
   },
   "theme": {
@@ -2948,5 +2982,94 @@
     "instructionsTitle": "Consignes",
     "sectionsTitle": "Sections participantes",
     "editAction": "Modifier"
+  },
+  "institutionalTimetable": {
+    "title": "Emploi du temps institutionnel",
+    "subtitle": "Consultez l'emploi du temps hebdomadaire d'une offre de programme. Cette vue partagée ne se limite pas à vos propres inscriptions.",
+    "periodLabel": "Période académique",
+    "offeringLabel": "Offre de programme",
+    "sharedHint": "Il s'agit de l'emploi du temps institutionnel partagé : il affiche toutes les sections de l'offre sélectionnée.",
+    "period": "Période",
+    "sessions": "Séances",
+    "courses": "Cours",
+    "coursesScheduled": "cours planifiés",
+    "sectionsCount": "{scheduled} sections planifiées sur {total}",
+    "scheduledOf": "{scheduled} sections sur {total} ont des séances planifiées",
+    "weeklyTitle": "Emploi du temps hebdomadaire",
+    "sectionListTitle": "Sections de cette offre",
+    "sessionCount": "Séances : {count}",
+    "scheduled": "Planifiée",
+    "notScheduled": "Non planifiée",
+    "unnamedSection": "Section sans titre",
+    "noPeriods": "Aucune période académique",
+    "noPeriodsHint": "Aucune période académique n'a encore été configurée.",
+    "noOfferings": "Aucune offre de programme",
+    "noOfferingsHint": "Cette période n'a pas encore d'offre de programme. Un administrateur peut les importer ou les créer.",
+    "noSessions": "Aucune séance planifiée",
+    "noSessionsHint": "Cette offre n'a pas encore de séances. Elle n'est peut-être pas publiée.",
+    "issuesTitle": "Contrôles de complétude",
+    "readiness": {
+      "generic": "Cet emploi du temps est incomplet.",
+      "TIMETABLE_NO_SECTIONS": "Cette offre n'a pas encore de sections ; aucun emploi du temps ne peut être affiché.",
+      "TIMETABLE_PARTIALLY_SCHEDULED": "Cet emploi du temps est incomplet : certaines sections n'ont pas encore de séances.",
+      "TIMETABLE_NOT_SCHEDULED": "Cet emploi du temps n'a pas encore été planifié."
+    },
+    "issues": {
+      "SECTIONS_WITHOUT_SESSIONS": "Sections sans séances",
+      "SECTIONS_WITHOUT_TEACHER": "Sections sans enseignant",
+      "SESSIONS_WITHOUT_ROOM": "Séances sans salle",
+      "PERIOD_NOT_MAPPED_TO_SOURCE": "Période non liée au catalogue source"
+    },
+    "periodStatus": {
+      "PLANNED": "Planifiée",
+      "ACTIVE": "Active",
+      "COMPLETED": "Terminée",
+      "CANCELLED": "Annulée"
+    }
+  },
+  "academicImport": {
+    "title": "Import du catalogue source",
+    "subtitle": "Prévisualisez le catalogue d'emplois du temps accepté, associez ses promotions à de vraies périodes académiques, puis appliquez. Rien n'est écrit avant votre confirmation.",
+    "academicsBreadcrumb": "Scolarité",
+    "dryRunTitle": "Simulation",
+    "dryRunHint": "La mise en attente lit le catalogue et indique ce qui serait créé. Elle n'écrit aucune donnée académique.",
+    "runDryRun": "Lancer la simulation",
+    "working": "En cours…",
+    "noPreviewYet": "Lancez une simulation pour voir le contenu du catalogue.",
+    "alreadyAppliedNotice": "Cette source a déjà été appliquée. Affichage du lot appliqué.",
+    "appliedNotice": "Import appliqué. Les tables académiques incluent désormais les enregistrements du catalogue.",
+    "rolledBackNotice": "Import annulé. Seuls les enregistrements de ce lot ont été supprimés.",
+    "forbiddenTitle": "Indisponible",
+    "forbiddenHint": "L'import de données académiques nécessite la permission de gestion des périodes.",
+    "entities": {
+      "periods": "Périodes",
+      "offerings": "Offres",
+      "courses": "Cours",
+      "rooms": "Salles",
+      "sections": "Sections",
+      "sessions": "Séances"
+    },
+    "heldTitle": "{count} enregistrements retenus",
+    "heldHint": "Les enregistrements retenus n'ont pas été appliqués : un conflit ou une correspondance reste à résoudre. Corrigez puis relancez la simulation.",
+    "mappingTitle": "Associer les promotions source aux périodes académiques",
+    "mappingHint": "Une promotion source n'est importée que dans la période choisie. Laissez vide pour l'ignorer.",
+    "targetPeriod": "Période cible",
+    "leaveUnmapped": "Ne pas importer",
+    "confirmLabel": "J'ai examiné le rapport de simulation et je confirme l'application de ces enregistrements.",
+    "apply": "Appliquer l'import",
+    "mappedCount": "{mapped} promotions associées sur {total}",
+    "batchesTitle": "Historique des imports",
+    "noBatches": "Aucun import",
+    "noBatchesHint": "La prévisualisation du catalogue crée le premier lot.",
+    "batchCounts": "{sections} sections · {sessions} séances",
+    "rollback": "Annuler",
+    "status": {
+      "READY": "Prêt",
+      "DRY_RUN": "Simulation",
+      "APPLIED": "Appliqué",
+      "FAILED": "Échec",
+      "ROLLED_BACK": "Annulé",
+      "ALREADY_APPLIED": "Déjà appliqué"
+    }
   }
 }

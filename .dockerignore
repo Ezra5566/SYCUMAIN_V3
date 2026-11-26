@@ -1,0 +1,45 @@
+# Build context hygiene. Without this the whole workspace (node_modules, build
+# output, Git history, local env files) is sent to the daemon and can leak into
+# an image layer.
+**/node_modules
+**/.next
+**/test-results
+**/playwright-report
+**/tsconfig.tsbuildinfo
+**/.turbo
+
+.git
+.gitignore
+
+# Local environment files must never be baked into an image. `apps/api/.env`
+# was previously copied into the image, where pydantic-settings read it as the
+# database/DEBUG/secret configuration for every container started from it.
+# Runtime values are supplied by Compose; build-time public values are passed as
+# build arguments.
+.env
+.env.*
+**/.env
+**/.env.*
+!**/.env.example
+
+backups
+**/*.log
+
+# Host-side development artifacts. These were being copied into the production
+# API image by `COPY apps/api/ .`: a 177 MB macOS virtualenv (meaningless, and a
+# large attack surface), the test suite, and host-generated `__pycache__`
+# bytecode. Stale bytecode whose embedded mtime and size still match the source
+# is imported in preference to the .py file, so shipping it risks running code
+# that is not the code in the image.
+**/.venv
+**/__pycache__
+**/.pytest_cache
+**/.ruff_cache
+**/*.egg-info
+apps/api/tests
+
+# `docs/` is intentionally NOT ignored: the API image reads two reference
+# catalogues from it at runtime (see infra/docker/Dockerfile.api).
+
+.DS_Store
+**/.DS_Store

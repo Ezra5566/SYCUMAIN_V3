@@ -80,6 +80,14 @@ class User(Base):
         Boolean, default=False, nullable=False
     )
 
+    # When a temporary password was issued, the moment it stops working. NULL
+    # means either "no temporary password outstanding" or a legacy row created
+    # before this control existed; such a row still cannot be used for anything
+    # except changing the password (see app/auth/dependencies.py).
+    temporary_password_expires_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True)
+    )
+
     # A provisioned account that has never established its own password. The
     # stored hash is a marker that no input can satisfy, and login refuses the
     # account with ACCOUNT_NOT_ACTIVATED until the single-use activation link

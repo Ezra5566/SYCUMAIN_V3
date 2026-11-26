@@ -15,10 +15,14 @@ from fastapi import Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session as DBSession
 
 from app.auth.service import get_user_from_session
+from app.config.settings import get_settings
 from app.database.session import get_db
 from app.models.identity import User
 
-SESSION_COOKIE_NAME = "session_token"
+# One definition, read from configuration. A second hard-coded literal here
+# would let the cookie that login issues and the cookie authentication reads
+# drift apart, which signs every user out on the next request.
+SESSION_COOKIE_NAME = get_settings().SESSION_COOKIE_NAME
 
 #: Paths an account may still reach while ``must_change_password`` is set.
 #: Everything needed to finish the change, plus logout so the user is never

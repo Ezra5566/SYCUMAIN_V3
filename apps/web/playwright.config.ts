@@ -12,6 +12,24 @@ import { defineConfig, devices } from "@playwright/test";
  * target with E2E_BASE_URL / E2E_API_URL; the defaults name the test stack so a
  * stray run cannot silently target the development one.
  */
+/**
+ * Browsers to run. Chromium is the default because it is what CI installs;
+ * cross-browser certification runs with `E2E_BROWSERS=chromium,firefox,webkit`
+ * or selects one with `--project=firefox`.
+ */
+type BrowserName = "chromium" | "firefox" | "webkit";
+
+const BROWSERS = (process.env.E2E_BROWSERS ?? "chromium")
+  .split(",")
+  .map((name) => name.trim())
+  .filter(Boolean) as BrowserName[];
+
+const DEVICE_BY_BROWSER: Record<BrowserName, string> = {
+  chromium: "Desktop Chrome",
+  firefox: "Desktop Firefox",
+  webkit: "Desktop Safari",
+};
+
 export default defineConfig({
   testDir: "./e2e",
   // Retires the students the lifecycle tests onboard. With the isolated stack
@@ -32,18 +50,17 @@ export default defineConfig({
   expect: { timeout: 10_000 },
   use: {
     baseURL: process.env.E2E_BASE_URL || "http://localhost:3001",
-    // Defaults to Playwright's bundled Chromium. E2E_CHANNEL=chrome runs the
-    // same specs against a locally installed Chrome, which is the fallback on a
-    // machine where the browser download is unavailable.
-    channel: process.env.E2E_CHANNEL || undefined,
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
     video: "retain-on-failure",
   },
-  projects: [
-    {
-      name: "chromium",
-      use: { ...devices["Desktop Chrome"] },
+  projects: BROWSERS.map((name) => ({
+    name,
+    use: {
+      ...devices[DEVICE_BY_BROWSER[name]],
+      // E2E_CHANNEL=chrome is the fallback where the bundled Chromium download
+      // is unavailable; it must not leak into Firefox or WebKit.
+      channel: name === "chromium" ? process.env.E2E_CHANNEL || undefined : undefined,
     },
-  ],
+  })),
 });

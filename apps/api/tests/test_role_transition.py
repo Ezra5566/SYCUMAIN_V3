@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import uuid
 
+from app.auth.dependencies import SESSION_COOKIE_NAME
 from app.models.academic import TeacherAssignment
 from app.models.identity import Staff, User
 
@@ -91,7 +92,7 @@ def test_teacher_management_teacher_restores_scope_without_stale_session(
     outsider_id = outsider_response.json()["student"]["id"]
 
     _login(client, "teacher@school.portal")
-    teacher_cookie = client.cookies.get("session_token")
+    teacher_cookie = client.cookies.get(SESSION_COOKIE_NAME)
     assert teacher_cookie
     baseline_students = _student_ids(client)
     assert baseline_students
@@ -111,7 +112,7 @@ def test_teacher_management_teacher_restores_scope_without_stale_session(
 
     # The teacher's pre-transition browser session is no longer trusted.
     client.cookies.clear()
-    client.cookies.set("session_token", teacher_cookie)
+    client.cookies.set(SESSION_COOKIE_NAME, teacher_cookie)
     assert client.get(f"{API}/auth/me").status_code == 401
 
     client.cookies.clear()
@@ -122,7 +123,7 @@ def test_teacher_management_teacher_restores_scope_without_stale_session(
     assert outsider_id in management_students
     assert client.get(f"{API}/students/{outsider_id}").status_code == 200
     assert client.get(f"{API}/users/").status_code == 200
-    management_cookie = client.cookies.get("session_token")
+    management_cookie = client.cookies.get(SESSION_COOKIE_NAME)
 
     # Management -> Teacher.
     _login(client, "admin@school.portal")
@@ -135,7 +136,7 @@ def test_teacher_management_teacher_restores_scope_without_stale_session(
     assert after["assignments"] == before["assignments"]
 
     client.cookies.clear()
-    client.cookies.set("session_token", management_cookie)
+    client.cookies.set(SESSION_COOKIE_NAME, management_cookie)
     assert client.get(f"{API}/auth/me").status_code == 401
 
     client.cookies.clear()

@@ -46,12 +46,18 @@ def seed_roles_and_permissions(db: Session) -> None:
     db.commit()
 
 
-def seed_test_users(db: Session) -> None:
-    """Create test users for each role if they don't exist.
+def seed_test_users(db: Session, *, password: str = "password123") -> None:
+    """Create the role accounts for each role if they don't exist.
 
-    These are development-only users for testing the authentication system.
+    These are development-only users for exercising the authentication system.
+
+    ``password`` defaults to the *test fixture* credential, which is what the
+    pytest suite signs in with. The application's startup path passes
+    ``settings.DEMO_PASSWORD`` instead, so a development installation and the
+    login page's account chips agree on one value, while the suite stays
+    independent of a value intended for demonstrations.
     """
-    default_password = hash_password("password123")
+    default_password = hash_password(password)
 
     test_users = [
         {

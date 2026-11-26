@@ -49,7 +49,6 @@ from sqlalchemy import (
     String,
     Text,
     Time,
-    UniqueConstraint,
     text,
 )
 from sqlalchemy.dialects.postgresql import UUID
@@ -228,13 +227,12 @@ class ExaminationSection(Base):
         index=True,
     )
 
-    __table_args__ = (
-        UniqueConstraint(
-            "examination_id",
-            "class_section_id",
-            name="uq_examination_section",
-        ),
-    )
+    # Uniqueness is already guaranteed by the composite primary key above
+    # (examination_id, class_section_id): a section cannot appear twice on the
+    # same examination. A separate UniqueConstraint on the identical column
+    # pair was declared here as well, which made the metadata disagree with
+    # the database (where that pair is the primary key) and would have created
+    # a second, redundant unique index had it ever been applied.
 
     examination: Mapped[Examination] = relationship(back_populates="sections")
     class_section: Mapped[ClassSection] = relationship("ClassSection")

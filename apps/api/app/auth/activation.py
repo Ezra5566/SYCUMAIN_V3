@@ -152,6 +152,7 @@ def issue_activation(
     user.activation_required = True
     user.hashed_password = UNUSABLE_PASSWORD_HASH
     user.must_change_password = False
+    user.temporary_password_expires_at = None
     user.activated_at = None
 
     db.add(record)
@@ -274,6 +275,7 @@ def consume_activation(
     user.hashed_password = hash_password(password)
     user.activation_required = False
     user.must_change_password = False
+    user.temporary_password_expires_at = None
     user.activated_at = now
     record.used_at = now
 

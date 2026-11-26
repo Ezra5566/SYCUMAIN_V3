@@ -2,6 +2,7 @@
 
 import json
 
+from app.auth.dependencies import SESSION_COOKIE_NAME
 from app.auth.service import (
     create_session,
     get_user_from_session,
@@ -111,7 +112,7 @@ def test_login_success(client):
     assert len(data["user"]["permissions"]) > 0
 
     # Should have set session cookie
-    assert "session_token" in response.cookies
+    assert SESSION_COOKIE_NAME in response.cookies
 
 
 def test_login_invalid_password(client):
@@ -295,7 +296,7 @@ def test_session_cookie_security(client):
     assert response.status_code == 200
 
     # Check cookie attributes
-    cookie = response.cookies.get("session_token")
+    cookie = response.cookies.get(SESSION_COOKIE_NAME)
     assert cookie is not None
     # Cookie should be set (in test client, httponly is not directly checkable
     # but we can verify the cookie exists)

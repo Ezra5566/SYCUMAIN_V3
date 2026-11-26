@@ -1,0 +1,247 @@
+name: CI
+
+# Each gate here is a command a developer already runs locally through `make`.
+# The pipeline exists so none of them is optional. It uses a throwaway
+# PostgreSQL service with synthetic credentials: no development, staging or
+# production database, credential or secret is referenced anywhere.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.11"
+  NODE_VERSION: "20"
+
+jobs:
+  backend:
+    name: Backend (tests, lint, migrations)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: school_portal_test_v2
+          POSTGRES_USER: portal
+          POSTGRES_PASSWORD: portal
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U portal -d school_portal_test_v2"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      ENVIRONMENT: testing
+      DATABASE_URL: postgresql://portal:portal@localhost:5433/school_portal_test_v2
+      # The suite refuses a URL that is not localhost/school_portal_test*, so a
+      # mistake here cannot reach a real database.
+      SYCUMAIN_TEST_DATABASE_URL: postgresql://portal:portal@localhost:5433/school_portal_test_v2
+      STORAGE_BACKEND: local
+      STORAGE_LOCAL_ROOT: /tmp/ci-storage
+      LOG_FORMAT: json
+
+    defaults:
+      run:
+        working-directory: apps/api
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: apps/api/pyproject.toml
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Lint
+        run: python -m ruff check app tests tools
+
+      - name: Apply migrations to a fresh database
+        run: python -m alembic upgrade head
+
+      - name: Migration consistency
+        # Fails when a model change has no matching revision, so a diff that
+        # forgets its migration cannot merge.
+        run: python -m alembic check
+
+      - name: Import check
+        run: python -c "import app.main"
+
+      - name: Tests
+        run: python -m pytest -q
+
+  contract:
+    name: API contract (OpenAPI current)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: apps/api/pyproject.toml
+
+      - name: Install backend
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+        working-directory: apps/api
+
+      - name: Export the current OpenAPI document
+        run: python tools/export_openapi.py /tmp/openapi.json
+        working-directory: apps/api
+
+      - name: Fail when the contract is stale
+        # Compared as parsed JSON: the committed file and the exporter are free
+        # to differ in key order and indentation, but not in meaning.
+        run: |
+          python - <<'PY'
+          import json, sys
+          fresh = json.load(open("/tmp/openapi.json"))
+          committed = json.load(open("apps/web/openapi.json"))
+          if fresh != committed:
+              print("::error::apps/web/openapi.json is out of date.")
+              print("Run 'cd apps/api && python tools/export_openapi.py ../web/openapi.json'"
+                    " and commit the result.")
+              sys.exit(1)
+          print(f"contract current: {len(fresh['paths'])} documented paths")
+          PY
+
+  frontend:
+    name: Frontend (types, i18n, build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    defaults:
+      run:
+        working-directory: apps/web
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+          cache-dependency-path: apps/web/pnpm-lock.yaml
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Translation parity (5 locales)
+        run: pnpm i18n:check
+
+      - name: Production build
+        # The gate that was missing when `next build` was broken: a build must
+        # not depend on a live backend, so the public API URL is synthetic.
+        run: pnpm build
+        env:
+          NEXT_PUBLIC_API_URL: https://portal.example.invalid
+
+  images:
+    name: Docker images (both artifacts build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build the API image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: infra/docker/Dockerfile.api
+          push: false
+          tags: sycumain-api:ci
+
+      - name: Build the production web image
+        # `--target production` resolves the standalone runner stage. If the
+        # stage, the messages directory or the build itself is broken, this
+        # fails here instead of during a deployment.
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: infra/docker/Dockerfile.web
+          target: production
+          push: false
+          build-args: |
+            NEXT_PUBLIC_API_URL=https://portal.example.invalid
+          tags: sycumain-web:ci
+
+  e2e:
+    name: Browser E2E (isolated stack)
+    # Independent of the other jobs: it neither waits for them nor slows them
+    # down. It brings up its own database, api and web containers on
+    # 5436/8002/3002 and discards them afterwards.
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+          cache-dependency-path: apps/web/pnpm-lock.yaml
+
+      - name: Install
+        working-directory: apps/web
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Chromium
+        working-directory: apps/web
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run the browser suite
+        # The script waits on /ready and a real login page, seeds a fresh
+        # database, and always tears the stack down with its volume.
+        run: ./scripts/e2e.sh
+
+      - name: Upload Playwright diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-diagnostics
+          if-no-files-found: ignore
+          retention-days: 7
+          path: |
+            apps/web/playwright-report/
+            apps/web/test-results/

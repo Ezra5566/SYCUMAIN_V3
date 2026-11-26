@@ -7,9 +7,10 @@ from datetime import UTC, datetime, timedelta
 
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session as DBSession
+from sqlalchemy.orm import joinedload
 
 from app.config.settings import get_settings
-from app.models.identity import Student, StudentStatus, User
+from app.models.identity import Role, Student, StudentStatus, User
 from app.models.session import UserSession
 
 settings = get_settings()
@@ -88,6 +89,17 @@ def create_session(
     return raw_token, session
 
 
+#: How stale ``last_accessed_at`` may be before it is written again.
+#:
+#: Every authenticated request used to UPDATE this row and commit, which under
+#: load serialised all concurrent requests of one user on a single row (and
+#: cost a write per API call). The value is operational telemetry — it feeds
+#: the "active sessions" list — so minute resolution is enough. Throttling it
+#: removes the write from the hot path without weakening expiry, which is
+#: governed by ``expires_at`` and is never touched here.
+LAST_ACCESSED_WRITE_INTERVAL = timedelta(minutes=1)
+
+
 def get_session_by_token(db: DBSession, raw_token: str) -> UserSession | None:
     """Look up a session by its raw token."""
     token_hash_value = hash_token(raw_token)
@@ -97,9 +109,18 @@ def get_session_by_token(db: DBSession, raw_token: str) -> UserSession | None:
         .first()
     )
     if session and session.expires_at > datetime.now(UTC):
-        # Update last accessed time
-        session.last_accessed_at = datetime.now(UTC)
-        db.commit()
+        now = datetime.now(UTC)
+        last_seen = session.last_accessed_at
+        # A timestamp stored without tzinfo (older rows, or a driver that
+        # returns naive datetimes) must not raise here: comparing it to an
+        # aware value would turn every request into a 500. Treated as stale.
+        if (
+            last_seen is None
+            or last_seen.tzinfo is None
+            or now - last_seen >= LAST_ACCESSED_WRITE_INTERVAL
+        ):
+            session.last_accessed_at = now
+            db.commit()
         return session
     return None
 
@@ -133,10 +154,23 @@ def get_user_from_session(db: DBSession, raw_token: str) -> User | None:
 
     A live cookie is not by itself sufficient: the account must be enabled and
     any linked student record must still permit access.
+
+    Roles and their permissions are loaded in the same statement as the user.
+    They were configured `lazy="selectin"`, which meant every authenticated
+    request paid three extra round trips (user_roles, roles, role_permissions/
+    permissions) before the router could run a permission check — on every
+    endpoint, including ones that answer with 63 bytes. `joinedload` returns
+    the same rows in one round trip; the authorization result is unchanged,
+    because the same Role/Permission objects are attached to the same user.
     """
     session = get_session_by_token(db, raw_token)
     if session:
-        user = db.query(User).filter(User.id == session.user_id).first()
+        user = (
+            db.query(User)
+            .options(joinedload(User.roles).joinedload(Role.permissions))
+            .filter(User.id == session.user_id)
+            .first()
+        )
         if user and user.is_active and student_record_permits_access(db, user):
             return user
     return None

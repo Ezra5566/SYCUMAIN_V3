@@ -8,7 +8,7 @@ from fastapi import status as http_status
 from fastapi.responses import Response
 from sqlalchemy.orm import Session as DBSession
 
-from app.audit import record_audit
+from app.audit import field_changes, record_audit
 from app.auth.dependencies import CurrentUser
 from app.config.settings import get_settings
 from app.database.session import get_db
@@ -723,6 +723,13 @@ def update_student_endpoint(
         # is applied while the caller believes the placement changed.
         raise _placement_error(ValueError("placement_direct_write_retired"))
 
+    # Snapshot the submitted fields *before* the service mutates the record, so
+    # the audit entry can state what each field was as well as what it became.
+    # `update_student` writes and commits in one call, so this is the only
+    # moment the previous values exist.
+    requested = data.model_dump(exclude_unset=True)
+    previous = {field: getattr(student, field, None) for field in requested}
+
     try:
         updated = update_student(db, student, data)
     except ValueError as e:
@@ -734,8 +741,15 @@ def update_student_endpoint(
         actor=current_user,
         entity_type="student",
         entity_id=updated.id,
-        # Field *names* only — never values, which can be sensitive.
-        context={"fields": sorted(data.model_dump(exclude_unset=True).keys())},
+        context={
+            # The submitted field names (the pre-Phase-10 contract) plus the
+            # previous and new value of each field that actually changed.
+            "fields": sorted(requested),
+            "changes": field_changes(
+                previous,
+                {field: getattr(updated, field, None) for field in requested},
+            ),
+        },
         request=request,
     )
     db.commit()

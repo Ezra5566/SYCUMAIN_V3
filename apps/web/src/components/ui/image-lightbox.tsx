@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
+import { useTranslations } from "next-intl";
 import { Download, RotateCw, X, ZoomIn, ZoomOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -38,6 +39,8 @@ export function ImageLightbox({
   caption,
   downloadName,
 }: ImageLightboxProps) {
+  const t = useTranslations("documents");
+  const tActions = useTranslations("common.actions");
   const [zoom, setZoom] = React.useState(1);
   const [rotation, setRotation] = React.useState(0);
   const [offset, setOffset] = React.useState({ x: 0, y: 0 });
@@ -114,7 +117,10 @@ export function ImageLightbox({
                   <Download className="h-4 w-4" aria-hidden="true" />
                 </a>
               )}
-              <DialogPrimitive.Close className="scu-lightbox__btn" aria-label="Close">
+              <DialogPrimitive.Close
+                className="scu-lightbox__btn"
+                aria-label={tActions("close")}
+              >
                 <X className="h-4 w-4" aria-hidden="true" />
               </DialogPrimitive.Close>
             </div>
@@ -173,7 +179,7 @@ export function ImageLightbox({
                 className="scu-lightbox__btn"
                 onClick={() => setZoom((value) => Math.max(MIN_ZOOM, value - STEP))}
                 disabled={zoom <= MIN_ZOOM}
-                aria-label="Zoom out"
+                aria-label={t("zoomOut")}
               >
                 <ZoomOut className="h-4 w-4" aria-hidden="true" />
               </button>
@@ -181,7 +187,7 @@ export function ImageLightbox({
                 type="button"
                 className="min-w-14 rounded-md px-1 text-xs font-semibold tabular-nums text-white/85 hover:text-white"
                 onClick={reset}
-                aria-label="Reset zoom"
+                aria-label={t("zoomReset")}
               >
                 {zoomPercent}
               </button>
@@ -190,7 +196,7 @@ export function ImageLightbox({
                 className="scu-lightbox__btn"
                 onClick={() => setZoom((value) => Math.min(MAX_ZOOM, value + STEP))}
                 disabled={zoom >= MAX_ZOOM}
-                aria-label="Zoom in"
+                aria-label={t("zoomIn")}
               >
                 <ZoomIn className="h-4 w-4" aria-hidden="true" />
               </button>

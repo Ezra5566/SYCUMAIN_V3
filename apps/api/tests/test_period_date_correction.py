@@ -47,6 +47,14 @@ from app.services import period_correction as svc
 
 API = "/api/v1"
 
+# Fixtures created by the helpers below represent state that already exists
+# before the request under test, so they are committed — not merely flushed.
+# The client fixture runs the application inside a savepoint of the outer test
+# transaction; an endpoint that correctly rolls back after a refused correction
+# (403/404/422) rolls back to that savepoint, and anything the test had only
+# flushed would disappear with it. Committing releases a savepoint without
+# leaving the outer transaction, so teardown still removes every row.
+
 
 @pytest.fixture(autouse=True)
 def phase_five_flag(monkeypatch):
@@ -74,7 +82,7 @@ def _mk_student(db, tag: str) -> Student:
         is_active=True,
     )
     db.add(user)
-    db.flush()
+    db.commit()
     student = Student(
         user_id=user.id,
         student_id=f"P5-{tag}-{uuid.uuid4().hex[:6]}",
@@ -82,7 +90,7 @@ def _mk_student(db, tag: str) -> Student:
         last_name=tag,
     )
     db.add(student)
-    db.flush()
+    db.commit()
     return student
 
 
@@ -104,21 +112,21 @@ def _mk_period(
         status=status,
     )
     db.add(period)
-    db.flush()
+    db.commit()
     return period
 
 
 def _mk_program(db, tag: str) -> Program:
     major = Major(code=f"M5-{uuid.uuid4().hex[:12]}", name=f"Phase Five Major {tag}")
     db.add(major)
-    db.flush()
+    db.commit()
     program = Program(
         major_id=major.id,
         code=f"PP-{uuid.uuid4().hex[:12]}",
         name=f"Phase Five Program {tag}",
     )
     db.add(program)
-    db.flush()
+    db.commit()
     return program
 
 
@@ -131,7 +139,7 @@ def _mk_offering(db, tag: str, period: AcademicPeriod, program: Program) -> Prog
         name=f"Phase Five Offering {tag}",
     )
     db.add(offering)
-    db.flush()
+    db.commit()
     return offering
 
 
@@ -162,7 +170,7 @@ def _mk_admission(
         created_by_id=actor.id,
     )
     db.add(admission)
-    db.flush()
+    db.commit()
     return admission
 
 
@@ -175,7 +183,7 @@ def _mk_section(
         name=f"Phase Five Course {tag}",
     )
     db.add(course)
-    db.flush()
+    db.commit()
     section = ClassSection(
         course_id=course.id,
         academic_period_id=period.id,
@@ -183,7 +191,7 @@ def _mk_section(
         capacity=30,
     )
     db.add(section)
-    db.flush()
+    db.commit()
     return section
 
 
@@ -310,7 +318,7 @@ def test_management_superuser_without_admin_cannot_correct_completed(
         db_session.query(User).filter(User.email == "management@school.portal").one()
     )
     management.is_superuser = True
-    db_session.flush()
+    db_session.commit()
     _login(client, "management@school.portal")
 
     completed = _mk_period(db_session, "superuser-completed", status="COMPLETED")
@@ -377,7 +385,7 @@ def test_success_writes_one_history_row_and_one_audit_without_moving_records(
         created_by_id=admin.id,
     )
     db_session.add(placement)
-    db_session.flush()
+    db_session.commit()
 
     change = AcademicAdmissionChange(
         admission_id=admission.id,
@@ -417,7 +425,7 @@ def test_success_writes_one_history_row_and_one_audit_without_moving_records(
         end_time=time(10, 0),
     )
     db_session.add_all([enrollment, attendance, assessment, timetable])
-    db_session.flush()
+    db_session.commit()
 
     before = {
         "admission_intake_id": admission.admission_intake_id,
@@ -532,7 +540,7 @@ def test_successful_correction_does_not_change_grade_rows(client, db_session):
         due_date=date(2033, 10, 10),
     )
     db_session.add(assessment)
-    db_session.flush()
+    db_session.commit()
     grade = Grade(
         assessment_id=assessment.id,
         student_id=student.id,
@@ -542,7 +550,7 @@ def test_successful_correction_does_not_change_grade_rows(client, db_session):
         note="Synthetic grade preserved across date correction.",
     )
     db_session.add(grade)
-    db_session.flush()
+    db_session.commit()
     before = {
         "id": grade.id,
         "assessment_id": grade.assessment_id,
@@ -626,7 +634,7 @@ def test_academic_record_outside_corrected_term_is_refused(
                 end_time=time(10, 0),
             )
         )
-    db_session.flush()
+    db_session.commit()
 
     body = _valid_body()
     if kind == "timetable":
@@ -774,7 +782,7 @@ def test_placement_reflagging_refuses_unauthorized_then_accepts_authorized(
         created_by_id=admin.id,
     )
     db_session.add(placement)
-    db_session.flush()
+    db_session.commit()
 
     body = _valid_body(start="2033-08-15", end="2033-12-20")
     refused = client.post(
@@ -787,7 +795,7 @@ def test_placement_reflagging_refuses_unauthorized_then_accepts_authorized(
     placement = db_session.get(AcademicPlacement, placement.id)
     placement.authorized_by_id = admin.id
     placement.authorization_reason = "Approved by the international office."
-    db_session.flush()
+    db_session.commit()
 
     allowed = client.post(
         f"{API}/academics/periods/{target.id}/date-correction", json=body

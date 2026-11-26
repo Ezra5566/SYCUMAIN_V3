@@ -159,6 +159,7 @@ def consume_reset_token(
     # A recovered password is chosen by the account owner, so the
     # "must replace this temporary password" prompt no longer applies.
     user.must_change_password = False
+    user.temporary_password_expires_at = None
 
     record.used_at = now
 

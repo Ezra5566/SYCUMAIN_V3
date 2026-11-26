@@ -1,0 +1,44 @@
+# Ring-fenced verification edge.
+#
+# Same routing and headers as Caddyfile, but the certificate is signed by
+# Caddy's local CA instead of ACME. Use it to rehearse the production topology
+# on a host that is not reachable from the internet (or has no public name):
+#
+#   CADDYFILE=Caddyfile.local HTTPS_PORT=8443 SITE_ADDRESS=localhost \
+#     docker compose --env-file .env.production -f docker-compose.prod.yml up -d
+#
+# A browser will warn about the local CA until it is trusted; that warning is
+# the only difference from the public profile.
+
+{
+	admin off
+	local_certs
+}
+
+{$SITE_ADDRESS:localhost} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		Cross-Origin-Opener-Policy "same-origin"
+		-Server
+	}
+
+	@api path /api/* /health /ready /docs /docs/* /openapi.json /redoc
+	handle @api {
+		reverse_proxy api:8001
+	}
+
+	handle {
+		reverse_proxy web:3000
+	}
+
+	log {
+		output stdout
+		format json
+	}
+}

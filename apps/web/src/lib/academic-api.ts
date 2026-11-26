@@ -16,6 +16,9 @@ import type {
   ProgramOffering,
   PaginatedList,
   SourceIntakeList,
+  AcademicImportBatchReport,
+  InstitutionalTimetableResponse,
+  TimetableReconciliation,
 } from "@/types/academic";
 
 export async function listMajors(
@@ -162,6 +165,67 @@ export async function getStudentTimetable(
   const params = new URLSearchParams();
   if (periodId) params.set("period_id", periodId);
   return apiFetch(`/api/v1/academics/students/${studentId}/timetable?${params}`);
+}
+
+/**
+ * One program offering's complete institutional schedule.
+ *
+ * Not a personal view: the response contains every section of the offering,
+ * regardless of who is enrolled. Do not add a student id to this call — the
+ * personalised timetable is `getStudentTimetable`.
+ */
+export async function getInstitutionalTimetable(
+  programOfferingId: string,
+  periodId?: string
+): Promise<InstitutionalTimetableResponse> {
+  const params = new URLSearchParams({
+    program_offering_id: programOfferingId,
+  });
+  if (periodId) params.set("period_id", periodId);
+  return apiFetch(`/api/v1/academics/institutional-timetable?${params}`);
+}
+
+/** Staff-facing completeness report for one period's timetable. */
+export async function getTimetableReconciliation(
+  periodId?: string
+): Promise<TimetableReconciliation> {
+  const params = new URLSearchParams();
+  if (periodId) params.set("period_id", periodId);
+  return apiFetch(`/api/v1/academics/timetable/reconciliation?${params}`);
+}
+
+// --- Source-catalogue import (Admin/Management only) ---
+
+export async function listAcademicImports(): Promise<AcademicImportBatchReport[]> {
+  return apiFetch(`/api/v1/academics/imports`);
+}
+
+/** Stage the catalogue and return the dry-run report. No academic rows change. */
+export async function previewAcademicImport(): Promise<AcademicImportBatchReport> {
+  return apiFetch(`/api/v1/academics/imports/preview`, { method: "POST" });
+}
+
+export async function applyAcademicImport(
+  batchId: string,
+  periodMap: Record<string, string>,
+  parentProgramMap: Record<string, string> = {}
+): Promise<AcademicImportBatchReport> {
+  return apiFetch(`/api/v1/academics/imports/${batchId}/apply`, {
+    method: "POST",
+    body: JSON.stringify({
+      confirm: true,
+      period_map: periodMap,
+      parent_program_map: parentProgramMap,
+    }),
+  });
+}
+
+export async function rollbackAcademicImport(
+  batchId: string
+): Promise<AcademicImportBatchReport> {
+  return apiFetch(`/api/v1/academics/imports/${batchId}/rollback`, {
+    method: "POST",
+  });
 }
 
 /** Stage 9A append-only history for assessments and grades in one class. */
@@ -450,11 +514,16 @@ export async function removeTeacher(
  */
 export async function enrollStudent(
   classId: string,
-  studentId: string
+  studentId: string,
+  authorization?: { reason: string; reference?: string }
 ): Promise<Enrollment> {
   return apiFetch(`/api/v1/academics/classes/${classId}/enrollments`, {
     method: "POST",
-    body: JSON.stringify({ student_id: studentId }),
+    body: JSON.stringify({
+      student_id: studentId,
+      authorization_reason: authorization?.reason ?? null,
+      authorization_reference: authorization?.reference ?? null,
+    }),
   });
 }
 

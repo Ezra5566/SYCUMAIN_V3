@@ -14,8 +14,11 @@ from typing import Any
 from sqlalchemy import func
 from sqlalchemy.orm import Session as DBSession
 
+from app.config.settings import get_settings
 from app.models.identity import Role, User, user_roles
+from app.models.mail import EmailOutbox
 from app.models.platform import Notification, NotificationType
+from app.services.mailer import notification_email_body
 
 
 def create_notification(
@@ -42,7 +45,42 @@ def create_notification(
         entity_id=entity_id,
     )
     db.add(notification)
+    # Flushed so the notification has an id: that id is the dedupe key which
+    # makes the email queue idempotent if the surrounding job is re-run.
+    db.flush()
+    _enqueue_email(db, notification)
     return notification
+
+
+def _enqueue_email(db: DBSession, notification: Notification) -> None:
+    """Queue an email for a notification type the institution opted into.
+
+    Off by default. The body carries only a sign-in link: notification
+    parameters (a student number, an expiry date) must not be copied into mail
+    that leaves the portal.
+    """
+    settings = get_settings()
+    if not settings.EMAIL_NOTIFICATIONS_ENABLED:
+        return
+    if notification.type not in settings.email_notification_types:
+        return
+
+    address = db.query(User.email).filter(User.id == notification.user_id).scalar()
+    if not address:
+        return
+
+    base = settings.ACTIVATION_LINK_BASE.rstrip("/")
+    link = f"{base}{notification.link_url}" if notification.link_url else f"{base}/app"
+    db.add(
+        EmailOutbox(
+            dedupe_key=f"notification:{notification.id}",
+            to_email=address,
+            subject="Student Portal notification",
+            body_text=notification_email_body(link),
+            purpose="notification",
+            next_attempt_at=datetime.now(UTC),
+        )
+    )
 
 
 def notify_users_with_role(

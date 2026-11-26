@@ -34,6 +34,7 @@ if TYPE_CHECKING:
     from sqlalchemy.orm import Session as DBSession
 
 from app.auth.service import hash_password
+from app.config.settings import get_settings
 from app.models.academic import (
     AcademicPeriod,
     AcademicPeriodStatus,
@@ -85,7 +86,6 @@ from app.models.platform import (
 )
 from app.storage import get_storage
 
-DEMO_PASSWORD = "password123"
 ACTIVE_PERIOD_CODE = "2026-FALL"
 TERM_START = date(2026, 9, 1)
 
@@ -174,7 +174,10 @@ def seed_demo_dataset(db: DBSession) -> None:
     existing.date_of_birth = existing.date_of_birth or datetime(2004, 5, 12, tzinfo=UTC)
     existing.gender = existing.gender or "Other"
 
-    password_hash = hash_password(DEMO_PASSWORD)
+    # The cohort shares the one configured demonstration password, so a fresh
+    # development database has exactly one credential to sign in with — the one
+    # the login page's chips fill.
+    password_hash = hash_password(get_settings().DEMO_PASSWORD)
     people: list[tuple[Student, str]] = [(existing, "BCS")]
 
     for number, first, last, gender, nationality, programme, status, _city in STUDENTS:
@@ -463,9 +466,19 @@ def seed_demo_dataset(db: DBSession) -> None:
         profile.data_source = "STAFF"
         # Leave two profiles deliberately incomplete so the dashboard's
         # "profile incomplete" metric is exercised rather than always zero.
-        if index in {7, 18}:
+        #
+        # Index 0 is ``STU-001`` — the account every demonstration and
+        # end-to-end run signs in as. Their record stays unverified and blank so
+        # a student-initiated renewal can be demonstrated end to end: an import
+        # may fill the blank (and, correctly, leaves the record unverified), a
+        # student may only *request* the change, and an authorised verification
+        # is what makes it official. Without this the only student account in
+        # the dataset is already verified, so that workflow cannot be shown.
+        if index in {0, 18}:
             profile.passport_number = None
             profile.visa_number = None
+            profile.visa_type = None
+            profile.visa_expiry_date = None
         else:
             profile.verification_status = "VERIFIED"
             profile.verified_by_id = admin.id

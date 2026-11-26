@@ -1,3 +1,5 @@
+import { getTranslations } from "next-intl/server";
+
 import { AppShell } from "@/components/layout/app-shell";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -7,11 +9,15 @@ import { Skeleton } from "@/components/ui/skeleton";
  * Keeping the navigation visible during a slow route transition avoids a
  * blank page without pretending that record data is already available.
  */
-export default function AppLoading() {
+export default async function AppLoading() {
+  // Announced to screen readers only, so it needs the reader's language — not
+  // an English string that a Chinese or Arabic user would hear in English.
+  const t = await getTranslations("common.states");
+
   return (
     <AppShell>
       <div className="space-y-4" aria-busy="true" aria-live="polite">
-        <span className="sr-only">Loading page</span>
+        <span className="sr-only">{t("loading")}</span>
         <Skeleton className="h-32 w-full rounded-2xl" />
         <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
           <Skeleton className="h-64 rounded-xl" />

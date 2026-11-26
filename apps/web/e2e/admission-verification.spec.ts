@@ -1,6 +1,6 @@
 import { expect, test, type APIResponse, type Page } from "@playwright/test";
 
-import { API_BASE, USERS, app } from "./accounts";
+import { API_BASE, USERS, app, signOutViaAccountMenu } from "./accounts";
 
 /**
  * Phase 2 migration verification console.
@@ -19,6 +19,38 @@ import { API_BASE, USERS, app } from "./accounts";
  */
 
 const PASSWORD = process.env.E2E_PASSWORD ?? "password123";
+
+/**
+ * Assert a module is reachable from the navigation.
+ *
+ * V3 replaced V1's sidebar with a horizontal rail, and the rail moves whatever
+ * does not fit into "More". A module is therefore a link when it is on the rail
+ * and a menuitem when it is in the overflow, and asserting only one of the two
+ * would fail for a purely presentational reason.
+ */
+async function expectNavEntry(page: Page, name: string, moreLabel = "More") {
+  const nav = page.getByRole("navigation").first();
+  const direct = nav.getByRole("link", { name, exact: true });
+  if ((await direct.count()) > 0) {
+    await expect(direct).toBeVisible();
+    return;
+  }
+  await nav.getByRole("button", { name: moreLabel }).click();
+  await expect(page.getByRole("menuitem", { name, exact: true })).toBeVisible();
+  await page.keyboard.press("Escape");
+}
+
+/** The negative form: absent from the rail *and* from the overflow menu. */
+async function expectNoNavEntry(page: Page, name: string, moreLabel = "More") {
+  const nav = page.getByRole("navigation").first();
+  await expect(nav.getByRole("link", { name, exact: true })).toHaveCount(0);
+  const more = nav.getByRole("button", { name: moreLabel });
+  if (await more.count()) {
+    await more.click();
+    await expect(page.getByRole("menuitem", { name, exact: true })).toHaveCount(0);
+    await page.keyboard.press("Escape");
+  }
+}
 
 function trackPageHealth(page: Page) {
   const failures: string[] = [];
@@ -42,7 +74,7 @@ async function login(page: Page, user: { email: string; password: string }) {
 }
 
 async function signOut(page: Page) {
-  await page.getByRole("button", { name: "Sign out", exact: true }).click();
+  await signOutViaAccountMenu(page);
   await page.waitForURL(/\/en\/login/, { timeout: 25_000 });
 }
 
@@ -139,9 +171,7 @@ test.describe("migration verification console", () => {
     await signOut(page);
     await login(page, USERS.management);
 
-    await expect(
-      page.getByRole("link", { name: "Admission verification", exact: true }),
-    ).toBeVisible();
+    await expectNavEntry(page, "Admission verification");
     await page.goto(app("/app/admissions/verification"));
     await expect(
       page.getByRole("heading", { name: "Admission verification" }),
@@ -409,9 +439,7 @@ test.describe("migration verification console", () => {
 
     await signOut(page);
     await login(page, USERS.teacher);
-    await expect(
-      page.getByRole("link", { name: "Admission verification", exact: true }),
-    ).toHaveCount(0);
+    await expectNoNavEntry(page, "Admission verification");
     await page.goto(app("/app/admissions/verification"));
     await expect(
       page.getByText("You do not have permission to view admission verification."),
@@ -437,20 +465,23 @@ test.describe("migration verification console", () => {
     await expect(
       page.getByRole("heading", { name: "التحقق من القبول" }),
     ).toBeVisible();
-    await expect(
-      page.getByRole("link", { name: "التحقق من القبول", exact: true }),
-    ).toBeVisible();
+    await expectNavEntry(page, "التحقق من القبول", "المزيد");
     await expect(page.getByLabel("حالة الثقة")).toBeVisible();
     await expect(page.getByRole("searchbox")).toBeVisible();
 
-    const sidebar = page.locator("aside").first();
-    const main = page.locator("main").first();
-    const sidebarBox = await sidebar.boundingBox();
-    const mainBox = await main.boundingBox();
-    expect(sidebarBox).not.toBeNull();
-    expect(mainBox).not.toBeNull();
-    if (sidebarBox && mainBox) {
-      expect(sidebarBox.x).toBeGreaterThan(mainBox.x);
+    // The V3 shell is a top rail rather than the V1 sidebar, so mirroring shows
+    // up in the header: the end-side account control resolves to the left.
+    const account = page.locator("header .scu-me").first();
+    await expect(account).toBeVisible();
+    const box = await account.boundingBox();
+    const viewport = page.viewportSize();
+    expect(box).not.toBeNull();
+    expect(viewport).not.toBeNull();
+    if (box && viewport) {
+      expect(box.x + box.width / 2).toBeLessThan(viewport.width / 2);
     }
+    const mainBox = await page.locator("main").first().boundingBox();
+    expect(mainBox).not.toBeNull();
+    if (mainBox) expect(mainBox.width).toBeGreaterThan(0);
   });
 });

@@ -64,7 +64,9 @@ from app.services.account import (
     change_own_password,
     list_sessions,
     revoke_sessions,
+    temporary_password_expired,
 )
+from app.services.mailer import reset_email_body, send_email
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 settings = get_settings()
@@ -300,6 +302,32 @@ def login(
                     "message": (
                         "Your student record is not active. "
                         "Please contact the international office."
+                    ),
+                }
+            },
+        )
+
+    # A temporary password is time-limited. Checked after the credential is
+    # verified, so an expired credential is only reported to whoever holds it,
+    # and before a session is created, so it cannot be used for anything at all.
+    if temporary_password_expired(user):
+        record_audit(
+            db,
+            action="auth.login_failed",
+            entity_type="user",
+            entity_id=user.id,
+            context={"reason": "temporary_password_expired"},
+            request=request,
+        )
+        db.commit()
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "error": {
+                    "code": "TEMPORARY_PASSWORD_EXPIRED",
+                    "message": (
+                        "This temporary password has expired. Contact the "
+                        "international office for a new one."
                     ),
                 }
             },
@@ -601,9 +629,36 @@ def request_reset(
         request=request,
     )
 
-    # Only the development channel ever sees the token; in production it is
-    # delivered out of band by the mail provider (Stage 8 hardening item).
+    # Only the development channel ever sees the token. With SMTP configured
+    # the link is mailed inline, from this request, and never stored: the body
+    # contains a working credential, so an outbox row would be a second copy of
+    # it at rest.
     dev_token = raw_token if settings.PASSWORD_RESET_DELIVERY == "dev" else None
+    if raw_token is not None and settings.PASSWORD_RESET_DELIVERY == "smtp":
+        link = (
+            f"{settings.ACTIVATION_LINK_BASE.rstrip('/')}"
+            f"/reset-password?token={raw_token}"
+        )
+        delivery = send_email(
+            to=user.email,
+            subject="Reset your Student Portal password",
+            body=reset_email_body(link, settings.PASSWORD_RESET_EXPIRE_MINUTES),
+            purpose="password_reset",
+        )
+        if not delivery.sent:
+            # Never surfaced to the caller — the response must stay identical
+            # for known and unknown addresses — but an operator can see that a
+            # reset was issued and not delivered.
+            record_audit(
+                db,
+                action="auth.password_reset_delivery_failed",
+                actor=user,
+                entity_type="user",
+                entity_id=user.id,
+                context={"reason": delivery.detail},
+                request=request,
+            )
+            db.commit()
 
     return PasswordResetRequestResponse(
         accepted=True,

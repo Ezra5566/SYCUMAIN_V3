@@ -1,0 +1,82 @@
+# syntax=docker/dockerfile:1
+
+# ---------------------------------------------------------------------------
+# Base image. pnpm is pinned by the lockfile's packageManager semantics, so
+# corepack is enough; there is no separate pnpm install step.
+# ---------------------------------------------------------------------------
+FROM node:20-alpine AS base
+WORKDIR /app
+RUN corepack enable
+
+# ---------------------------------------------------------------------------
+# Dependencies. Only the manifests are copied so this layer is cached until a
+# dependency actually changes.
+# ---------------------------------------------------------------------------
+FROM base AS deps
+COPY apps/web/package.json apps/web/pnpm-lock.yaml apps/web/pnpm-workspace.yaml ./
+RUN pnpm install --frozen-lockfile
+
+# ---------------------------------------------------------------------------
+# Build. `messages/` must be present: src/i18n/request.ts imports the locale
+# catalogues at module scope, so the build fails without them (this was the
+# original "next-intl Docker" symptom — the image was missing this directory).
+# NEXT_PUBLIC_API_URL is inlined into the client bundle at build time, so it is
+# a build argument, not a runtime variable.
+# ---------------------------------------------------------------------------
+FROM base AS builder
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV NEXT_TELEMETRY_DISABLED=1
+
+COPY --from=deps /app/node_modules ./node_modules
+COPY apps/web/package.json ./
+COPY apps/web/next.config.ts apps/web/tsconfig.json ./apps/web/tailwind.config.ts ./apps/web/postcss.config.js ./apps/web/.eslintrc.json ./
+COPY apps/web/src ./src
+COPY apps/web/public ./public
+COPY apps/web/messages ./messages
+
+RUN pnpm run build
+
+# ---------------------------------------------------------------------------
+# Development. Source is bind-mounted by docker-compose, so only dependencies
+# and configuration live in the image.
+# ---------------------------------------------------------------------------
+FROM base AS dev
+ENV NEXT_TELEMETRY_DISABLED=1
+COPY --from=deps /app/node_modules ./node_modules
+COPY apps/web/package.json apps/web/pnpm-lock.yaml apps/web/pnpm-workspace.yaml ./
+COPY apps/web/next.config.ts apps/web/tsconfig.json ./apps/web/tailwind.config.ts ./apps/web/postcss.config.js ./apps/web/.eslintrc.json ./
+COPY apps/web/src ./src
+COPY apps/web/public ./public
+COPY apps/web/messages ./messages
+
+EXPOSE 3000
+CMD ["pnpm", "run", "dev:docker", "--", "--hostname", "0.0.0.0"]
+
+# ---------------------------------------------------------------------------
+# Production. Runs the standalone server as a non-root user; no source, no
+# dev server, no bind mounts. `public/` and `.next/static` are not part of the
+# standalone trace and must be copied explicitly.
+# ---------------------------------------------------------------------------
+FROM base AS production
+ENV NODE_ENV=production \
+    PORT=3000 \
+    HOSTNAME=0.0.0.0 \
+    NEXT_TELEMETRY_DISABLED=1
+
+RUN addgroup -g 1001 -S nodejs && adduser -S nextjs -u 1001
+
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/messages ./messages
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+USER nextjs
+EXPOSE 3000
+
+# The app answers on a locale route; hitting it proves the server, the router
+# and the message catalogues all loaded.
+HEALTHCHECK --interval=15s --timeout=5s --start-period=20s --retries=3 \
+  CMD node -e "fetch('http://127.0.0.1:3000/en/login').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+
+CMD ["node", "server.js"]

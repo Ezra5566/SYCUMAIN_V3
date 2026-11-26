@@ -11,6 +11,8 @@
  * mutating the wrong database.
  */
 
+import type { Page } from "@playwright/test";
+
 export type E2eRole = "admin" | "management" | "teacher" | "student";
 
 export interface E2eAccount {
@@ -40,3 +42,23 @@ export const API_BASE = process.env.E2E_API_URL ?? "http://localhost:8001";
 /** Locale every spec except the i18n one runs in. */
 export const LOCALE = "en";
 export const app = (path: string) => `/${LOCALE}${path}`;
+
+/**
+ * Sign out through the account menu in the V3 shell.
+ *
+ * V1 exposed a header-level "Sign out" button; V3 keeps it behind the avatar.
+ * The menu opens from the keyboard too, so this drives the button that way and
+ * then chooses the item — the same path a keyboard user takes, and one that does
+ * not depend on the header's transient layout (a positional click on the avatar
+ * can be cancelled mid-flight while the shell re-renders).
+ *
+ * The specs that assert the menu itself are `smoke.spec.ts` and
+ * `closure.spec.ts`; every other spec uses this helper only to switch accounts.
+ */
+export async function signOutViaAccountMenu(page: Page) {
+  const trigger = page.locator("header .scu-me").first();
+  await trigger.focus();
+  await trigger.press("Enter");
+  await page.getByRole("menuitem", { name: /sign out/i }).click();
+  await page.waitForURL(new RegExp(`/${LOCALE}/login`), { timeout: 25_000 });
+}

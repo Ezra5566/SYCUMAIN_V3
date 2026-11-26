@@ -129,24 +129,25 @@ test.describe("RTL layout", () => {
     // The document is RTL…
     await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
 
-    // …and the layout actually follows, rather than being an LTR skin: the
-    // sidebar must sit on the right-hand side of the viewport.
-    const sidebar = page.locator("aside").first();
-    await expect(sidebar).toBeVisible();
+    // …and the layout actually follows, rather than being an LTR skin. The V3
+    // shell is a top rail, not the V1 sidebar, so the check is that its
+    // end-side controls mirror: in RTL the account menu resolves to the left
+    // half of the header, where "end" is.
+    const account = page.locator("header .scu-me").first();
+    await expect(account).toBeVisible();
 
-    const box = await sidebar.boundingBox();
+    const box = await account.boundingBox();
     const viewport = page.viewportSize();
     expect(box).not.toBeNull();
     expect(viewport).not.toBeNull();
     if (box && viewport) {
-      // Sidebar occupies the right half of the screen.
-      expect(box.x).toBeGreaterThan(viewport.width / 2);
-      // And the main content starts to its left.
-      const main = page.locator("main").first();
-      const mainBox = await main.boundingBox();
-      expect(mainBox).not.toBeNull();
-      if (mainBox) expect(mainBox.x).toBeLessThan(box.x);
+      expect(box.x + box.width / 2).toBeLessThan(viewport.width / 2);
     }
+
+    // The main landmark is still present and laid out.
+    const mainBox = await page.locator("main").first().boundingBox();
+    expect(mainBox).not.toBeNull();
+    if (mainBox) expect(mainBox.width).toBeGreaterThan(0);
   });
 
   test("arabic student profile keeps tables usable", async ({ page }) => {

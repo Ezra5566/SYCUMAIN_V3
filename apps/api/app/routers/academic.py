@@ -7,17 +7,20 @@ import uuid  # noqa: TC003
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session as DBSession  # noqa: TC002
 
-from app.audit import record_audit
+from app.audit import field_changes, record_audit
 from app.auth.dependencies import (
     get_current_active_user,
     get_db,
 )
 from app.config.settings import get_settings
+from app.models.academic import AcademicPeriod  # noqa: TC001
 from app.models.admission import AcademicPeriodDateCorrection  # noqa: TC001
 from app.models.identity import User  # noqa: TC001
 from app.permissions.checks import has_permission, require_permission
 from app.schemas.academic import (
     AcademicChangeHistoryResponse,
+    AcademicImportApplyRequest,
+    AcademicImportBatchReport,
     AcademicPeriodCreate,
     AcademicPeriodDateCorrectionCreate,
     AcademicPeriodDateCorrectionResponse,
@@ -44,6 +47,7 @@ from app.schemas.academic import (
     EnrollmentCreate,
     EnrollmentResponse,
     GradeCreate,
+    InstitutionalTimetableResponse,
     GradeResponse,
     GradeUpdate,
     IntakePlanRequest,
@@ -70,6 +74,7 @@ from app.schemas.academic import (
     TimetableListResponse,
 )
 from app.services import academic as svc
+from app.services import academic_import as import_svc
 from app.services import intake_plan as intake_svc
 from app.services import period_correction as correction_svc
 from app.services import source_intakes as source_intake_svc
@@ -916,7 +921,16 @@ def enroll_student(
     db: DBSession = Depends(get_db),
 ):
     try:
-        enrollment = svc.enroll_student(db, class_id, data)
+        enrollment = svc.enroll_student(db, class_id, data, actor=current_user)
+    except svc.EnrollmentAuthorizationError as exc:
+        # The late-enrolment rule is decided by the service, not by this route
+        # or the client. A rejected attempt never reaches the audit block below
+        # because no enrolment row exists to name.
+        db.rollback()
+        raise HTTPException(
+            status_code=exc.status_code,
+            detail={"error": {"code": exc.code, "message": str(exc)}},
+        ) from None
     except ValueError as exc:
         db.rollback()
         raise HTTPException(status_code=400, detail=str(exc)) from None
@@ -927,7 +941,13 @@ def enroll_student(
         actor=current_user,
         entity_type="enrollment",
         entity_id=enrollment.id,
-        context={"class_section_id": str(class_id)},
+        context={
+            "class_section_id": str(class_id),
+            "student_id": str(enrollment.student_id),
+            "status": str(enrollment.status),
+            "late_authorized": enrollment.authorized_by_id is not None,
+            "authorization_reason": enrollment.authorization_reason,
+        },
         request=request,
     )
     db.commit()
@@ -945,6 +965,14 @@ def drop_enrollment(
     current_user: User = Depends(require_permission("academic.manage_enrollment")),
     db: DBSession = Depends(get_db),
 ):
+    from app.models.academic import Enrollment
+
+    # A withdrawal is a status transition; without the prior status the audit
+    # entry cannot distinguish dropping an active enrolment from a no-op on one
+    # that was already withdrawn.
+    existing = db.query(Enrollment).filter(Enrollment.id == enrollment_id).first()
+    previous_status = existing.status if existing is not None else None
+
     try:
         enrollment = svc.drop_enrollment(db, enrollment_id)
     except ValueError as exc:
@@ -957,7 +985,14 @@ def drop_enrollment(
         actor=current_user,
         entity_type="enrollment",
         entity_id=enrollment.id,
-        context={"class_section_id": str(class_id)},
+        context={
+            "class_section_id": str(class_id),
+            "student_id": str(enrollment.student_id),
+            "changes": field_changes(
+                {"status": previous_status, "dropped_at": None},
+                {"status": enrollment.status, "dropped_at": enrollment.dropped_at},
+            ),
+        },
         request=request,
     )
     db.commit()
@@ -1361,6 +1396,16 @@ def record_grade(
             "assessment_id": str(data.assessment_id),
             "student_id": str(data.student_id),
             "class_section_id": str(class_id),
+            # The values recorded on first entry. A later correction carries its
+            # own previous/new pair (see `update_grade`).
+            "changes": field_changes(
+                {},
+                {
+                    "score": grade.score,
+                    "letter_grade": grade.letter_grade,
+                    "note": grade.note,
+                },
+            ),
         },
         request=request,
     )
@@ -1394,6 +1439,17 @@ def update_grade(
     if assessment is None or assessment.class_section_id != class_id:
         raise HTTPException(status_code=404, detail="Grade not found")
 
+    # `update_grade` overwrites in place, so the previous values are captured
+    # here before the service runs. `AcademicChangeHistory` remains the
+    # authoritative record of the grade's full before/after state; this entry
+    # carries the same previous/new pair so the audit trail is readable on its
+    # own, without a join.
+    previous = {
+        "score": grade.score,
+        "letter_grade": grade.letter_grade,
+        "note": grade.note,
+    }
+
     try:
         updated = svc.update_grade(
             db, class_id, grade, data, actor_id=current_user.id
@@ -1415,6 +1471,14 @@ def update_grade(
             "assessment_id": str(updated.assessment_id),
             "student_id": str(updated.student_id),
             "class_section_id": str(class_id),
+            "changes": field_changes(
+                previous,
+                {
+                    "score": updated.score,
+                    "letter_grade": updated.letter_grade,
+                    "note": updated.note,
+                },
+            ),
         },
         request=request,
     )
@@ -1507,3 +1571,249 @@ def timetable_reconciliation(
         if period is None:
             raise HTTPException(status_code=404, detail="Academic period not found")
     return reconciliation_svc.reconcile_timetable(db, period_id=period_id)
+
+
+# ── Shared institutional timetable ──
+#
+# Deliberately separate from ``/timetable`` (the administrative list) and from
+# ``/students/{id}/timetable`` (one student's personal schedule). This endpoint
+# filters by the selected period and offering only; enrollment is never
+# consulted, so a student browsing it sees the whole cohort schedule.
+
+
+@router.get(
+    "/institutional-timetable",
+    response_model=InstitutionalTimetableResponse,
+)
+def institutional_timetable(
+    program_offering_id: uuid.UUID,
+    period_id: uuid.UUID | None = None,
+    current_user: User = Depends(require_permission("academic.view")),
+    db: DBSession = Depends(get_db),
+):
+    """One offering's complete weekly schedule, for any authenticated viewer.
+
+    Every role that may read academic data may read this: it is the published
+    institutional schedule, not a personal or administrative record. The only
+    role-dependent part is the issue breakdown, which stays with staff who can
+    act on it.
+    """
+    try:
+        return svc.institutional_timetable(
+            db,
+            period_id=period_id,
+            program_offering_id=program_offering_id,
+            include_diagnostics=has_permission(
+                current_user, "academic.manage_timetable"
+            ),
+        )
+    except svc.AcademicRuleError as exc:
+        raise _academic_rule_error(exc) from None
+
+
+# ── Source-catalogue import ──
+#
+# The existing staged importer, exposed as preview → apply → rollback. Nothing
+# here maps catalogue objects to academic rows: ``academic_import`` does that,
+# and a second pathway would be a second source of truth. Authorization is
+# `academic.manage_periods`, which Admin and Management hold and teachers and
+# students do not.
+
+
+_IMPORT_PERMISSION = "academic.manage_periods"
+
+
+@router.get("/imports", response_model=list[AcademicImportBatchReport])
+def list_academic_imports(
+    limit: int = Query(20, ge=1, le=100),
+    current_user: User = Depends(require_permission(_IMPORT_PERMISSION)),
+    db: DBSession = Depends(get_db),
+):
+    return [
+        AcademicImportBatchReport(**import_svc.batch_report(db, batch.id))
+        for batch in import_svc.list_batches(db, limit=limit)
+    ]
+
+
+@router.post("/imports/preview", response_model=AcademicImportBatchReport)
+def preview_academic_import(
+    request: Request,
+    current_user: User = Depends(require_permission(_IMPORT_PERMISSION)),
+    db: DBSession = Depends(get_db),
+):
+    """Stage the source catalogue and return the dry-run report.
+
+    Staging writes only import-batch rows; no period, offering, course, section
+    or session is created. Applying is a separate, confirmed request.
+    """
+    try:
+        staged = import_svc.preview_import(db, actor_id=current_user.id)
+    except FileNotFoundError:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "error": {
+                    "code": "IMPORT_SOURCE_UNAVAILABLE",
+                    "message": "The source catalogue file is not available",
+                }
+            },
+        ) from None
+    except (ValueError, KeyError) as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=422,
+            detail={"error": {"code": "IMPORT_SOURCE_INVALID", "message": str(exc)}},
+        ) from None
+
+    batch_id = uuid.UUID(str(staged["batch_id"]))
+    if not staged.get("already_applied"):
+        record_audit(
+            db,
+            action="academic.import.previewed",
+            actor=current_user,
+            entity_type="academic_import_batch",
+            entity_id=batch_id,
+            context={
+                "source_sha256": staged.get("source_sha256"),
+                "counts": {k: v for k, v in staged.items() if k.endswith("s")},
+            },
+            request=request,
+        )
+        db.commit()
+    return AcademicImportBatchReport(**import_svc.batch_report(db, batch_id))
+
+
+@router.get(
+    "/imports/{batch_id}",
+    response_model=AcademicImportBatchReport,
+)
+def get_academic_import(
+    batch_id: uuid.UUID,
+    current_user: User = Depends(require_permission(_IMPORT_PERMISSION)),
+    db: DBSession = Depends(get_db),
+):
+    try:
+        return AcademicImportBatchReport(**import_svc.batch_report(db, batch_id))
+    except ImportError as exc:
+        raise HTTPException(
+            status_code=404,
+            detail={"error": {"code": "IMPORT_BATCH_NOT_FOUND", "message": str(exc)}},
+        ) from None
+
+
+@router.post(
+    "/imports/{batch_id}/apply",
+    response_model=AcademicImportBatchReport,
+)
+def apply_academic_import(
+    batch_id: uuid.UUID,
+    data: AcademicImportApplyRequest,
+    request: Request,
+    current_user: User = Depends(require_permission(_IMPORT_PERMISSION)),
+    db: DBSession = Depends(get_db),
+):
+    """Apply a staged batch, but only after an explicit confirmation.
+
+    ``confirm`` is not ceremony: the request must name it, so an accidental
+    retry or an unfinished form cannot write academic rows. The period mapping
+    is validated here because a stale id must fail before the importer starts
+    rather than half-way through.
+    """
+    if not data.confirm:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error": {
+                    "code": "IMPORT_CONFIRMATION_REQUIRED",
+                    "message": "Set confirm=true after reviewing the dry run",
+                }
+            },
+        )
+
+    for source_id, period_id in data.period_map.items():
+        exists = (
+            db.query(AcademicPeriod)
+            .filter(AcademicPeriod.id == period_id)
+            .first()
+        )
+        if exists is None:
+            raise HTTPException(
+                status_code=422,
+                detail={
+                    "error": {
+                        "code": "IMPORT_PERIOD_NOT_FOUND",
+                        "message": f"Mapped period for {source_id} does not exist",
+                    }
+                },
+            )
+
+    try:
+        result = import_svc.apply_import(
+            db,
+            batch_id,
+            period_map={key: str(value) for key, value in data.period_map.items()},
+            parent_program_map={
+                key: str(value) for key, value in data.parent_program_map.items()
+            },
+        )
+    except ImportError as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=409,
+            detail={"error": {"code": "IMPORT_CONFLICT", "message": str(exc)}},
+        ) from None
+    except ValueError as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=409,
+            detail={"error": {"code": "IMPORT_CONFLICT", "message": str(exc)}},
+        ) from None
+
+    record_audit(
+        db,
+        action="academic.import.applied",
+        actor=current_user,
+        entity_type="academic_import_batch",
+        entity_id=batch_id,
+        context={
+            "status": result.get("status"),
+            "period_map": {k: str(v) for k, v in data.period_map.items()},
+            "counts": {k: v for k, v in result.items() if k.endswith("s")},
+        },
+        request=request,
+    )
+    db.commit()
+    return AcademicImportBatchReport(**import_svc.batch_report(db, batch_id))
+
+
+@router.post(
+    "/imports/{batch_id}/rollback",
+    response_model=AcademicImportBatchReport,
+)
+def rollback_academic_import(
+    batch_id: uuid.UUID,
+    request: Request,
+    current_user: User = Depends(require_permission(_IMPORT_PERMISSION)),
+    db: DBSession = Depends(get_db),
+):
+    """Remove only the rows this batch created and restore mapped period data."""
+    try:
+        result = import_svc.rollback_batch(db, batch_id)
+    except ImportError as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=404,
+            detail={"error": {"code": "IMPORT_BATCH_NOT_FOUND", "message": str(exc)}},
+        ) from None
+
+    record_audit(
+        db,
+        action="academic.import.rolled_back",
+        actor=current_user,
+        entity_type="academic_import_batch",
+        entity_id=batch_id,
+        context={k: v for k, v in result.items() if k.endswith("s") or k == "status"},
+        request=request,
+    )
+    db.commit()
+    return AcademicImportBatchReport(**import_svc.batch_report(db, batch_id))

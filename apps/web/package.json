@@ -26,7 +26,7 @@
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
     "lucide-react": "^0.400.0",
-    "next": "^15.0.0",
+    "next": "15.5.29",
     "next-intl": "^4.14.5",
     "pdfjs-dist": "5.4.394",
     "react": "^19.0.0",
@@ -35,6 +35,13 @@
     "tailwind-merge": "^2.3.0",
     "tailwindcss-animate": "^1.0.7",
     "world-map-country-shapes": "2.0.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@next/swc",
+      "sharp",
+      "esbuild"
+    ]
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",

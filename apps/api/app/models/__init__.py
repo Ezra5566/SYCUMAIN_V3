@@ -88,6 +88,7 @@ from app.models.immigration import (
     ImmigrationProfile,
 )
 from app.models.immigration_reminder import ImmigrationReminder
+from app.models.mail import EmailOutbox, EmailOutboxStatus
 from app.models.platform import (
     DOCUMENT_TYPES,
     Announcement,
@@ -212,4 +213,6 @@ __all__ = [
     "DOCUMENT_TYPES",
     "PasswordResetToken",
     "AuthRateLimit",
+    "EmailOutbox",
+    "EmailOutboxStatus",
 ]

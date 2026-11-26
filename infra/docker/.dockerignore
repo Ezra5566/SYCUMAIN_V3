@@ -1,0 +1,22 @@
+# Docker ignore for web build
+node_modules
+*.log
+**/.next
+**/.git
+**/.github
+playwright-report
+*.spec.ts
+*.test.ts
+e2e/**
+.env*
+*.env.local
+*.next
+tsconfig*.json
+tsconfig*.tsbuildinfo
+*.tgz
+*.pbxproj
+*.xcworkspace
+.DS_Store
+npm-debug.log
+yarn-error.log
+.pnpm-lock.yaml

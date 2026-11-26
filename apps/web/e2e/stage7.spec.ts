@@ -319,18 +319,31 @@ test.describe("authorization hardening", () => {
 });
 
 test.describe("student navigation scope", () => {
-  test("a student's sidebar is limited to self-service modules", async ({ page }) => {
+  test("a student's navigation is limited to self-service modules", async ({ page }) => {
     await login(page, USERS.student);
     const nav = page.getByRole("navigation", { name: "Main navigation" });
+    const staff = ["Students", "Immigration", "Housing", "Academics", "Reports", "Audit log"];
 
-    // Self-service is present…
+    // Self-service is present on the rail. V3 replaced the V1 sidebar with a
+    // horizontal tab rail, so these are the rail's own links.
+    await expect(nav.getByRole("link", { name: "My profile" })).toBeVisible();
     await expect(nav.getByRole("link", { name: "Announcements" })).toBeVisible();
-    await expect(nav.getByRole("link", { name: "Support" })).toBeVisible();
-    await expect(nav.getByRole("link", { name: "Documents" })).toBeVisible();
 
-    // …and institutional surfaces are absent.
-    for (const hidden of ["Students", "Immigration", "Housing", "Academics", "Reports", "Audit log"]) {
+    // …and institutional surfaces are absent from it.
+    for (const hidden of staff) {
       await expect(nav.getByRole("link", { name: hidden })).toHaveCount(0);
+    }
+
+    // The rail keeps everything that does not fit behind "More", so the same
+    // check has to cover the overflow menu; a visible-row-only assertion would
+    // miss a module that leaked into it.
+    const more = nav.getByRole("button", { name: "More" });
+    if (await more.count()) {
+      await more.click();
+      for (const hidden of staff) {
+        await expect(page.getByRole("menuitem", { name: hidden })).toHaveCount(0);
+      }
+      await page.keyboard.press("Escape");
     }
   });
 });

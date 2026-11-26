@@ -170,7 +170,9 @@
     "commencement": "بدء الحضور",
     "attendance": "الحضور",
     "calendar": "التقويم",
-    "examinations": "الامتحانات"
+    "examinations": "الامتحانات",
+    "timetable": "الجدول المؤسسي",
+    "myTimetable": "جدولي"
   },
   "auth": {
     "signIn": "تسجيل الدخول",
@@ -1382,7 +1384,22 @@
     "scheduledSessions": "{count, plural, =0 {لا توجد جلسات} one {جلسة واحدة} other {# جلسات}}",
     "time": "الوقت",
     "weekDays": "أيام الأسبوع",
-    "noSessionsOnDay": "لا توجد حصص مجدولة في هذا اليوم."
+    "noSessionsOnDay": "لا توجد حصص مجدولة في هذا اليوم.",
+    "openInstitutionalTimetable": "الجدول المؤسسي",
+    "openImport": "استيراد الدليل",
+    "periodNotLinkedHint": "هذا الفصل غير مرتبط بدفعة من دليل المصدر. يمكنك إعداده يدويًا أو استيراد الدليل.",
+    "sourceNotLinked": "غير مستورد",
+    "reconciliationWarnings": "{count} ملاحظات على الجدول تحتاج إلى معالجة",
+    "reconciliationCodes": {
+      "SECTION_WITHOUT_TEACHER": "شعب بدون مدرّس",
+      "SECTION_WITHOUT_TIMETABLE": "شعب بدون جدول",
+      "SECTION_WITHOUT_SESSIONS": "شعب بدون حصص",
+      "SESSION_WITHOUT_ROOM": "حصص بدون قاعة",
+      "PERIOD_WITHOUT_TIMETABLE": "فصل بدون جدول",
+      "DUPLICATE_ROOM_SLOT": "تعارض في القاعة",
+      "DUPLICATE_TEACHER_SLOT": "تعارض في المدرّس",
+      "DUPLICATE_SECTION_SLOT": "تعارض في الشعبة"
+    }
   },
   "announcements": {
     "title": "الإعلانات",
@@ -1722,7 +1739,8 @@
         "password_reset_requested": "طلب إعادة تعيين كلمة المرور",
         "password_reset_completed": "تمت إعادة تعيين كلمة المرور",
         "sessions_revoked": "تم تسجيل الخروج من الجلسات الأخرى",
-        "rate_limited": "محاولات كثيرة جدًا"
+        "rate_limited": "محاولات كثيرة جدًا",
+        "password_reset_delivery_failed": "فشل إرسال بريد إعادة تعيين كلمة المرور"
       },
       "student": {
         "created": "إضافة طالب",
@@ -1748,7 +1766,8 @@
         "sessions_revoked": "تم إبطال الجلسات",
         "activation_issued": "تم إصدار رابط التنشيط",
         "activation_completed": "تم تنشيط الحساب بواسطة صاحبه",
-        "activation_revoked": "تم سحب رابط التنشيط"
+        "activation_revoked": "تم سحب رابط التنشيط",
+        "activation_delivery_failed": "فشل إرسال بريد التنشيط"
       },
       "immigration": {
         "change_request": {
@@ -1758,6 +1777,9 @@
         },
         "import": {
           "applied": "تم تطبيق استيراد الهجرة"
+        },
+        "profile": {
+          "updated": "تم تحديث ملف الهجرة"
         },
         "overview_exported": "تم تصدير نظرة عامة على الهجرة",
         "reminders": {
@@ -2292,7 +2314,19 @@
       "EXISTING_STUDENT_MATCHED": "تمت مطابقة ملف طالب موجود. لم يتم تغيير أي شيء.",
       "ACCOUNT_NOT_ACTIVATED": "لم يتم تنشيط هذا الحساب بعد. استخدم رابط التنشيط الممنوح عند التسجيل.",
       "FUTURE_INTAKE_CANNOT_BE_ACTIVE": "الدفعة التي تبدأ في المستقبل يجب أن تكون مخططة وليست نشطة.",
-      "INTAKE_CODE_REQUIRED": "رمز الدفعة مطلوب."
+      "INTAKE_CODE_REQUIRED": "رمز الدفعة مطلوب.",
+      "TEMPORARY_PASSWORD_EXPIRED": "انتهت صلاحية كلمة المرور المؤقتة. تواصل مع المكتب الدولي للحصول على كلمة جديدة.",
+      "EMAIL_DELIVERY_FAILED": "تعذّر إرسال البريد الإلكتروني. سلّم بيانات الدخول يدويًا أو حاول لاحقًا.",
+      "CSRF_ORIGIN_REJECTED": "جاء هذا الطلب من مصدر غير موثوق. أعد تحميل الصفحة ثم حاول مرة أخرى.",
+      "IMPORT_BATCH_NOT_FOUND": "دفعة الاستيراد هذه لم تعد موجودة.",
+      "IMPORT_CONFLICT": "تعذّر تطبيق الاستيراد. راجع تقرير التشغيل التجريبي وأعد المحاولة.",
+      "IMPORT_PERIOD_NOT_FOUND": "الفصل الدراسي المحدد لم يعد موجودًا.",
+      "IMPORT_SOURCE_INVALID": "تعذّرت قراءة دليل المصدر.",
+      "IMPORT_SOURCE_UNAVAILABLE": "ملف دليل المصدر غير متاح.",
+      "PERIOD_NOT_MAPPED_TO_SOURCE": "الفصل الدراسي غير مرتبط بدليل المصدر.",
+      "SECTIONS_WITHOUT_SESSIONS": "بعض الشعب ليس لديها حصص مجدولة.",
+      "SECTIONS_WITHOUT_TEACHER": "بعض الشعب ليس لديها مدرّس.",
+      "SESSIONS_WITHOUT_ROOM": "بعض الحصص ليس لديها قاعة."
     }
   },
   "theme": {
@@ -2948,5 +2982,94 @@
     "instructionsTitle": "التعليمات",
     "sectionsTitle": "الشعب المشاركة",
     "editAction": "تعديل"
+  },
+  "institutionalTimetable": {
+    "title": "الجدول الدراسي المؤسسي",
+    "subtitle": "تصفح الجدول الأسبوعي لطرح برنامج معيّن. هذا عرض مشترك لا يقتصر على تسجيلك الشخصي.",
+    "periodLabel": "الفصل الدراسي",
+    "offeringLabel": "طرح البرنامج",
+    "sharedHint": "هذا هو الجدول المؤسسي المشترك: يعرض جميع شعب الطرح المحدد.",
+    "period": "الفصل",
+    "sessions": "الحصص",
+    "courses": "المقررات",
+    "coursesScheduled": "مقررات مجدولة",
+    "sectionsCount": "{scheduled} من {total} شعبة مجدولة",
+    "scheduledOf": "{scheduled} من {total} شعبة لديها حصص مجدولة",
+    "weeklyTitle": "الجدول الأسبوعي",
+    "sectionListTitle": "شعب هذا الطرح",
+    "sessionCount": "الحصص: {count}",
+    "scheduled": "مجدولة",
+    "notScheduled": "غير مجدولة",
+    "unnamedSection": "شعبة بدون عنوان",
+    "noPeriods": "لا توجد فصول دراسية",
+    "noPeriodsHint": "لم يتم إعداد أي فصل دراسي بعد.",
+    "noOfferings": "لا توجد طروحات برامج",
+    "noOfferingsHint": "لا توجد طروحات لهذا الفصل بعد. يمكن للمسؤول استيرادها أو إنشاؤها.",
+    "noSessions": "لا توجد حصص مجدولة",
+    "noSessionsHint": "لا توجد مدخلات جدول لهذا الطرح بعد، وقد لا يكون منشورًا.",
+    "issuesTitle": "فحوص الاكتمال",
+    "readiness": {
+      "generic": "هذا الجدول غير مكتمل.",
+      "TIMETABLE_NO_SECTIONS": "لا توجد شعب لهذا الطرح بعد، لذا لا يوجد جدول لعرضه.",
+      "TIMETABLE_PARTIALLY_SCHEDULED": "هذا الجدول غير مكتمل: بعض الشعب ليس لديها حصص مجدولة بعد.",
+      "TIMETABLE_NOT_SCHEDULED": "لم يتم جدولة هذا الجدول بعد."
+    },
+    "issues": {
+      "SECTIONS_WITHOUT_SESSIONS": "شعب بدون حصص",
+      "SECTIONS_WITHOUT_TEACHER": "شعب بدون مدرّس",
+      "SESSIONS_WITHOUT_ROOM": "حصص بدون قاعة",
+      "PERIOD_NOT_MAPPED_TO_SOURCE": "الفصل غير مرتبط بدليل المصدر"
+    },
+    "periodStatus": {
+      "PLANNED": "مخطط",
+      "ACTIVE": "نشط",
+      "COMPLETED": "مكتمل",
+      "CANCELLED": "ملغى"
+    }
+  },
+  "academicImport": {
+    "title": "استيراد دليل المصدر",
+    "subtitle": "راجع دليل الجدول المعتمد، واربط دفعاته بفصول دراسية فعلية، ثم طبّقه. لا يُكتب أي شيء قبل تأكيدك.",
+    "academicsBreadcrumb": "الشؤون الأكاديمية",
+    "dryRunTitle": "تشغيل تجريبي",
+    "dryRunHint": "التجهيز يقرأ الدليل ويعرض ما سيُنشأ. لا يكتب أي بيانات أكاديمية.",
+    "runDryRun": "تشغيل تجريبي",
+    "working": "جارٍ العمل…",
+    "noPreviewYet": "شغّل التشغيل التجريبي لرؤية محتوى الدليل.",
+    "alreadyAppliedNotice": "تم تطبيق هذا المصدر بالفعل. يتم عرض الدفعة المطبقة.",
+    "appliedNotice": "تم تطبيق الاستيراد. أصبحت الجداول الأكاديمية تتضمن سجلات الدليل.",
+    "rolledBackNotice": "تم التراجع عن الاستيراد. حُذفت سجلات هذه الدفعة فقط.",
+    "forbiddenTitle": "غير متاح",
+    "forbiddenHint": "استيراد البيانات الأكاديمية يتطلب صلاحية إدارة الفصول.",
+    "entities": {
+      "periods": "الفصول",
+      "offerings": "الطروحات",
+      "courses": "المقررات",
+      "rooms": "القاعات",
+      "sections": "الشعب",
+      "sessions": "الحصص"
+    },
+    "heldTitle": "{count} سجلًا محتجزًا",
+    "heldHint": "لم تُطبّق السجلات المحتجزة: هناك تعارض في المصدر أو ربط غير محلول. أصلحه ثم أعد التشغيل التجريبي.",
+    "mappingTitle": "ربط دفعات المصدر بالفصول الدراسية",
+    "mappingHint": "تُستورد دفعة المصدر فقط في الفصل الذي تختاره. اتركها فارغة لتخطيها.",
+    "targetPeriod": "الفصل المستهدف",
+    "leaveUnmapped": "عدم الاستيراد",
+    "confirmLabel": "راجعت تقرير التشغيل التجريبي وأؤكد تطبيق هذه السجلات.",
+    "apply": "تطبيق الاستيراد",
+    "mappedCount": "{mapped} من {total} دفعات مرتبطة",
+    "batchesTitle": "سجل الاستيراد",
+    "noBatches": "لا توجد عمليات استيراد",
+    "noBatchesHint": "معاينة الدليل تنشئ أول دفعة.",
+    "batchCounts": "{sections} شعبة · {sessions} حصة",
+    "rollback": "تراجع",
+    "status": {
+      "READY": "جاهز",
+      "DRY_RUN": "تشغيل تجريبي",
+      "APPLIED": "مطبق",
+      "FAILED": "فشل",
+      "ROLLED_BACK": "تم التراجع",
+      "ALREADY_APPLIED": "مطبق بالفعل"
+    }
   }
 }

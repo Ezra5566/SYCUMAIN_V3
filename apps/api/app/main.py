@@ -13,6 +13,7 @@ from app.auth import auth_router
 from app.config.settings import get_settings
 from app.core.logging import configure_logging
 from app.core.middleware import RequestContextMiddleware
+from app.core.origin import OriginGuardMiddleware
 from app.database.session import SessionLocal
 from app.routers import (
     absence,
@@ -74,7 +75,15 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         # is local-development material only: seeding it under assertions that
         # count academic rows makes the suite order-dependent.
         if settings.should_seed_demo_data or settings.ENVIRONMENT == "testing":
-            seed_test_users(db)
+            # Demonstration seeding uses the configured demo password, which the
+            # login page's development chips also read. The test suite supplies
+            # its own fixture credential (tests/conftest.py), so a change made
+            # for a presentation cannot silently rewrite what the suite signs
+            # in with.
+            if settings.should_seed_demo_data:
+                seed_test_users(db, password=settings.DEMO_PASSWORD)
+            else:
+                seed_test_users(db)
             seed_housing(db)
             seed_immigration(db)
             seed_academic(db)
@@ -165,8 +174,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Added last so it wraps every other middleware: a request rejected by CORS is
-# still logged, and still carries an X-Request-ID for the caller to report.
+# Cross-site request protection for unsafe methods. Sits inside the request
+# context (so a rejection is still logged and correlated) and wraps CORS, so a
+# hostile write is refused before routing, authentication or any database work.
+app.add_middleware(
+    OriginGuardMiddleware,
+    trusted_origins=settings.trusted_origins,
+)
+
+# Added last so it wraps every other middleware: a request rejected by CORS or
+# by the origin guard is still logged, and still carries an X-Request-ID for the
+# caller to report.
 app.add_middleware(RequestContextMiddleware)
 
 

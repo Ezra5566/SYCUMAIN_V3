@@ -10,8 +10,10 @@ The public flow is intentionally three operations:
     apply_import(...)    -> apply explicitly mapped rows and record target ids
     rollback_batch(...)  -> remove only rows owned by that batch
 
-This module is not wired into application startup. It is invoked by tests or the
-operator CLI, never by a request.
+The HTTP surface (``/academics/imports``) is a thin, permission-gated wrapper
+around these three operations; it adds nothing that could become a second
+mapping mechanism. The batch table is the provenance record, so an applied
+source can be inspected and rolled back later.
 """
 
 from __future__ import annotations
@@ -591,6 +593,25 @@ def apply_import(
         raise ImportError("Import batch not found")
     if batch.status == "APPLIED":
         return {"batch_id": str(batch.id), "status": "APPLIED", **batch.counts_json}
+
+    # The same source file must not be applied twice from two batches. Applying
+    # the same rows again would be a no-op at source-key level but would write a
+    # second provenance batch claiming the same records, which makes rollback
+    # ambiguous. One applied batch per source checksum is the invariant.
+    duplicate = (
+        db.query(AcademicImportBatch)
+        .filter(
+            AcademicImportBatch.source_sha256 == batch.source_sha256,
+            AcademicImportBatch.status == "APPLIED",
+            AcademicImportBatch.id != batch.id,
+        )
+        .first()
+    )
+    if duplicate is not None:
+        raise ImportError(
+            "This source catalogue has already been applied in batch "
+            f"{duplicate.id}; roll that batch back before applying it again"
+        )
     if batch.status not in {"READY", "DRY_RUN"}:
         raise ImportError(f"Batch cannot be applied from status {batch.status}")
 
@@ -983,4 +1004,129 @@ def rollback_batch(db: DBSession, batch_id: uuid.UUID) -> dict[str, Any]:
         "offerings_deleted": offerings_deleted,
         "courses_deleted": courses_deleted,
         "rooms_deleted": rooms_deleted,
+    }
+
+
+# --- Request-facing workflow ------------------------------------------------
+#
+# These helpers are the only additions the HTTP layer uses. ``preview_import``
+# reuses ``prepare_import`` unchanged, so the dry run and the apply see exactly
+# the same rows; ``batch_report`` only reads staging rows.
+
+
+def applied_batch_for_source(
+    db: DBSession, source_sha256: str
+) -> AcademicImportBatch | None:
+    """The applied batch for a source checksum, if the file is already live."""
+    return (
+        db.query(AcademicImportBatch)
+        .filter(
+            AcademicImportBatch.source_sha256 == source_sha256,
+            AcademicImportBatch.status == "APPLIED",
+        )
+        .order_by(AcademicImportBatch.finished_at.desc())
+        .first()
+    )
+
+
+def preview_import(
+    db: DBSession,
+    *,
+    actor_id: uuid.UUID | None = None,
+    source_path: str | Path | None = None,
+) -> dict[str, Any]:
+    """Stage the catalogue, unless this exact file is already applied.
+
+    A second preview of an applied source does not create a batch: it reports
+    the applied one. That is what keeps repeated clicks idempotent and stops a
+    duplicate application before any academic row is touched.
+    """
+    path = Path(source_path) if source_path is not None else Path(DEFAULT_SOURCE)
+    raw = path.read_bytes()
+    sha = hashlib.sha256(raw).hexdigest()
+    applied = applied_batch_for_source(db, sha)
+    if applied is not None:
+        return {
+            "batch_id": str(applied.id),
+            "status": "ALREADY_APPLIED",
+            "source_sha256": sha,
+            "already_applied": True,
+            **(applied.counts_json or {}),
+        }
+    result = prepare_import(db, path, actor_id=actor_id)
+    return {**result, "status": "READY", "already_applied": False}
+
+
+def list_batches(db: DBSession, *, limit: int = 20) -> list[AcademicImportBatch]:
+    return (
+        db.query(AcademicImportBatch)
+        .order_by(AcademicImportBatch.created_at.desc())
+        .limit(limit)
+        .all()
+    )
+
+
+def batch_report(db: DBSession, batch_id: uuid.UUID) -> dict[str, Any]:
+    """Read back one batch: counts, mapping state and the held rows.
+
+    Nothing here is derived from the live academic tables; the report describes
+    the staged import so an operator can decide before applying it.
+    """
+    batch = (
+        db.query(AcademicImportBatch)
+        .filter(AcademicImportBatch.id == batch_id)
+        .first()
+    )
+    if batch is None:
+        raise ImportError("Import batch not found")
+
+    rows = (
+        db.query(AcademicImportRow)
+        .filter(AcademicImportRow.batch_id == batch.id)
+        .order_by(AcademicImportRow.id)
+        .all()
+    )
+    by_entity: dict[str, int] = {}
+    by_action: dict[str, int] = {}
+    periods: list[dict[str, Any]] = []
+    held: list[dict[str, Any]] = []
+    for row in rows:
+        by_entity[row.entity_type] = by_entity.get(row.entity_type, 0) + 1
+        by_action[row.action] = by_action.get(row.action, 0) + 1
+        if row.entity_type == "period":
+            periods.append(
+                {
+                    "source_id": row.payload.get("source_id"),
+                    "source_key": row.source_key,
+                    "mapped_period_id": (
+                        row.target_id if row.action in {"UPDATE", "APPLIED"} else None
+                    ),
+                    "mapped_period_code": None,
+                }
+            )
+        if row.action == "HELD" or row.error_code:
+            held.append(
+                {
+                    "entity_type": row.entity_type,
+                    "action": row.action,
+                    "source_key": row.source_key,
+                    "error_code": row.error_code,
+                    "target_id": row.target_id,
+                }
+            )
+
+    return {
+        "batch_id": batch.id,
+        "status": batch.status,
+        "dry_run": batch.dry_run,
+        "source_name": batch.source_name,
+        "source_sha256": batch.source_sha256,
+        "created_at": batch.created_at,
+        "finished_at": batch.finished_at,
+        "counts": batch.counts_json or {},
+        "periods": periods,
+        "by_entity": by_entity,
+        "by_action": by_action,
+        "held": held,
+        "already_applied": batch.status == "APPLIED",
     }

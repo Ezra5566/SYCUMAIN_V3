@@ -1,6 +1,6 @@
 import { expect, test, type APIResponse, type Page } from "@playwright/test";
 
-import { API_BASE, USERS, app } from "./accounts";
+import { API_BASE, USERS, app, signOutViaAccountMenu } from "./accounts";
 
 /**
  * Phase 4 programme-change workflow.
@@ -161,7 +161,7 @@ test.describe.serial("programme change within one admission episode", () => {
     expect(pending.items[0].admitted_program_id).toBe(admittedProgram.id);
     expect(pending.items[0].current_program_id).toBe(admittedProgram.id);
 
-    await page.getByRole("button", { name: "Sign out", exact: true }).click();
+    await signOutViaAccountMenu(page);
     await page.waitForURL(/\/en\/login/, { timeout: 25_000 });
     await login(page, USERS.management);
     await page.goto(app(`/app/students/${studentId}`));
@@ -199,7 +199,7 @@ test.describe.serial("programme change within one admission episode", () => {
     expect(changes.items).toHaveLength(1);
     expect(changes.items[0].status).toBe("APPROVED");
 
-    await page.getByRole("button", { name: "Sign out", exact: true }).click();
+    await signOutViaAccountMenu(page);
     await page.waitForURL(/\/en\/login/, { timeout: 25_000 });
     await login(page, USERS.admin);
     await page.goto(app("/app/audit"));

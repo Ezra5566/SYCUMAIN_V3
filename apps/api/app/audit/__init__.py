@@ -16,6 +16,18 @@ Usage::
     db.commit()  # the audit entry commits with the change
 """
 
-from app.audit.service import record_audit, request_context, sanitize_context
+from app.audit.service import (
+    field_changes,
+    record_audit,
+    request_context,
+    sanitize_context,
+    sanitize_value,
+)
 
-__all__ = ["record_audit", "request_context", "sanitize_context"]
+__all__ = [
+    "field_changes",
+    "record_audit",
+    "request_context",
+    "sanitize_context",
+    "sanitize_value",
+]

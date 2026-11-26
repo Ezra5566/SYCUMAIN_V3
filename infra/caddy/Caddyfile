@@ -1,0 +1,44 @@
+# Caddy edge for the production stack.
+#
+# Caddy obtains and renews the certificate for SITE_ADDRESS automatically, so
+# that name must resolve publicly to this host and ports 80/443 must reach it.
+# Set ACME_EMAIL so expiry notices go somewhere useful.
+#
+# One origin: `/api/*` and the operational endpoints go to the API, everything
+# else to the Next.js server. That keeps the session cookie same-origin, so no
+# CORS exception is needed and the API is never published directly.
+
+{
+	admin off
+	email {$ACME_EMAIL:admin@example.invalid}
+}
+
+{$SITE_ADDRESS:localhost} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		Cross-Origin-Opener-Policy "same-origin"
+		-Server
+	}
+
+	# `X-Forwarded-Proto` is set here; the API runs with --proxy-headers and
+	# --forwarded-allow-ips so cookies and logs see the real scheme and client.
+	@api path /api/* /health /ready /docs /docs/* /openapi.json /redoc
+	handle @api {
+		reverse_proxy api:8001
+	}
+
+	handle {
+		reverse_proxy web:3000
+	}
+
+	log {
+		output stdout
+		format json
+	}
+}

@@ -1,0 +1,104 @@
+# Isolated performance environment.
+#
+#   docker compose -p sycumain-v3-perf -f docker-compose.perf.yml up -d --build
+#   docker compose -p sycumain-v3-perf -f docker-compose.perf.yml \
+#     exec -T api python tools/seed_load.py --students 1450
+#   ./apps/api/.venv/bin/python scripts/load/run_load.py
+#
+# Deliberately separate from the development, test and production stacks:
+#   * its own database (school_portal_perf) and port (5440/8010);
+#   * no bind mount of source, so a running test measures the built image;
+#   * no reload and a uvicorn command shaped like production;
+#   * throwaway volumes — `down -v` removes everything.
+#
+# Rate limiting is disabled here and ONLY here, because the workload logs in
+# hundreds of synthetic accounts from one address and would otherwise measure
+# the login throttle rather than capacity. The throttle itself is verified by
+# its own tests and by the security probes against the development stack.
+
+name: sycumain-v3-perf
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    # pg_stat_statements gives query-level evidence; the slow-statement log is
+    # the second source when a query never reaches the extension.
+    command:
+      - postgres
+      - -c
+      - shared_preload_libraries=pg_stat_statements
+      - -c
+      - pg_stat_statements.track=all
+      - -c
+      - log_min_duration_statement=200
+    environment:
+      POSTGRES_DB: school_portal_perf
+      POSTGRES_USER: portal
+      POSTGRES_PASSWORD: portal
+    ports:
+      - "5440:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U portal -d school_portal_perf"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    tmpfs:
+      - /var/lib/postgresql/data
+
+  api:
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.api
+    environment:
+      ENVIRONMENT: development
+      DEBUG: "false"
+      DATABASE_URL: postgresql://portal:portal@postgres:5432/school_portal_perf
+      SECRET_KEY: perf-only-secret-key-not-used-anywhere-else-0000
+      CORS_ORIGINS: '["http://localhost:8010"]'
+      # First boot seeds the demonstration catalogue and the demo accounts;
+      # later runs (and multi-worker runs, where every worker would race the
+      # same inserts) set this to false and reuse the seeded database.
+      SEED_DEMO_DATA: ${SEED_DEMO_DATA:-true}
+      # The load generator authenticates with the published catalogue credential,
+      # so this stack pins it rather than inheriting the demonstration default.
+      DEMO_PASSWORD: ${DEMO_PASSWORD:-password123}
+      PASSWORD_RESET_DELIVERY: disabled
+      MALWARE_SCANNER: ${MALWARE_SCANNER:-disabled}
+      CLAMAV_HOST: ${CLAMAV_HOST:-clamav}
+      CLAMAV_PORT: ${CLAMAV_PORT:-3310}
+      STORAGE_BACKEND: local
+      STORAGE_LOCAL_ROOT: /perf/storage
+      ACTIVATION_LINK_BASE: http://localhost:8010
+      ACTIVATION_RETURN_LINK: "true"
+      LOG_LEVEL: warning
+      LOG_FORMAT: json
+      SLOW_REQUEST_MS: "500"
+      RATE_LIMIT_ENABLED: "false"
+      PERF_WORKERS: ${PERF_WORKERS:-1}
+    ports:
+      - "8010:8001"
+    volumes:
+      - ./.perf:/perf
+    depends_on:
+      postgres:
+        condition: service_healthy
+    # Disposable stack: migrating on start is acceptable here and nowhere
+    # else. Production runs `migrate` as an explicit, gated step before the
+    # API is rolled, so a failed migration stops the release.
+    command:
+      - sh
+      - -c
+      - >-
+        python -m alembic upgrade head &&
+        exec uvicorn app.main:app --host 0.0.0.0 --port 8001
+        --workers ${PERF_WORKERS:-1}
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          python -c "import urllib.request,sys;
+          sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8001/ready', timeout=3).status == 200 else 1)"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s

@@ -8,10 +8,10 @@ from fastapi import status as http_status
 from fastapi.responses import Response
 from sqlalchemy.orm import Session as DBSession
 
-from app.audit import record_audit
+from app.audit import field_changes, record_audit
 from app.auth.dependencies import CurrentUser, get_db
 from app.config.settings import get_settings
-from app.models.housing import RoomStatus
+from app.models.housing import HousingAssignment, RoomStatus
 from app.models.platform import NotificationType
 from app.permissions.scope import can_view_housing
 from app.schemas.housing import (
@@ -659,11 +659,25 @@ def update_assignment_endpoint(
     """Update notes / end date / status of a housing assignment."""
     _check_housing_admin(current_user)
 
+    changes = data.model_dump(exclude_unset=True)
+    # Previous values must be read before the service writes; there is no other
+    # record of what a bed or a status was before an administrative edit.
+    existing = (
+        db.query(HousingAssignment)
+        .filter(HousingAssignment.id == assignment_id)
+        .first()
+    )
+    previous = (
+        {field: getattr(existing, field, None) for field in changes}
+        if existing is not None
+        else {}
+    )
+
     try:
         assignment = update_housing_assignment(
             db,
             assignment_id,
-            data.model_dump(exclude_unset=True),
+            changes,
             actor_id=current_user.id,
         )
     except ValueError as e:
@@ -675,7 +689,13 @@ def update_assignment_endpoint(
         actor=current_user,
         entity_type="housing_assignment",
         entity_id=assignment.id,
-        context={"fields": sorted(data.model_dump(exclude_unset=True).keys())},
+        context={
+            "fields": sorted(changes),
+            "changes": field_changes(
+                previous,
+                {field: getattr(assignment, field, None) for field in changes},
+            ),
+        },
         request=request,
     )
     db.commit()
@@ -695,6 +715,19 @@ def transfer_assignment_endpoint(
 ) -> HousingAssignmentResponse:
     """Transfer a student to a new bed (single transaction)."""
     _check_housing_admin(current_user)
+
+    # The vacated bed is what a transfer is *from*; without it the audit entry
+    # names only the destination and the previous room cannot be reconstructed.
+    previous_assignment = (
+        db.query(HousingAssignment)
+        .filter(HousingAssignment.id == assignment_id)
+        .first()
+    )
+    # Copied now, not read later: the service mutates the same identity-mapped
+    # row, so a lazy read after the call could report the post-transfer state.
+    previous_bed_id = (
+        str(previous_assignment.bed_id) if previous_assignment is not None else None
+    )
 
     try:
         new_assignment = transfer_student(
@@ -716,7 +749,11 @@ def transfer_assignment_endpoint(
         entity_id=new_assignment.id,
         context={
             "from_assignment_id": str(assignment_id),
+            "previous_bed_id": previous_bed_id,
             "bed_id": str(new_assignment.bed_id),
+            "student_id": str(new_assignment.student_id),
+            "transfer_date": data.transfer_date.isoformat(),
+            "notes": data.notes,
         },
         request=request,
     )
@@ -738,6 +775,17 @@ def end_assignment_endpoint(
 ) -> HousingAssignmentResponse:
     """End a housing assignment."""
     _check_housing_admin(current_user)
+    existing = (
+        db.query(HousingAssignment)
+        .filter(HousingAssignment.id == assignment_id)
+        .first()
+    )
+    # Read the scalars now: the service mutates this same identity-mapped
+    # object, so a lazy `existing.status` after the call would already be the
+    # new value and the transition would look like no change at all.
+    previous_status = existing.status if existing is not None else None
+    previous_end_date = existing.end_date if existing is not None else None
+
     try:
         assignment = end_housing_assignment(
             db, assignment_id, actor_id=current_user.id
@@ -751,6 +799,19 @@ def end_assignment_endpoint(
         actor=current_user,
         entity_type="housing_assignment",
         entity_id=assignment.id,
+        # A move-out is the end of a room occupancy: record which bed, when,
+        # and what state the assignment moved from.
+        context={
+            "bed_id": str(assignment.bed_id),
+            "student_id": str(assignment.student_id),
+            "end_date": (
+                assignment.end_date.isoformat() if assignment.end_date else None
+            ),
+            "changes": field_changes(
+                {"status": previous_status, "end_date": previous_end_date},
+                {"status": assignment.status, "end_date": assignment.end_date},
+            ),
+        },
         request=request,
     )
     _notify_student(db, assignment, NotificationType.HOUSING_ASSIGNMENT_ENDED)

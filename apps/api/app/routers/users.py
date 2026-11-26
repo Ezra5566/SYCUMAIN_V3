@@ -62,6 +62,7 @@ from app.services.account import (
     set_account_roles,
     update_account,
 )
+from app.services.mailer import activation_email_body, send_email
 from app.services.migration_report import student_account_migration_report
 
 router = APIRouter(prefix="/users", tags=["users"])
@@ -492,6 +493,14 @@ def reset_user_password(
         "temporary_password": password,
         "must_change_password": user.must_change_password,
         "sessions_revoked": revoked,
+        # Told to the administrator so the slip of paper can carry the day it
+        # stops working. NULL when the account is not using a temporary
+        # password (the caller chose `must_change_password=false`).
+        "temporary_password_expires_at": (
+            user.temporary_password_expires_at.isoformat()
+            if user.temporary_password_expires_at
+            else None
+        ),
     }
 
 
@@ -631,6 +640,46 @@ def issue_activation_link(
     except ActivationError as exc:
         db.rollback()
         raise _activation_error(exc) from exc
+
+    # An academically delivered link is mailed from here. On failure the token
+    # is rolled back rather than left live: a working link that nobody received
+    # is a credential in circulation with no owner. The failure is audited and
+    # the caller gets a 503 so the counter can hand the link over directly
+    # instead.
+    if payload.delivery == "ACADEMIC_EMAIL":
+        recipient = user.email
+        delivery = send_email(
+            to=recipient,
+            subject="Activate your Student Portal account",
+            body=activation_email_body(
+                activation_url(raw_token), get_settings().ACTIVATION_EXPIRE_HOURS
+            ),
+            purpose="account_activation",
+        )
+        if not delivery.sent:
+            db.rollback()
+            record_audit(
+                db,
+                action="account.activation_delivery_failed",
+                actor=current_user,
+                entity_type="user",
+                entity_id=user.id,
+                context={"reason": delivery.detail},
+                request=request,
+            )
+            db.commit()
+            raise HTTPException(
+                status_code=http_status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail={
+                    "error": {
+                        "code": "EMAIL_DELIVERY_FAILED",
+                        "message": (
+                            "The activation link could not be emailed. Hand it "
+                            "over in person or try again later."
+                        ),
+                    }
+                },
+            )
 
     db.commit()
     db.refresh(record)

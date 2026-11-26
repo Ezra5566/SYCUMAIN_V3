@@ -170,7 +170,9 @@
     "commencement": "Commencement",
     "attendance": "Attendance",
     "calendar": "Calendar",
-    "examinations": "Examinations"
+    "examinations": "Examinations",
+    "timetable": "Institutional timetable",
+    "myTimetable": "My timetable"
   },
   "auth": {
     "signIn": "Sign in",
@@ -1382,7 +1384,22 @@
     "scheduledSessions": "{count, plural, =0 {No sessions} one {# session} other {# sessions}}",
     "time": "Time",
     "weekDays": "Days of the week",
-    "noSessionsOnDay": "No classes are scheduled for this day."
+    "noSessionsOnDay": "No classes are scheduled for this day.",
+    "openInstitutionalTimetable": "Institutional timetable",
+    "openImport": "Import catalogue",
+    "periodNotLinkedHint": "This period is not linked to a source catalogue intake. You can configure it manually or import the catalogue.",
+    "sourceNotLinked": "Not imported",
+    "reconciliationWarnings": "{count} timetable findings need attention",
+    "reconciliationCodes": {
+      "SECTION_WITHOUT_TEACHER": "Sections without a teacher",
+      "SECTION_WITHOUT_TIMETABLE": "Sections without a timetable",
+      "SECTION_WITHOUT_SESSIONS": "Sections without sessions",
+      "SESSION_WITHOUT_ROOM": "Sessions without a room",
+      "PERIOD_WITHOUT_TIMETABLE": "Period without a timetable",
+      "DUPLICATE_ROOM_SLOT": "Room double-booked",
+      "DUPLICATE_TEACHER_SLOT": "Teacher double-booked",
+      "DUPLICATE_SECTION_SLOT": "Section double-booked"
+    }
   },
   "announcements": {
     "title": "Announcements",
@@ -1722,7 +1739,8 @@
         "password_reset_requested": "Password reset requested",
         "password_reset_completed": "Password reset completed",
         "sessions_revoked": "Other sessions signed out",
-        "rate_limited": "Too many attempts"
+        "rate_limited": "Too many attempts",
+        "password_reset_delivery_failed": "Password reset email failed"
       },
       "student": {
         "created": "Student created",
@@ -1748,7 +1766,8 @@
         "sessions_revoked": "Sessions revoked",
         "activation_issued": "Activation link issued",
         "activation_completed": "Account activated by the holder",
-        "activation_revoked": "Activation link withdrawn"
+        "activation_revoked": "Activation link withdrawn",
+        "activation_delivery_failed": "Activation email failed"
       },
       "immigration": {
         "change_request": {
@@ -1758,6 +1777,9 @@
         },
         "import": {
           "applied": "Immigration import applied"
+        },
+        "profile": {
+          "updated": "Immigration profile updated"
         },
         "overview_exported": "Immigration overview exported",
         "reminders": {
@@ -2292,7 +2314,19 @@
       "EXISTING_STUDENT_MATCHED": "An existing student record was matched. Nothing was changed.",
       "ACCOUNT_NOT_ACTIVATED": "This account has not been activated yet. Use the activation link issued at registration.",
       "FUTURE_INTAKE_CANNOT_BE_ACTIVE": "An intake that starts in the future must be planned, not active.",
-      "INTAKE_CODE_REQUIRED": "An intake code is required."
+      "INTAKE_CODE_REQUIRED": "An intake code is required.",
+      "TEMPORARY_PASSWORD_EXPIRED": "This temporary password has expired. Contact the international office for a new one.",
+      "EMAIL_DELIVERY_FAILED": "The email could not be sent. Hand the credential over in person or try again later.",
+      "CSRF_ORIGIN_REJECTED": "This request came from an untrusted origin. Reload the page and try again.",
+      "IMPORT_BATCH_NOT_FOUND": "This import batch no longer exists.",
+      "IMPORT_CONFLICT": "The import could not be applied. Review the dry-run report and try again.",
+      "IMPORT_PERIOD_NOT_FOUND": "The selected academic period no longer exists.",
+      "IMPORT_SOURCE_INVALID": "The source catalogue could not be read.",
+      "IMPORT_SOURCE_UNAVAILABLE": "The source catalogue file is not available.",
+      "PERIOD_NOT_MAPPED_TO_SOURCE": "The academic period is not linked to the source catalogue.",
+      "SECTIONS_WITHOUT_SESSIONS": "Some sections have no scheduled sessions.",
+      "SECTIONS_WITHOUT_TEACHER": "Some sections have no teacher assigned.",
+      "SESSIONS_WITHOUT_ROOM": "Some sessions have no room assigned."
     }
   },
   "theme": {
@@ -2948,5 +2982,94 @@
     "instructionsTitle": "Instructions",
     "sectionsTitle": "Participating sections",
     "editAction": "Edit"
+  },
+  "institutionalTimetable": {
+    "title": "Institutional timetable",
+    "subtitle": "Browse the weekly schedule of a program offering. This shared view is not limited to your own enrolments.",
+    "periodLabel": "Academic period",
+    "offeringLabel": "Program offering",
+    "sharedHint": "This is the shared institutional schedule: it shows every section of the selected offering.",
+    "period": "Period",
+    "sessions": "Sessions",
+    "courses": "Courses",
+    "coursesScheduled": "courses scheduled",
+    "sectionsCount": "{scheduled} of {total} sections scheduled",
+    "scheduledOf": "{scheduled} of {total} sections have scheduled sessions",
+    "weeklyTitle": "Weekly timetable",
+    "sectionListTitle": "Sections in this offering",
+    "sessionCount": "Sessions: {count}",
+    "scheduled": "Scheduled",
+    "notScheduled": "Not scheduled",
+    "unnamedSection": "Untitled section",
+    "noPeriods": "No academic periods",
+    "noPeriodsHint": "No academic period has been configured yet.",
+    "noOfferings": "No program offerings",
+    "noOfferingsHint": "This period has no program offerings yet. An administrator can import or create them.",
+    "noSessions": "No scheduled sessions",
+    "noSessionsHint": "This offering has no timetable entries yet. It may not be published.",
+    "issuesTitle": "Completeness checks",
+    "readiness": {
+      "generic": "This timetable is incomplete.",
+      "TIMETABLE_NO_SECTIONS": "This offering has no sections yet, so there is no timetable to show.",
+      "TIMETABLE_PARTIALLY_SCHEDULED": "This timetable is incomplete: some sections have no scheduled sessions yet.",
+      "TIMETABLE_NOT_SCHEDULED": "This timetable has not been scheduled yet."
+    },
+    "issues": {
+      "SECTIONS_WITHOUT_SESSIONS": "Sections without sessions",
+      "SECTIONS_WITHOUT_TEACHER": "Sections without a teacher",
+      "SESSIONS_WITHOUT_ROOM": "Sessions without a room",
+      "PERIOD_NOT_MAPPED_TO_SOURCE": "Period not linked to the source catalogue"
+    },
+    "periodStatus": {
+      "PLANNED": "Planned",
+      "ACTIVE": "Active",
+      "COMPLETED": "Completed",
+      "CANCELLED": "Cancelled"
+    }
+  },
+  "academicImport": {
+    "title": "Source catalogue import",
+    "subtitle": "Preview the accepted timetable catalogue, map its intakes to real academic periods and apply it. Nothing is written until you confirm.",
+    "academicsBreadcrumb": "Academics",
+    "dryRunTitle": "Dry run",
+    "dryRunHint": "Staging reads the catalogue and reports what would be created. It does not write academic rows.",
+    "runDryRun": "Run dry run",
+    "working": "Working…",
+    "noPreviewYet": "Run a dry run to see what the catalogue contains.",
+    "alreadyAppliedNotice": "This source has already been applied. Showing the applied batch.",
+    "appliedNotice": "Import applied. The academic tables now include the catalogued records.",
+    "rolledBackNotice": "Import rolled back. Only that batch's records were removed.",
+    "forbiddenTitle": "Not available",
+    "forbiddenHint": "Importing academic data requires period management permission.",
+    "entities": {
+      "periods": "Periods",
+      "offerings": "Offerings",
+      "courses": "Courses",
+      "rooms": "Rooms",
+      "sections": "Sections",
+      "sessions": "Sessions"
+    },
+    "heldTitle": "{count} records held",
+    "heldHint": "Held records were not applied: a source conflict or mapping is unresolved. Fix it and preview again.",
+    "mappingTitle": "Map source intakes to academic periods",
+    "mappingHint": "A source intake is imported only into the period you choose. Leave an intake unmapped to skip it.",
+    "targetPeriod": "Target period",
+    "leaveUnmapped": "Do not import",
+    "confirmLabel": "I have reviewed the dry-run report and confirm applying these records.",
+    "apply": "Apply import",
+    "mappedCount": "{mapped} of {total} intakes mapped",
+    "batchesTitle": "Import history",
+    "noBatches": "No imports yet",
+    "noBatchesHint": "Previewing the catalogue creates the first batch.",
+    "batchCounts": "{sections} sections · {sessions} sessions",
+    "rollback": "Roll back",
+    "status": {
+      "READY": "Ready",
+      "DRY_RUN": "Dry run",
+      "APPLIED": "Applied",
+      "FAILED": "Failed",
+      "ROLLED_BACK": "Rolled back",
+      "ALREADY_APPLIED": "Already applied"
+    }
   }
 }
